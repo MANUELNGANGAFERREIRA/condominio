@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CondoGest — Gestão de Condomínios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="scroll-progress"></div>
+
+<svg class="svg-defs" aria-hidden="true">
+  <filter id="liquid-glass">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise">
+      <animate attributeName="baseFrequency" dur="22s" values="0.008 0.012;0.014 0.008;0.008 0.012" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="14"/>
+  </filter>
+</svg>
+
+<!-- ==========================================================================
+     TELA 0 — LANDING PAGE (pública)
+     ========================================================================== -->
+<section id="screen-landing" class="screen">
+
+  <nav class="lux-nav" id="lux-nav">
+    <div class="lux-nav-inner">
+      <a class="lux-logo" data-goto="screen-landing" href="javascript:void(0)"><span class="lux-logo-mark" data-icon="gem" data-icon-size="16"></span>CondoGest</a>
+      <div class="lux-nav-links">
+        <a href="#section-modulos">Módulos</a>
+        <a href="#section-experiencia">Experiência</a>
+        <a href="#section-galeria">Espaços</a>
+        <a href="#section-depoimentos">Depoimentos</a>
+      </div>
+      <div class="lux-nav-actions">
+        <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+          <span class="theme-toggle-knob"><span data-icon="sun" data-icon-size="13"></span></span>
+        </button>
+        <button class="btn btn-secondary btn-small" data-goto="screen-login">Entrar</button>
+        <button class="btn btn-primary btn-small btn-magnetic" data-goto="screen-cadastro-choice">Criar conta</button>
+        <button type="button" class="lux-nav-burger" id="lux-nav-burger" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="lux-nav-mobile" id="lux-nav-mobile">
+      <a href="#section-modulos">Módulos</a>
+      <a href="#section-experiencia">Experiência</a>
+      <a href="#section-galeria">Espaços</a>
+      <a href="#section-depoimentos">Depoimentos</a>
+      <div class="lux-nav-mobile-actions">
+        <button class="btn btn-secondary btn-block" data-goto="screen-login">Entrar</button>
+        <button class="btn btn-primary btn-block" data-goto="screen-cadastro-choice">Criar conta</button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero-lux" id="hero-section">
+    <div class="hero-lux-bg hero-parallax" style="--pdepth:40px"></div>
+    <div class="hero-lux-grain"></div>
+    <div class="orb-field"><span class="orb orb-1"></span><span class="orb orb-2"></span><span class="orb orb-3"></span></div>
+
+    <div class="hero-lux-inner">
+      <div class="hero-lux-text">
+        <span class="landing-hero-eyebrow hero-parallax" style="--pdepth:-10px">Plataforma para condomínios de alto padrão</span>
+        <h1 class="hero-parallax" style="--pdepth:-30px">A arte de gerir o seu <span class="text-foil">condomínio</span>, em tempo real</h1>
+        <p class="hero-parallax" style="--pdepth:-14px">Moradores, unidades, finanças, reservas, ocorrências e comunicados — tudo organizado
+        numa única plataforma desenhada com o mesmo cuidado do lugar onde vive.</p>
+        <div class="landing-hero-actions hero-parallax" style="--pdepth:-4px">
+          <button class="btn btn-primary btn-glow btn-magnetic" data-goto="screen-cadastro-choice">Começar agora <span data-icon="arrowRight" data-icon-size="15"></span></button>
+          <button class="btn btn-secondary btn-magnetic" data-goto="screen-login">Já tenho conta</button>
+        </div>
+      </div>
+      <div class="hero-lux-visual hero-parallax" style="--pdepth:16px">
+        <div class="building-visual">
+          <div class="building-visual-shadow"></div>
+          <span class="floating-chip chip-1"><span class="chip-icon" data-icon="shield" data-icon-size="16"></span><span><strong>99.9%</strong><span>Disponibilidade</span></span></span>
+          <span class="floating-chip chip-2"><span class="chip-icon" data-icon="bolt" data-icon-size="16"></span><span><strong>Tempo real</strong><span>Sincronizado</span></span></span>
+          <div class="building-visual-frame glass">
+            <div class="building-visual-img-wrap">
+              <img class="building-visual-img" src="https://images.unsplash.com/photo-1758448511487-15f69dd6107b?auto=format&fit=crop&w=1200&q=75" alt="Fachada de um condomínio moderno, envidraçado — imagem ilustrativa" loading="eager">
+              <div class="building-visual-img-veil"></div>
+              <div class="building-visual-img-sheen"></div>
+            </div>
+          </div>
+          <div class="building-visual-stats">
+            <div class="bv-stat"><span class="odometer" data-odometer-value="128"></span><span class="bv-stat-label">Unidades geridas</span></div>
+            <div class="bv-stat"><span class="odometer" data-odometer-value="36"></span><span class="bv-stat-label">Condomínios</span></div>
+            <div class="bv-stat"><span class="odometer" data-odometer-value="99" data-odometer-suffix="%"></span><span class="bv-stat-label">Disponibilidade</span></div>
+          </div>
+        </div>
+        <div class="glass-shard" data-depth="34" style="width:64px; height:64px; top:-6%; right:-10%;"><span data-icon="sparkle" data-icon-size="22"></span></div>
+        <div class="glass-shard" data-depth="-26" style="width:52px; height:52px; bottom:12%; left:-8%;"><span data-icon="gem" data-icon-size="18"></span></div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-cue"><span>Percorra</span><span class="hero-scroll-cue-line"></span></div>
+  </header>
+
+  <section class="lux-marquee" aria-hidden="true">
+    <div class="lux-marquee-track">
+      <span>Gestão financeira</span><span>Reservas de espaços</span><span>Comunicados</span><span>Segurança 24h</span><span>Manutenção</span><span>Portaria digital</span>
+      <span>Gestão financeira</span><span>Reservas de espaços</span><span>Comunicados</span><span>Segurança 24h</span><span>Manutenção</span><span>Portaria digital</span>
+    </div>
+  </section>
+
+  <section class="landing-section" id="section-modulos">
+    <div class="landing-section-head">
+      <span class="showcase-tag" style="justify-content:center; display:inline-flex;">O que inclui</span>
+      <h2>Tudo o que o seu condomínio precisa</h2>
+      <p class="landing-section-sub">Módulos prontos para o dia a dia de quem administra e de quem mora.</p>
+    </div>
+    <div class="benefits-grid">
+      <div class="reveal-3d"><div class="benefit-card glass tilt-3d">
+        <span class="benefit-icon" data-icon="coins" data-icon-size="26"></span>
+        <h3>Gestão financeira</h3>
+        <p>Taxas, multas, despesas e pagamentos organizados por mês e por unidade.</p>
+      </div></div>
+      <div class="reveal-3d"><div class="benefit-card glass tilt-3d">
+        <span class="benefit-icon" data-icon="megaphone" data-icon-size="26"></span>
+        <h3>Comunicados e regras</h3>
+        <p>Avisos e regulamento interno sempre visíveis para todos os moradores.</p>
+      </div></div>
+      <div class="reveal-3d"><div class="benefit-card glass tilt-3d">
+        <span class="benefit-icon" data-icon="car" data-icon-size="26"></span>
+        <h3>Controlo de visitantes e veículos</h3>
+        <p>Registo de entrada e saída de visitantes, e cadastro de veículos por unidade.</p>
+      </div></div>
+      <div class="reveal-3d"><div class="benefit-card glass tilt-3d">
+        <span class="benefit-icon" data-icon="calendar" data-icon-size="26"></span>
+        <h3>Reservas de áreas comuns</h3>
+        <p>Salão de festas, piscina e outras áreas com reserva simples e organizada.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="section-experiencia">
+    <div class="showcase-row reveal-3d">
+      <div class="showcase-media">
+        <div class="duo-photo"><img src="https://picsum.photos/seed/condogest-finance/900/900" alt="Gestão financeira do condomínio — imagem ilustrativa" loading="lazy"></div>
+      </div>
+      <div class="showcase-text">
+        <span class="showcase-tag">Financeiro</span>
+        <h3>Cada real, visível e organizado</h3>
+        <p>Um painel financeiro claro para o síndico e transparente para o morador — sem planilhas soltas, sem dúvidas no fim do mês.</p>
+        <ul class="showcase-list">
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Taxas e multas por unidade</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Despesas categorizadas e auditáveis</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Relatórios mensais automáticos</li>
+        </ul>
+      </div>
+    </div>
+    <div class="showcase-row reveal-3d">
+      <div class="showcase-media">
+        <div class="duo-photo"><img src="https://picsum.photos/seed/condogest-lounge/900/900" alt="Área comum de lazer do condomínio — imagem ilustrativa" loading="lazy"></div>
+      </div>
+      <div class="showcase-text">
+        <span class="showcase-tag">Reservas</span>
+        <h3>Espaços comuns sem conflitos</h3>
+        <p>Salão de festas, piscina, churrasqueira — reservados em segundos, com regras claras e confirmação instantânea.</p>
+        <ul class="showcase-list">
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Calendário partilhado em tempo real</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Regras e taxas por área</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Notificações automáticas</li>
+        </ul>
+      </div>
+    </div>
+    <div class="showcase-row reveal-3d">
+      <div class="showcase-media">
+        <div class="duo-photo"><img src="https://picsum.photos/seed/condogest-security/900/900" alt="Portaria e segurança do condomínio — imagem ilustrativa" loading="lazy"></div>
+      </div>
+      <div class="showcase-text">
+        <span class="showcase-tag">Segurança</span>
+        <h3>Portaria e acessos sob controlo</h3>
+        <p>Visitantes, veículos e prestadores de serviço registados e rastreáveis, com histórico completo por unidade.</p>
+        <ul class="showcase-list">
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Registo de entrada e saída</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Cadastro de veículos por unidade</li>
+          <li><span class="sw-check"><span data-icon="check" data-icon-size="12"></span></span>Histórico consultável a qualquer momento</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section section-media">
+    <div class="section-media-bg" style="background-image:url('https://images.unsplash.com/photo-1673687781946-e0570d6d1f32?auto=format&fit=crop&w=1600&q=60')"></div>
+    <div class="landing-section-head">
+      <h2>Para quem é</h2>
+      <p class="landing-section-sub">Uma área dedicada para cada perfil de utilizador.</p>
+    </div>
+    <div class="audience-grid">
+      <div class="reveal-3d"><div class="audience-card glass tilt-3d">
+        <span class="audience-icon" data-icon="shield" data-icon-size="30"></span>
+        <h3>Síndico</h3>
+        <ul>
+          <li>Cadastra moradores, unidades e funcionários</li>
+          <li>Define taxas, despesas e acompanha pagamentos</li>
+          <li>Gerencia áreas comuns, reservas e ocorrências</li>
+          <li>Publica comunicados e regras do condomínio</li>
+        </ul>
+      </div></div>
+      <div class="reveal-3d"><div class="audience-card glass tilt-3d">
+        <span class="audience-icon" data-icon="door" data-icon-size="30"></span>
+        <h3>Morador</h3>
+        <ul>
+          <li>Consulta a sua unidade e os pagamentos</li>
+          <li>Cadastra os seus veículos e visitas</li>
+          <li>Reserva áreas comuns e reporta ocorrências</li>
+          <li>Acompanha comunicados e regras do condomínio</li>
+        </ul>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="section-galeria">
+    <div class="landing-section-head">
+      <span class="showcase-tag" style="justify-content:center; display:inline-flex;">Espaços</span>
+      <h2>O condomínio, em detalhe</h2>
+      <p class="landing-section-sub">Uma vitrine dos ambientes que a sua plataforma ajuda a gerir.</p>
+    </div>
+    <div class="gallery-masonry">
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-pool/700/900" alt="Piscina — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Piscina</span></div>
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-hall/700/560" alt="Hall de entrada — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Hall de entrada</span></div>
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-garden/700/860" alt="Jardim comum — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Jardim</span></div>
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-gym/700/620" alt="Academia — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Academia</span></div>
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-facade/700/900" alt="Fachada — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Fachada</span></div>
+      <div class="gallery-item reveal-3d"><div class="duo-photo"><img src="https://picsum.photos/seed/condogest-lobby/700/560" alt="Lobby — imagem ilustrativa" loading="lazy"></div><span class="gallery-caption">Lobby</span></div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="section-depoimentos">
+    <div class="landing-section-head">
+      <span class="showcase-tag" style="justify-content:center; display:inline-flex;">Depoimentos</span>
+      <h2>Quem gere, recomenda</h2>
+      <p class="landing-section-sub">Síndicos e moradores que já trocaram planilhas pela CondoGest.</p>
+    </div>
+    <div class="testimonial-grid">
+      <div class="reveal-3d"><div class="testimonial-card glass tilt-3d">
+        <span class="testimonial-quote-icon" data-icon="quote" data-icon-size="26"></span>
+        <p class="testimonial-text">Deixámos de perseguir recibos em pastas. Hoje o financeiro do condomínio é transparente para todos, em tempo real.</p>
+        <div class="testimonial-stars"><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span></div>
+        <div class="testimonial-person">
+          <div class="testimonial-avatar"><img src="https://picsum.photos/seed/condogest-p1/100/100" alt="" loading="lazy"></div>
+          <div><strong>Marta Sequeira</strong><span>Síndica — Edifício Aurora</span></div>
+        </div>
+      </div></div>
+      <div class="reveal-3d"><div class="testimonial-card glass tilt-3d">
+        <span class="testimonial-quote-icon" data-icon="quote" data-icon-size="26"></span>
+        <p class="testimonial-text">Reservar o salão de festas passou a levar 20 segundos. A comunicação com os moradores nunca foi tão clara.</p>
+        <div class="testimonial-stars"><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span></div>
+        <div class="testimonial-person">
+          <div class="testimonial-avatar"><img src="https://picsum.photos/seed/condogest-p2/100/100" alt="" loading="lazy"></div>
+          <div><strong>Bruno Castanheira</strong><span>Síndico — Residencial Vega</span></div>
+        </div>
+      </div></div>
+      <div class="reveal-3d"><div class="testimonial-card glass tilt-3d">
+        <span class="testimonial-quote-icon" data-icon="quote" data-icon-size="26"></span>
+        <p class="testimonial-text">Como moradora, sinto que finalmente vejo para onde vai a taxa condominial. A plataforma parece feita por quem entende de design.</p>
+        <div class="testimonial-stars"><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span><span data-icon="star" data-icon-size="14"></span></div>
+        <div class="testimonial-person">
+          <div class="testimonial-avatar"><img src="https://picsum.photos/seed/condogest-p3/100/100" alt="" loading="lazy"></div>
+          <div><strong>Inês Valadares</strong><span>Moradora — Bloco C</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="lux-cta reveal-3d">
+    <div class="lux-cta-bg"></div>
+    <h2>A gestão do seu condomínio merece este cuidado</h2>
+    <p>Comece hoje, sem custos de configuração — leva menos de dois minutos para criar a sua conta.</p>
+    <div class="lux-cta-actions">
+      <button class="btn btn-primary btn-glow btn-magnetic" data-goto="screen-cadastro-choice">Criar conta gratuita <span data-icon="arrowRight" data-icon-size="15"></span></button>
+      <button class="btn btn-secondary btn-magnetic" data-goto="screen-login">Já tenho conta</button>
+    </div>
+  </section>
+
+  <footer class="lux-footer">
+    <div class="lux-footer-top">
+      <div class="lux-footer-brand">
+        <div class="lux-logo"><span class="lux-logo-mark" data-icon="gem" data-icon-size="16"></span>CondoGest</div>
+        <p>Uma plataforma pensada para condomínios que valorizam clareza, cuidado e bom design tanto quanto boa gestão.</p>
+        <div class="lux-footer-socials">
+          <a href="javascript:void(0)" aria-label="Instagram"><span data-icon="instagram" data-icon-size="16"></span></a>
+          <a href="javascript:void(0)" aria-label="LinkedIn"><span data-icon="linkedin" data-icon-size="16"></span></a>
+          <a href="javascript:void(0)" aria-label="X"><span data-icon="twitterX" data-icon-size="16"></span></a>
+        </div>
+      </div>
+      <div class="lux-footer-col">
+        <h4>Produto</h4>
+        <ul>
+          <li><a href="#section-modulos">Módulos</a></li>
+          <li><a href="#section-experiencia">Experiência</a></li>
+          <li><a href="#section-galeria">Espaços</a></li>
+        </ul>
+      </div>
+      <div class="lux-footer-col">
+        <h4>Conta</h4>
+        <ul>
+          <li><a data-goto="screen-login" href="javascript:void(0)">Entrar</a></li>
+          <li><a data-goto="screen-cadastro-sindico" href="javascript:void(0)">Sou síndico</a></li>
+          <li><a data-goto="screen-cadastro-morador" href="javascript:void(0)">Sou morador</a></li>
+        </ul>
+      </div>
+      <div class="lux-footer-col lux-footer-newsletter">
+        <h4>Fique a par</h4>
+        <p>Novidades sobre módulos e melhorias, sem spam.</p>
+        <form class="lux-footer-form" onsubmit="return false;">
+          <input type="email" placeholder="o.seu@email.com" aria-label="Email">
+          <button type="submit" class="btn btn-primary btn-icon-only" aria-label="Subscrever"><span data-icon="send" data-icon-size="15"></span></button>
+        </form>
+      </div>
+    </div>
+    <div class="lux-footer-bottom">
+      <span>© 2026 CondoGest — mockup visual, sem integração real com API.</span>
+      <a href="#screen-landing" class="lux-back-top" aria-label="Voltar ao topo"><span data-icon="arrowUp" data-icon-size="16"></span></a>
+    </div>
+  </footer>
+</section>
+
+<!-- ==========================================================================
+     TELA 1 — LOGIN
+     ========================================================================== -->
+<section id="screen-login" class="screen">
+  <div class="auth-screen">
+    <div class="auth-bg"><img src="https://picsum.photos/seed/condogest-auth1/1600/1200" alt="" loading="lazy"></div>
+    <div class="orb-field"><span class="orb orb-1"></span><span class="orb orb-2"></span></div>
+    <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema" style="position:absolute; top:22px; right:22px; z-index:3;">
+      <span class="theme-toggle-knob"><span data-icon="sun" data-icon-size="13"></span></span>
+    </button>
+    <div class="auth-card glass">
+      <h1>Entrar na CondoGest</h1>
+      <p class="auth-subtitle">Mockup sem autenticação real — escolha o perfil que quer visualizar.</p>
+
+      <div id="login-role-selector">
+        <button type="button" class="role-option" data-role="admin">Admin</button>
+        <button type="button" class="role-option" data-role="sindico">Síndico</button>
+        <button type="button" class="role-option" data-role="morador">Morador</button>
+      </div>
+
+      <form id="login-form" class="crud-form">
+        <div class="form-row">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="voce@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label for="login-senha">Senha</label>
+          <input type="password" id="login-senha" placeholder="••••••••">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        </div>
+      </form>
+      <!-- Endpoint real: POST /auth/login -->
+      <p class="api-note">Endpoint real: POST /auth/login</p>
+
+      <p class="auth-footer-link">Ainda não tem conta? <a data-goto="screen-cadastro-choice" href="javascript:void(0)">Criar conta</a></p>
+      <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2 — ESCOLHA DE CADASTRO
+     ========================================================================== -->
+<section id="screen-cadastro-choice" class="screen">
+  <div class="auth-screen">
+    <div class="auth-bg"><img src="https://picsum.photos/seed/condogest-auth2/1600/1200" alt="" loading="lazy"></div>
+    <div class="orb-field"><span class="orb orb-2"></span><span class="orb orb-3"></span></div>
+    <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema" style="position:absolute; top:22px; right:22px; z-index:3;">
+      <span class="theme-toggle-knob"><span data-icon="sun" data-icon-size="13"></span></span>
+    </button>
+    <div class="auth-card glass">
+      <h1>Criar conta</h1>
+      <p class="auth-subtitle">Você é síndico de um condomínio ou mora numa unidade?</p>
+
+      <div class="cadastro-choice-grid">
+        <div class="cadastro-choice-card tilt-3d">
+          <span class="icon-badge" data-icon="building" data-icon-size="22"></span>
+          <h3>Sou síndico</h3>
+          <p>Cadastro o meu condomínio e passo a administrá-lo.</p>
+          <button id="btn-cadastro-sindico" class="btn btn-primary btn-block">Sou síndico</button>
+        </div>
+        <div class="cadastro-choice-card tilt-3d">
+          <span class="icon-badge" data-icon="door" data-icon-size="22"></span>
+          <h3>Sou morador</h3>
+          <p>Crio a minha conta e aguardo o síndico vincular a minha unidade.</p>
+          <button id="btn-cadastro-morador" class="btn btn-primary btn-block">Sou morador</button>
+        </div>
+      </div>
+
+      <p class="auth-footer-link">Já tem conta? <a data-goto="screen-login" href="javascript:void(0)">Entrar</a></p>
+      <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2A — CADASTRO SÍNDICO (cria condomínio + login do síndico)
+     ========================================================================== -->
+<section id="screen-cadastro-sindico" class="screen">
+  <div class="auth-screen">
+    <div class="auth-bg"><img src="https://picsum.photos/seed/condogest-auth3/1600/1200" alt="" loading="lazy"></div>
+    <div class="orb-field"><span class="orb orb-1"></span><span class="orb orb-3"></span></div>
+    <div class="auth-card glass">
+      <h1>Cadastrar meu condomínio</h1>
+      <p class="auth-subtitle">No sistema real, este cadastro já cria o login do síndico.</p>
+
+      <form id="form-cadastro-sindico" class="crud-form">
+        <div class="form-row">
+          <label for="cs-nome">Nome do Condomínio</label>
+          <input type="text" id="cs-nome" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-endereco">Endereço</label>
+          <input type="text" id="cs-endereco" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-email">Email (será o seu login)</label>
+          <input type="email" id="cs-email" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-telefone">Telefone</label>
+          <input type="tel" id="cs-telefone" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-senha">Senha</label>
+          <input type="password" id="cs-senha" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+        </div>
+      </form>
+      <!-- Endpoint real: POST /condominio (cria o condomínio + o login do síndico) -->
+      <p class="api-note">Endpoint real: POST /condominio</p>
+
+      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2B — CADASTRO MORADOR (ainda sem unidade vinculada)
+     ========================================================================== -->
+<section id="screen-cadastro-morador" class="screen">
+  <div class="auth-screen">
+    <div class="auth-bg"><img src="https://picsum.photos/seed/condogest-auth4/1600/1200" alt="" loading="lazy"></div>
+    <div class="orb-field"><span class="orb orb-2"></span><span class="orb orb-3"></span></div>
+    <div class="auth-card glass">
+      <h1>Criar conta de morador</h1>
+      <p class="auth-subtitle">O síndico vai vincular a sua unidade depois do cadastro.</p>
+
+      <form id="form-cadastro-morador" class="crud-form">
+        <div class="form-row">
+          <label for="cm-nome">Nome completo</label>
+          <input type="text" id="cm-nome" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-email">Email</label>
+          <input type="email" id="cm-email" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-telefone">Telefone</label>
+          <input type="tel" id="cm-telefone" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-senha">Senha</label>
+          <input type="password" id="cm-senha" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+        </div>
+      </form>
+      <!-- Endpoint real: POST /morador-publico -->
+      <p class="api-note">Endpoint real: POST /morador-publico</p>
+
+      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 3 — ÁREA LOGADA (Admin / Síndico / Morador)
+     A sidebar e o conteúdo são montados dinamicamente via JS (app.js) a
+     partir de MENUS e ENTITIES (data.js), reaproveitando o motor genérico
+     de CRUD em render.js.
+     ========================================================================== -->
+<section id="screen-app" class="screen">
+  <div class="app-shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="landing-logo"><span class="landing-logo-mark" data-icon="gem" data-icon-size="16"></span> CondoGest</div>
+        <span class="sidebar-role-badge" id="app-role-label">—</span>
+      </div>
+      <nav class="sidebar-nav" id="app-sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-theme-row">
+          <span>Tema claro</span>
+          <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+            <span class="theme-toggle-knob"><span data-icon="sun" data-icon-size="13"></span></span>
+          </button>
+        </div>
+        <button id="btn-logout" class="btn btn-secondary btn-block">Sair</button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="app-topbar">
+        <span class="app-topbar-title">Área do <strong id="app-role-label-topbar">—</strong></span>
+      </div>
+      <div class="app-content">
+        <!-- Todas as telas de módulo (Início, CRUDs, Vincular, Minha Unidade)
+             são renderizadas dentro deste único container. -->
+        <div id="generic-screen-body"></div>
+      </div>
+    </main>
+
+  </div>
+</section>
+
+<script src="js/icons.js"></script>
+<script src="js/interactions.js"></script>
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
+
+
