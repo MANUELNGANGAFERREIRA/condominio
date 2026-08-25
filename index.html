@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CondoGest — Gestão de Condomínios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==========================================================================
+     TELA 0 — LANDING PAGE (pública)
+     ========================================================================== -->
+<section id="screen-landing" class="screen">
+
+  <nav class="landing-nav">
+    <div class="landing-logo">
+      <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
+      <span>CondoGest</span>
+    </div>
+    <div class="landing-nav-actions">
+      <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+        <span class="theme-toggle-knob"></span>
+      </button>
+      <button class="btn btn-secondary" data-goto="screen-login">Entrar</button>
+      <button class="btn btn-primary" data-goto="screen-cadastro-choice">Criar conta</button>
+    </div>
+  </nav>
+
+  <header class="landing-hero">
+    <div class="landing-hero-text">
+      <span class="landing-hero-eyebrow">Plataforma para condomínios</span>
+      <h1>A gestão do seu condomínio, em tempo real</h1>
+      <p>Moradores, unidades, finanças, reservas, ocorrências e comunicados — tudo organizado
+      numa única plataforma pensada para síndicos e moradores.</p>
+      <div class="landing-hero-actions">
+        <button class="btn btn-primary" data-goto="screen-cadastro-choice">Começar agora</button>
+        <button class="btn btn-secondary" data-goto="screen-login">Já tenho conta</button>
+      </div>
+    </div>
+    <div class="landing-hero-visual">
+      <img class="hero-photo" src="assets/img/hero-condominio.jpg" alt="Foto ilustrativa do condomínio">
+      <div class="hero-stats">
+        <div class="hero-stat"><span data-icon="shield" data-icon-size="16"></span><div><strong>99.9%</strong><span>Disponibilidade</span></div></div>
+        <div class="hero-stat"><span data-icon="bolt" data-icon-size="16"></span><div><strong>Tempo real</strong><span>Dados sincronizados</span></div></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="landing-section">
+    <div class="landing-section-head">
+      <h2>Tudo o que o seu condomínio precisa</h2>
+      <p class="landing-section-sub">Módulos prontos para o dia a dia de quem administra e de quem mora.</p>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <span class="benefit-icon" data-icon="coins" data-icon-size="24"></span>
+        <h3>Gestão financeira</h3>
+        <p>Taxas, multas, despesas e pagamentos organizados por mês e por unidade.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon" data-icon="megaphone" data-icon-size="24"></span>
+        <h3>Comunicados e regras</h3>
+        <p>Avisos e regulamento interno sempre visíveis para todos os moradores.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon" data-icon="car" data-icon-size="24"></span>
+        <h3>Controlo de visitantes e veículos</h3>
+        <p>Registo de entrada e saída de visitantes, e cadastro de veículos por unidade.</p>
+      </div>
+      <div class="benefit-card">
+        <span class="benefit-icon" data-icon="calendar" data-icon-size="24"></span>
+        <h3>Reservas de áreas comuns</h3>
+        <p>Salão de festas, piscina e outras áreas com reserva simples e organizada.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="landing-section-head">
+      <h2>Para quem é</h2>
+      <p class="landing-section-sub">Uma área dedicada para cada perfil de utilizador.</p>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <span class="audience-icon" data-icon="shield" data-icon-size="26"></span>
+        <h3>Síndico</h3>
+        <ul>
+          <li>Cadastra moradores, unidades e funcionários</li>
+          <li>Define taxas, despesas e acompanha pagamentos</li>
+          <li>Gerencia áreas comuns, reservas e ocorrências</li>
+          <li>Publica comunicados e regras do condomínio</li>
+        </ul>
+      </div>
+      <div class="audience-card">
+        <span class="audience-icon" data-icon="door" data-icon-size="26"></span>
+        <h3>Morador</h3>
+        <ul>
+          <li>Consulta a sua unidade e os pagamentos</li>
+          <li>Cadastra os seus veículos e visitas</li>
+          <li>Reserva áreas comuns e reporta ocorrências</li>
+          <li>Acompanha comunicados e regras do condomínio</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <span>© 2026 CondoGest — mockup visual, sem integração real com API.</span>
+    <span>Feito com HTML, CSS e JavaScript puro.</span>
+  </footer>
+</section>
+
+<!-- ==========================================================================
+     TELA 1 — LOGIN
+     ========================================================================== -->
+<section id="screen-login" class="screen">
+  <div class="auth-screen">
+    <button type="button" class="theme-toggle auth-theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+      <span class="theme-toggle-knob"></span>
+    </button>
+    <div class="auth-card">
+      <h1>Entrar na CondoGest</h1>
+      <p class="auth-subtitle">Mockup sem autenticação real — escolha o perfil que quer visualizar.</p>
+
+      <div id="login-role-selector">
+        <button type="button" class="role-option" data-role="admin">Admin</button>
+        <button type="button" class="role-option" data-role="sindico">Síndico</button>
+        <button type="button" class="role-option" data-role="morador">Morador</button>
+      </div>
+
+      <form id="login-form" class="crud-form">
+        <div class="form-row">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="voce@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label for="login-senha">Senha</label>
+          <input type="password" id="login-senha" placeholder="••••••••">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        </div>
+      </form>
+      <p class="api-note">Endpoint real: POST /auth/login</p>
+
+      <p class="auth-footer-link">Ainda não tem conta? <a data-goto="screen-cadastro-choice" href="javascript:void(0)">Criar conta</a></p>
+      <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2 — ESCOLHA DE CADASTRO
+     ========================================================================== -->
+<section id="screen-cadastro-choice" class="screen">
+  <div class="auth-screen choice-screen">
+    <button type="button" class="theme-toggle auth-theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+      <span class="theme-toggle-knob"></span>
+    </button>
+    <div class="choice-wrap">
+      <div class="choice-heading">
+        <h1>Criar conta</h1>
+        <p class="auth-subtitle">A tua conta é diferente consoante o teu papel no condomínio. Escolhe a opção certa abaixo — basta clicar no cartão para continuar, não é preciso mais nada.</p>
+      </div>
+
+      <div class="cadastro-choice-grid">
+
+        <div class="cadastro-choice-card" id="btn-cadastro-sindico" role="button" tabindex="0">
+          <div class="cadastro-choice-media">
+            <ul>
+              <li><img src="assets/img/sindico1.jpg" alt="Síndico a organizar as contas do condomínio"></li>
+              <li><img src="assets/img/sindico2.jpg" alt="Síndico a conversar com um morador"></li>
+              <li><img src="assets/img/sindico3.jpg" alt="Síndico a verificar as áreas comuns do prédio"></li>
+            </ul>
+          </div>
+          <div class="cadastro-choice-body">
+            <span class="icon-badge" data-icon="shield" data-icon-size="20"></span>
+            <h3>Sou síndico</h3>
+            <p>Cadastra o teu condomínio e passa a administrá-lo por completo: moradores, unidades,
+            funcionários, taxas, despesas, pagamentos, áreas comuns, reservas, comunicados e
+            ocorrências — tudo organizado num só lugar. Depois de criares a conta, vinculas cada
+            morador à sua respetiva unidade em poucos cliques.</p>
+            <span class="cadastro-choice-cta">Continuar como síndico <span data-icon="chevronRight" data-icon-size="16"></span></span>
+          </div>
+        </div>
+
+        <div class="cadastro-choice-card" id="btn-cadastro-morador" role="button" tabindex="0">
+          <div class="cadastro-choice-media">
+            <ul>
+              <li><img src="assets/img/morador1.jpg" alt="Morador a consultar a sua unidade pelo telemóvel"></li>
+              <li><img src="assets/img/morador2.jpg" alt="Morador a reservar uma área comum"></li>
+              <li><img src="assets/img/morador3.jpg" alt="Morador a receber um visitante à entrada do condomínio"></li>
+            </ul>
+          </div>
+          <div class="cadastro-choice-body">
+            <span class="icon-badge" data-icon="door" data-icon-size="20"></span>
+            <h3>Sou morador</h3>
+            <p>Cria a tua conta e aguarda o síndico vincular a tua unidade. A partir daí, consultas
+            os teus pagamentos, cadastras os teus veículos e visitas, reservas áreas comuns, reportas
+            ocorrências e acompanhas comunicados e regras do condomínio — tudo pelo telemóvel ou
+            pelo computador.</p>
+            <span class="cadastro-choice-cta">Continuar como morador <span data-icon="chevronRight" data-icon-size="16"></span></span>
+          </div>
+        </div>
+
+      </div>
+
+      <p class="auth-footer-link">Já tem conta? <a data-goto="screen-login" href="javascript:void(0)">Entrar</a></p>
+      <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2A — CADASTRO SÍNDICO (cria condomínio + login do síndico)
+     ========================================================================== -->
+<section id="screen-cadastro-sindico" class="screen">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <h1>Cadastrar meu condomínio</h1>
+      <p class="auth-subtitle">No sistema real, este cadastro já cria o login do síndico.</p>
+
+      <form id="form-cadastro-sindico" class="crud-form">
+        <div class="form-row">
+          <label for="cs-nome">Nome do Condomínio</label>
+          <input type="text" id="cs-nome" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-endereco">Endereço</label>
+          <input type="text" id="cs-endereco" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-email">Email (será o seu login)</label>
+          <input type="email" id="cs-email" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-telefone">Telefone</label>
+          <input type="tel" id="cs-telefone" required>
+        </div>
+        <div class="form-row">
+          <label for="cs-senha">Senha</label>
+          <input type="password" id="cs-senha" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+        </div>
+      </form>
+      <p class="api-note">Endpoint real: POST /condominio</p>
+
+      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 2B — CADASTRO MORADOR (ainda sem unidade vinculada)
+     ========================================================================== -->
+<section id="screen-cadastro-morador" class="screen">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <h1>Criar conta de morador</h1>
+      <p class="auth-subtitle">O síndico vai vincular a sua unidade depois do cadastro.</p>
+
+      <form id="form-cadastro-morador" class="crud-form">
+        <div class="form-row">
+          <label for="cm-nome">Nome completo</label>
+          <input type="text" id="cm-nome" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-email">Email</label>
+          <input type="email" id="cm-email" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-telefone">Telefone</label>
+          <input type="tel" id="cm-telefone" required>
+        </div>
+        <div class="form-row">
+          <label for="cm-senha">Senha</label>
+          <input type="password" id="cm-senha" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+        </div>
+      </form>
+      <p class="api-note">Endpoint real: POST /morador-publico</p>
+
+      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 3 — ÁREA LOGADA (Admin / Síndico / Morador)
+     A sidebar e o conteúdo são montados dinamicamente via JS (app.js) a
+     partir de MENUS e ENTITIES (data.js), reaproveitando o motor genérico
+     de CRUD em render.js.
+     ========================================================================== -->
+<section id="screen-app" class="screen">
+  <div class="app-shell">
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="landing-logo">
+          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
+          <span>CondoGest</span>
+        </div>
+        <span class="sidebar-role-badge" id="app-role-label">—</span>
+      </div>
+      <nav class="sidebar-nav" id="app-sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-theme-row">
+          <span>Tema claro</span>
+          <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
+            <span class="theme-toggle-knob"></span>
+          </button>
+        </div>
+        <button id="btn-logout" class="btn btn-secondary btn-block">Sair</button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="app-topbar">
+        <button type="button" class="menu-toggle" id="btn-menu-toggle" aria-label="Abrir menu">
+          <span data-icon="menu" data-icon-size="20"></span>
+        </button>
+        <span class="app-topbar-title">Área do <strong id="app-role-label-topbar">—</strong></span>
+      </div>
+      <div class="app-content">
+        <!-- Todas as telas de módulo (Início, CRUDs, Vincular, Minha Unidade)
+             são renderizadas dentro deste único container. -->
+        <div id="generic-screen-body"></div>
+      </div>
+    </main>
+
+  </div>
+</section>
+
+<script src="js/icons.js"></script>
+<script src="js/interactions.js"></script>
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
