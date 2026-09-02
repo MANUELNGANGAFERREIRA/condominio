@@ -69,15 +69,7 @@ function initCadastro() {
     });
   });
 
-  document.getElementById('form-cadastro-sindico').addEventListener('submit', e => {
-    e.preventDefault();
-    // ------------------------------------------------------------------
-    // Endpoint real: POST /condominio  (cria o condomínio + o login do síndico)
-    // ------------------------------------------------------------------
-    alert('Cadastro simulado com sucesso! O login do síndico é o próprio condomínio.');
-    e.target.reset();
-    showScreen('screen-login');
-  });
+  initCadastroSindicoWizard();
 
   document.getElementById('form-cadastro-morador').addEventListener('submit', e => {
     e.preventDefault();
@@ -87,6 +79,98 @@ function initCadastro() {
     // ------------------------------------------------------------------
     alert('Cadastro simulado com sucesso! Assim que o síndico vincular a sua unidade, ela vai aparecer na sua área.');
     e.target.reset();
+    showScreen('screen-login');
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   ASSISTENTE DE CADASTRO DO SÍNDICO — dados → plano → pagamento → confirmação.
+   Tudo simulado no cliente (sem chamadas reais), mas já organizado nos passos
+   e nos pontos exatos onde entra a integração com o backend/gateway de
+   pagamento — ver comentários "Endpoint real" abaixo.
+   --------------------------------------------------------------------------- */
+function initCadastroSindicoWizard() {
+  const wizard = document.getElementById('screen-cadastro-sindico');
+  const panels = wizard.querySelectorAll('.signup-panel');
+  const steps = wizard.querySelectorAll('.signup-step');
+  let selectedPlan = { name: 'Profissional', price: '35.000 Kz/mês' };
+
+  function goToPanel(panelId) {
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === String(panelId)));
+    // O passo "processing" é uma transição visual do passo 3 (pagamento),
+    // por isso mantém o indicador de passos em "3" enquanto ele é mostrado.
+    const stepNum = panelId === 'processing' ? 3 : Number(panelId);
+    steps.forEach(s => {
+      const n = Number(s.dataset.step);
+      s.classList.toggle('done', n < stepNum);
+      s.classList.toggle('active', n === stepNum);
+    });
+  }
+
+  // -------- Passo 1 → 2 (dados do condomínio) --------
+  document.getElementById('form-cadastro-sindico').addEventListener('submit', e => {
+    e.preventDefault();
+    // ------------------------------------------------------------------
+    // Endpoint real: POST /condominio  (cria o condomínio + o login do síndico)
+    // ------------------------------------------------------------------
+    if (!e.target.checkValidity()) { e.target.reportValidity(); return; }
+    goToPanel(2);
+  });
+
+  // -------- Passo 2 → 3 (escolha de plano) --------
+  document.getElementById('btn-plano-voltar').addEventListener('click', () => goToPanel(1));
+  document.getElementById('btn-plano-continuar').addEventListener('click', () => {
+    const chosen = wizard.querySelector('input[name="signup-plan"]:checked');
+    const option = chosen.closest('.signup-plan-option');
+    selectedPlan = { name: chosen.value, price: option.dataset.planPrice };
+    document.getElementById('summary-plan-name').textContent = selectedPlan.name;
+    document.getElementById('summary-plan-price').textContent = selectedPlan.price;
+    goToPanel(3);
+  });
+
+  // -------- Passo 3 (pagamento) --------
+  document.getElementById('btn-pagamento-voltar').addEventListener('click', () => goToPanel(2));
+
+  // Formatação cosmética dos campos do cartão (mockup — sem validação real de bandeira/Luhn)
+  const numeroInput = document.getElementById('pg-numero');
+  numeroInput.addEventListener('input', () => {
+    numeroInput.value = numeroInput.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  });
+  const validadeInput = document.getElementById('pg-validade');
+  validadeInput.addEventListener('input', () => {
+    let v = validadeInput.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+    validadeInput.value = v;
+  });
+  const cvcInput = document.getElementById('pg-cvc');
+  cvcInput.addEventListener('input', () => { cvcInput.value = cvcInput.value.replace(/\D/g, '').slice(0, 4); });
+
+  document.getElementById('form-pagamento').addEventListener('submit', e => {
+    e.preventDefault();
+    // ------------------------------------------------------------------
+    // Endpoint real: POST /pagamentos/checkout  { plano, dados_cartao (tokenizados no gateway) }
+    // O ideal em produção é nunca enviar o número do cartão diretamente ao
+    // nosso backend — usar o SDK do gateway (Stripe, Multicaixa Express, etc.)
+    // para tokenizar no cliente e enviar só o token.
+    // ------------------------------------------------------------------
+    if (!e.target.checkValidity()) { e.target.reportValidity(); return; }
+    goToPanel('processing');
+    setTimeout(() => {
+      document.getElementById('success-plan-name').textContent = selectedPlan.name;
+      document.getElementById('success-plan-price').textContent = selectedPlan.price;
+      goToPanel(4);
+    }, 1500);
+  });
+
+  // -------- Passo 4 (confirmação) → login liberado --------
+  document.getElementById('btn-signup-finalizar').addEventListener('click', () => {
+    // ------------------------------------------------------------------
+    // Endpoint real: POST /auth/login  (sessão iniciada automaticamente
+    // depois de o pagamento e o cadastro serem confirmados no backend)
+    // ------------------------------------------------------------------
+    document.getElementById('form-cadastro-sindico').reset();
+    document.getElementById('form-pagamento').reset();
+    goToPanel(1);
     showScreen('screen-login');
   });
 }
@@ -137,6 +221,32 @@ function initMobileMenu() {
 function logout() {
   APP_STATE.role = null;
   showScreen('screen-landing');
+}
+
+/* ---------------------------------------------------------------------------
+   Menu mobile da landing page (hambúrguer no header público)
+   --------------------------------------------------------------------------- */
+function initLandingMenu() {
+  const toggleBtn = document.getElementById('btn-landing-menu');
+  const menu = document.getElementById('landing-mobile-menu');
+  if (!toggleBtn || !menu) return;
+
+  function setOpen(open) {
+    menu.classList.toggle('landing-mobile-menu-open', open);
+    toggleBtn.setAttribute('aria-expanded', String(open));
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    setOpen(!menu.classList.contains('landing-mobile-menu-open'));
+  });
+  menu.addEventListener('click', e => {
+    if (e.target.closest('a, button')) setOpen(false);
+  });
+  document.addEventListener('click', e => {
+    if (!menu.classList.contains('landing-mobile-menu-open')) return;
+    if (e.target.closest('#landing-mobile-menu') || e.target.closest('#btn-landing-menu')) return;
+    setOpen(false);
+  });
 }
 
 function buildSidebar(role) {
@@ -383,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-logout').addEventListener('click', logout);
   initMobileMenu();
+  initLandingMenu();
 
   showScreen('screen-landing');
 });

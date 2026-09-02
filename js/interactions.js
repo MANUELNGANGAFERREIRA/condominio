@@ -36,4 +36,37 @@ function initTheme() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initTheme);
+/* ---------------------------------------------------------------------------
+   Botão flutuante de tema — fica quase todo escondido encostado à direita
+   e "sai" para a vista quando o rato passa por cima, quando recebe foco
+   (teclado) ou quando é tocado no telemóvel; volta sozinho a esconder-se
+   pouco depois de deixar de ser usado.
+   --------------------------------------------------------------------------- */
+function initThemeFab() {
+  const fab = document.getElementById('theme-fab');
+  if (!fab) return;
+
+  let hideTimer = null;
+  const REVEALED = 'theme-fab-revealed';
+
+  function reveal() {
+    clearTimeout(hideTimer);
+    fab.classList.add(REVEALED);
+  }
+  function scheduleHide(delay) {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => fab.classList.remove(REVEALED), delay || 1500);
+  }
+
+  fab.addEventListener('mouseenter', reveal);
+  fab.addEventListener('mouseleave', () => scheduleHide(300));
+  fab.addEventListener('focus', reveal);
+  fab.addEventListener('blur', () => scheduleHide(300));
+  fab.addEventListener('touchstart', () => reveal(), { passive: true });
+  fab.addEventListener('click', () => scheduleHide(1500));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  initThemeFab();
+});

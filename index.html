@@ -11,6 +11,16 @@
 <body>
 
 <!-- ==========================================================================
+     BOTÃO FLUTUANTE DE TEMA (fica fora das telas para persistir sempre visível,
+     independentemente de qual .screen está ativa). Fica quase todo escondido
+     encostado à direita e "revela-se" ao passar o rato / tocar.
+     ========================================================================== -->
+<button type="button" id="theme-fab" class="theme-toggle theme-fab" role="switch" aria-checked="false" title="Mudar tema">
+  <span class="theme-fab-icon icon-sun" data-icon="sun" data-icon-size="20"></span>
+  <span class="theme-fab-icon icon-moon" data-icon="moon" data-icon-size="20"></span>
+</button>
+
+<!-- ==========================================================================
      TELA 0 — LANDING PAGE (pública)
      ========================================================================== -->
 <section id="screen-landing" class="screen">
@@ -20,12 +30,26 @@
       <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
       <span>CondoGest</span>
     </div>
+    <div class="landing-nav-links">
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#planos">Planos</a>
+    </div>
     <div class="landing-nav-actions">
-      <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
-        <span class="theme-toggle-knob"></span>
-      </button>
       <button class="btn btn-secondary" data-goto="screen-login">Entrar</button>
       <button class="btn btn-primary" data-goto="screen-cadastro-choice">Criar conta</button>
+      <button type="button" class="landing-menu-toggle" id="btn-landing-menu" aria-label="Abrir menu" aria-expanded="false">
+        <span data-icon="menu" data-icon-size="20"></span>
+      </button>
+    </div>
+    <div class="landing-mobile-menu" id="landing-mobile-menu">
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#planos">Planos</a>
+      <div class="landing-mobile-menu-actions">
+        <button class="btn btn-secondary btn-block" data-goto="screen-login">Entrar</button>
+        <button class="btn btn-primary btn-block" data-goto="screen-cadastro-choice">Criar conta</button>
+      </div>
     </div>
   </nav>
 
@@ -41,7 +65,9 @@
       </div>
     </div>
     <div class="landing-hero-visual">
-      <img class="hero-photo" src="assets/img/hero-condominio.jpg" alt="Foto ilustrativa do condomínio">
+      <div class="hero-photo-wrap">
+        <img class="hero-photo" src="assets/img/hero-condominio.jpg" alt="Foto ilustrativa do condomínio">
+      </div>
       <div class="hero-stats">
         <div class="hero-stat"><span data-icon="shield" data-icon-size="16"></span><div><strong>99.9%</strong><span>Disponibilidade</span></div></div>
         <div class="hero-stat"><span data-icon="bolt" data-icon-size="16"></span><div><strong>Tempo real</strong><span>Dados sincronizados</span></div></div>
@@ -49,7 +75,7 @@
     </div>
   </header>
 
-  <section class="landing-section">
+  <section class="landing-section" id="recursos">
     <div class="landing-section-head">
       <h2>Tudo o que o seu condomínio precisa</h2>
       <p class="landing-section-sub">Módulos prontos para o dia a dia de quem administra e de quem mora.</p>
@@ -107,9 +133,106 @@
     </div>
   </section>
 
+  <section class="landing-section" id="como-funciona">
+    <div class="landing-section-head">
+      <h2>Como funciona</h2>
+      <p class="landing-section-sub">Três passos simples para colocar o seu condomínio na plataforma.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-number">1</span>
+        <h3>Crie a sua conta</h3>
+        <p>Escolha se é síndico ou morador e preencha os seus dados em poucos minutos.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-number">2</span>
+        <h3>Cadastre o condomínio</h3>
+        <p>O síndico regista o condomínio, as unidades e vincula os moradores às suas frações.</p>
+      </div>
+      <div class="step-card">
+        <span class="step-number">3</span>
+        <h3>Gerencie tudo num só lugar</h3>
+        <p>Finanças, comunicados, reservas e ocorrências, acompanhados em tempo real.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="planos">
+    <div class="landing-section-head">
+      <h2>Planos para cada tipo de condomínio</h2>
+      <p class="landing-section-sub">Comece pequeno e evolua conforme o seu condomínio cresce.</p>
+    </div>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <h3>Básico</h3>
+        <p class="plan-desc">Para condomínios pequenos que estão a começar a digitalizar a gestão.</p>
+        <ul>
+          <li><span data-icon="check" data-icon-size="14"></span>Até 20 unidades</li>
+          <li><span data-icon="check" data-icon-size="14"></span>Financeiro e comunicados</li>
+          <li><span data-icon="check" data-icon-size="14"></span>1 síndico</li>
+        </ul>
+        <button class="btn btn-secondary btn-block" data-goto="screen-cadastro-choice">Começar</button>
+      </div>
+      <div class="plan-card plan-card-highlight">
+        <span class="plan-badge">Mais popular</span>
+        <h3>Profissional</h3>
+        <p class="plan-desc">Para condomínios de médio e grande porte, com gestão completa.</p>
+        <ul>
+          <li><span data-icon="check" data-icon-size="14"></span>Unidades ilimitadas</li>
+          <li><span data-icon="check" data-icon-size="14"></span>Manutenção e fornecedores</li>
+          <li><span data-icon="check" data-icon-size="14"></span>Relatórios financeiros</li>
+        </ul>
+        <button class="btn btn-primary btn-block" data-goto="screen-cadastro-choice">Começar</button>
+      </div>
+      <div class="plan-card">
+        <h3>Empresarial</h3>
+        <p class="plan-desc">Para administradoras que gerem vários condomínios ao mesmo tempo.</p>
+        <ul>
+          <li><span data-icon="check" data-icon-size="14"></span>Vários condomínios</li>
+          <li><span data-icon="check" data-icon-size="14"></span>Suporte prioritário</li>
+          <li><span data-icon="check" data-icon-size="14"></span>API e integrações</li>
+        </ul>
+        <button class="btn btn-secondary btn-block" data-goto="screen-cadastro-choice">Falar connosco</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-cta">
+    <div class="landing-cta-inner">
+      <h2>Pronto para organizar o seu condomínio?</h2>
+      <p>Leva poucos minutos para criar a conta e começar a gerir tudo num só lugar.</p>
+      <div class="landing-hero-actions">
+        <button class="btn btn-primary" data-goto="screen-cadastro-choice">Criar conta grátis</button>
+        <button class="btn btn-secondary" data-goto="screen-login">Já tenho conta</button>
+      </div>
+    </div>
+  </section>
+
   <footer class="landing-footer">
-    <span>© 2026 CondoGest — mockup visual, sem integração real com API.</span>
-    <span>Feito com HTML, CSS e JavaScript puro.</span>
+    <div class="landing-footer-inner">
+      <div class="landing-footer-brand">
+        <div class="landing-logo">
+          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
+          <span>CondoGest</span>
+        </div>
+        <p>A gestão do seu condomínio, em tempo real.</p>
+      </div>
+      <div class="landing-footer-col">
+        <h4>Produto</h4>
+        <a href="#recursos">Recursos</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#planos">Planos</a>
+      </div>
+      <div class="landing-footer-col">
+        <h4>Conta</h4>
+        <a data-goto="screen-login" href="javascript:void(0)">Entrar</a>
+        <a data-goto="screen-cadastro-choice" href="javascript:void(0)">Criar conta</a>
+      </div>
+    </div>
+    <div class="landing-footer-bottom">
+      <span>© 2026 CondoGest — mockup visual, sem integração real com API.</span>
+      <span>Feito com HTML, CSS e JavaScript puro.</span>
+    </div>
   </footer>
 </section>
 
@@ -118,9 +241,6 @@
      ========================================================================== -->
 <section id="screen-login" class="screen">
   <div class="auth-screen">
-    <button type="button" class="theme-toggle auth-theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
-      <span class="theme-toggle-knob"></span>
-    </button>
     <div class="auth-card">
       <h1>Entrar na CondoGest</h1>
       <p class="auth-subtitle">Mockup sem autenticação real — escolha o perfil que quer visualizar.</p>
@@ -157,9 +277,6 @@
      ========================================================================== -->
 <section id="screen-cadastro-choice" class="screen">
   <div class="auth-screen choice-screen">
-    <button type="button" class="theme-toggle auth-theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
-      <span class="theme-toggle-knob"></span>
-    </button>
     <div class="choice-wrap">
       <div class="choice-heading">
         <h1>Criar conta</h1>
@@ -219,38 +336,165 @@
      ========================================================================== -->
 <section id="screen-cadastro-sindico" class="screen">
   <div class="auth-screen">
-    <div class="auth-card">
-      <h1>Cadastrar meu condomínio</h1>
-      <p class="auth-subtitle">No sistema real, este cadastro já cria o login do síndico.</p>
+    <div class="auth-card signup-card">
 
-      <form id="form-cadastro-sindico" class="crud-form">
-        <div class="form-row">
-          <label for="cs-nome">Nome do Condomínio</label>
-          <input type="text" id="cs-nome" required>
+      <!-- Indicador de passos -->
+      <div class="signup-steps" id="signup-steps">
+        <div class="signup-step active" data-step="1">
+          <span class="signup-step-num">1</span><span class="signup-step-label">Dados</span>
         </div>
-        <div class="form-row">
-          <label for="cs-endereco">Endereço</label>
-          <input type="text" id="cs-endereco" required>
+        <div class="signup-step-line"></div>
+        <div class="signup-step" data-step="2">
+          <span class="signup-step-num">2</span><span class="signup-step-label">Plano</span>
         </div>
-        <div class="form-row">
-          <label for="cs-email">Email (será o seu login)</label>
-          <input type="email" id="cs-email" required>
+        <div class="signup-step-line"></div>
+        <div class="signup-step" data-step="3">
+          <span class="signup-step-num">3</span><span class="signup-step-label">Pagamento</span>
         </div>
-        <div class="form-row">
-          <label for="cs-telefone">Telefone</label>
-          <input type="tel" id="cs-telefone" required>
+        <div class="signup-step-line"></div>
+        <div class="signup-step" data-step="4">
+          <span class="signup-step-num">4</span><span class="signup-step-label">Pronto</span>
         </div>
-        <div class="form-row">
-          <label for="cs-senha">Senha</label>
-          <input type="password" id="cs-senha" required>
+      </div>
+
+      <!-- PASSO 1 — Dados do condomínio e do síndico -->
+      <div class="signup-panel active" data-panel="1">
+        <h1>Cadastrar meu condomínio</h1>
+        <p class="auth-subtitle">No sistema real, este cadastro já cria o login do síndico. Comece pelos dados do condomínio.</p>
+
+        <form id="form-cadastro-sindico" class="crud-form" novalidate>
+          <div class="form-row">
+            <label for="cs-nome">Nome do Condomínio</label>
+            <input type="text" id="cs-nome" required>
+          </div>
+          <div class="form-row">
+            <label for="cs-endereco">Endereço</label>
+            <input type="text" id="cs-endereco" required>
+          </div>
+          <div class="form-row">
+            <label for="cs-email">Email (será o seu login)</label>
+            <input type="email" id="cs-email" required>
+          </div>
+          <div class="form-row">
+            <label for="cs-telefone">Telefone</label>
+            <input type="tel" id="cs-telefone" required>
+          </div>
+          <div class="form-row">
+            <label for="cs-senha">Senha</label>
+            <input type="password" id="cs-senha" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Continuar <span data-icon="chevronRight" data-icon-size="16"></span></button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /condominio</p>
+
+        <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
+
+      <!-- PASSO 2 — Escolha de plano -->
+      <div class="signup-panel" data-panel="2">
+        <h1>Escolha o seu plano</h1>
+        <p class="auth-subtitle">Pode mudar de plano a qualquer momento depois de criar a conta.</p>
+
+        <div class="signup-plans" id="signup-plans">
+          <label class="signup-plan-option" data-plan-price="15.000 Kz/mês">
+            <input type="radio" name="signup-plan" value="Básico">
+            <div class="signup-plan-body">
+              <span class="signup-plan-name">Básico</span>
+              <span class="signup-plan-price">15.000 Kz<small>/mês</small></span>
+              <span class="signup-plan-desc">Até 20 unidades, financeiro e comunicados.</span>
+            </div>
+          </label>
+          <label class="signup-plan-option" data-plan-price="35.000 Kz/mês">
+            <span class="signup-plan-badge">Mais popular</span>
+            <input type="radio" name="signup-plan" value="Profissional" checked>
+            <div class="signup-plan-body">
+              <span class="signup-plan-name">Profissional</span>
+              <span class="signup-plan-price">35.000 Kz<small>/mês</small></span>
+              <span class="signup-plan-desc">Unidades ilimitadas, manutenção e relatórios.</span>
+            </div>
+          </label>
+          <label class="signup-plan-option" data-plan-price="Sob consulta">
+            <input type="radio" name="signup-plan" value="Empresarial">
+            <div class="signup-plan-body">
+              <span class="signup-plan-name">Empresarial</span>
+              <span class="signup-plan-price">Sob consulta</span>
+              <span class="signup-plan-desc">Vários condomínios, suporte prioritário e API.</span>
+            </div>
+          </label>
         </div>
+
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+          <button type="button" class="btn btn-secondary" id="btn-plano-voltar">&larr; Voltar</button>
+          <button type="button" class="btn btn-primary" id="btn-plano-continuar">Continuar para pagamento</button>
         </div>
-      </form>
-      <p class="api-note">Endpoint real: POST /condominio</p>
+        <p class="api-note">Endpoint real: POST /assinatura</p>
+      </div>
 
-      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      <!-- PASSO 3 — Pagamento (simulado) -->
+      <div class="signup-panel" data-panel="3">
+        <div class="signup-card-icon"><span data-icon="creditCard" data-icon-size="26"></span></div>
+        <h1>Pagamento</h1>
+        <p class="auth-subtitle">Ambiente simulado — nenhum valor é cobrado agora. Já preparado para ligar a um gateway real (Stripe, Multicaixa Express, etc.).</p>
+
+        <div class="signup-order-summary">
+          <span>Plano <strong id="summary-plan-name">Profissional</strong></span>
+          <span id="summary-plan-price">35.000 Kz/mês</span>
+        </div>
+
+        <form id="form-pagamento" class="crud-form" novalidate>
+          <div class="form-row">
+            <label for="pg-nome">Nome no cartão</label>
+            <input type="text" id="pg-nome" placeholder="Como está impresso no cartão" required>
+          </div>
+          <div class="form-row">
+            <label for="pg-numero">Número do cartão</label>
+            <input type="text" id="pg-numero" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" required>
+          </div>
+          <div class="form-row-group">
+            <div class="form-row">
+              <label for="pg-validade">Validade</label>
+              <input type="text" id="pg-validade" placeholder="MM/AA" inputmode="numeric" maxlength="5" required>
+            </div>
+            <div class="form-row">
+              <label for="pg-cvc">CVC</label>
+              <input type="text" id="pg-cvc" placeholder="123" inputmode="numeric" maxlength="4" required>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btn-pagamento-voltar">&larr; Voltar</button>
+            <button type="submit" class="btn btn-primary" id="btn-pagamento-confirmar">Confirmar e pagar</button>
+          </div>
+        </form>
+        <p class="signup-secure-note"><span data-icon="lock" data-icon-size="14"></span>Pagamento simulado neste mockup — o checkout e a encriptação reais entram com a integração do backend.</p>
+        <p class="api-note">Endpoint real: POST /pagamentos/checkout</p>
+      </div>
+
+      <!-- PASSO 3B — Processando pagamento (transição simulada) -->
+      <div class="signup-panel" data-panel="processing">
+        <div class="signup-processing">
+          <span class="signup-spinner"></span>
+          <h1>A processar o pagamento…</h1>
+          <p class="auth-subtitle">Simulação local — é aqui que o pedido seguiria para o gateway de pagamento real.</p>
+        </div>
+      </div>
+
+      <!-- PASSO 4 — Confirmação / acesso liberado -->
+      <div class="signup-panel" data-panel="4">
+        <div class="signup-success">
+          <span class="signup-success-icon" data-icon="check" data-icon-size="26"></span>
+          <h1>Conta criada com sucesso!</h1>
+          <p class="auth-subtitle">Pagamento simulado confirmado. O acesso do síndico já está liberado — pode entrar e configurar o seu condomínio.</p>
+          <div class="signup-order-summary">
+            <span>Plano <strong id="success-plan-name">Profissional</strong></span>
+            <span id="success-plan-price">35.000 Kz/mês</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" id="btn-signup-finalizar">Entrar na plataforma</button>
+        </div>
+        <p class="api-note">Endpoint real: POST /condominio → POST /pagamentos/checkout → POST /auth/login</p>
+      </div>
+
     </div>
   </div>
 </section>
@@ -313,12 +557,6 @@
       </div>
       <nav class="sidebar-nav" id="app-sidebar-nav"></nav>
       <div class="sidebar-footer">
-        <div class="sidebar-theme-row">
-          <span>Tema claro</span>
-          <button type="button" class="theme-toggle" role="switch" aria-checked="false" title="Mudar tema">
-            <span class="theme-toggle-knob"></span>
-          </button>
-        </div>
         <button id="btn-logout" class="btn btn-secondary btn-block">Sair</button>
       </div>
     </aside>
