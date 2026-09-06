@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CondoGest — Gestão de Condomínios</title>
+<title>CONVIVA — Gestão de Condomínios</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Smooch+Sans:wght@100..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -27,8 +28,7 @@
 
   <nav class="landing-nav">
     <div class="landing-logo">
-      <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
-      <span>CondoGest</span>
+      <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CONVIVA">
     </div>
     <div class="landing-nav-links">
       <a href="#recursos">Recursos</a>
@@ -36,7 +36,7 @@
       <a href="#planos">Planos</a>
     </div>
     <div class="landing-nav-actions">
-      <button class="btn btn-secondary" data-goto="screen-login">Entrar</button>
+      <button class="btn btn-secondary" data-goto="screen-login-choice">Entrar</button>
       <button class="btn btn-primary" data-goto="screen-cadastro-choice">Criar conta</button>
       <button type="button" class="landing-menu-toggle" id="btn-landing-menu" aria-label="Abrir menu" aria-expanded="false">
         <span data-icon="menu" data-icon-size="20"></span>
@@ -47,7 +47,7 @@
       <a href="#como-funciona">Como funciona</a>
       <a href="#planos">Planos</a>
       <div class="landing-mobile-menu-actions">
-        <button class="btn btn-secondary btn-block" data-goto="screen-login">Entrar</button>
+        <button class="btn btn-secondary btn-block" data-goto="screen-login-choice">Entrar</button>
         <button class="btn btn-primary btn-block" data-goto="screen-cadastro-choice">Criar conta</button>
       </div>
     </div>
@@ -61,7 +61,7 @@
       numa única plataforma pensada para síndicos e moradores.</p>
       <div class="landing-hero-actions">
         <button class="btn btn-primary" data-goto="screen-cadastro-choice">Começar agora</button>
-        <button class="btn btn-secondary" data-goto="screen-login">Já tenho conta</button>
+        <button class="btn btn-secondary" data-goto="screen-login-choice">Já tenho conta</button>
       </div>
     </div>
     <div class="landing-hero-visual">
@@ -203,7 +203,7 @@
       <p>Leva poucos minutos para criar a conta e começar a gerir tudo num só lugar.</p>
       <div class="landing-hero-actions">
         <button class="btn btn-primary" data-goto="screen-cadastro-choice">Criar conta grátis</button>
-        <button class="btn btn-secondary" data-goto="screen-login">Já tenho conta</button>
+        <button class="btn btn-secondary" data-goto="screen-login-choice">Já tenho conta</button>
       </div>
     </div>
   </section>
@@ -212,8 +212,7 @@
     <div class="landing-footer-inner">
       <div class="landing-footer-brand">
         <div class="landing-logo">
-          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
-          <span>CondoGest</span>
+          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CONVIVA">
         </div>
         <p>A gestão do seu condomínio, em tempo real.</p>
       </div>
@@ -225,49 +224,221 @@
       </div>
       <div class="landing-footer-col">
         <h4>Conta</h4>
-        <a data-goto="screen-login" href="javascript:void(0)">Entrar</a>
+        <a data-goto="screen-login-choice" href="javascript:void(0)">Entrar</a>
         <a data-goto="screen-cadastro-choice" href="javascript:void(0)">Criar conta</a>
       </div>
     </div>
     <div class="landing-footer-bottom">
-      <span>© 2026 CondoGest — mockup visual, sem integração real com API.</span>
+      <span>© 2026 CONVIVA — mockup visual, sem integração real com API.</span>
       <span>Feito com HTML, CSS e JavaScript puro.</span>
     </div>
   </footer>
 </section>
 
 <!-- ==========================================================================
-     TELA 1 — LOGIN
+     TELA 1 — ESCOLHA DE LOGIN
+     Tal como o cadastro, o login também é diferente consoante o papel:
+     cada perfil tem a sua própria tela de entrada (mais abaixo), sem
+     seletor de papel dentro do formulário.
      ========================================================================== -->
-<section id="screen-login" class="screen">
-  <div class="auth-screen">
-    <div class="auth-card">
-      <h1>Entrar na CondoGest</h1>
-      <p class="auth-subtitle">Mockup sem autenticação real — escolha o perfil que quer visualizar.</p>
-
-      <div id="login-role-selector">
-        <button type="button" class="role-option" data-role="admin">Admin</button>
-        <button type="button" class="role-option" data-role="sindico">Síndico</button>
-        <button type="button" class="role-option" data-role="morador">Morador</button>
+<section id="screen-login-choice" class="screen">
+  <div class="auth-screen choice-screen">
+    <div class="choice-wrap">
+      <div class="choice-heading">
+        <h1>Entrar na CONVIVA</h1>
+        <p class="auth-subtitle">Escolhe o teu perfil para entrares na tua área. Basta clicar no cartão para continuar.</p>
       </div>
 
-      <form id="login-form" class="crud-form">
-        <div class="form-row">
-          <label for="login-email">Email</label>
-          <input type="email" id="login-email" placeholder="voce@exemplo.com">
+      <div class="cadastro-choice-grid">
+
+        <div class="cadastro-choice-card" id="btn-login-sindico" role="button" tabindex="0">
+          <div class="cadastro-choice-media">
+            <ul>
+              <li><img src="assets/img/sindico1.jpg" alt="Síndico a organizar as contas do condomínio"></li>
+              <li><img src="assets/img/sindico2.jpg" alt="Síndico a conversar com um morador"></li>
+              <li><img src="assets/img/sindico3.jpg" alt="Síndico a verificar as áreas comuns do prédio"></li>
+            </ul>
+          </div>
+          <div class="cadastro-choice-body">
+            <span class="icon-badge" data-icon="shield" data-icon-size="20"></span>
+            <h3>Sou síndico</h3>
+            <p>Entra na tua área de administração para geres moradores, unidades, taxas, despesas,
+            pagamentos, comunicados, votações e ocorrências do teu condomínio.</p>
+            <span class="cadastro-choice-cta">Entrar como síndico <span data-icon="chevronRight" data-icon-size="16"></span></span>
+          </div>
         </div>
-        <div class="form-row">
-          <label for="login-senha">Senha</label>
-          <input type="password" id="login-senha" placeholder="••••••••">
+
+        <div class="cadastro-choice-card" id="btn-login-morador" role="button" tabindex="0">
+          <div class="cadastro-choice-media">
+            <ul>
+              <li><img src="assets/img/morador1.jpg" alt="Morador a consultar a sua unidade pelo telemóvel"></li>
+              <li><img src="assets/img/morador2.jpg" alt="Morador a reservar uma área comum"></li>
+              <li><img src="assets/img/morador3.jpg" alt="Morador a receber um visitante à entrada do condomínio"></li>
+            </ul>
+          </div>
+          <div class="cadastro-choice-body">
+            <span class="icon-badge" data-icon="door" data-icon-size="20"></span>
+            <h3>Sou morador</h3>
+            <p>Entra na tua área para consultares pagamentos, veículos, visitas, reservas,
+            ocorrências, comunicados e votações do teu condomínio.</p>
+            <span class="cadastro-choice-cta">Entrar como morador <span data-icon="chevronRight" data-icon-size="16"></span></span>
+          </div>
         </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-        </div>
-      </form>
-      <p class="api-note">Endpoint real: POST /auth/login</p>
+
+      </div>
 
       <p class="auth-footer-link">Ainda não tem conta? <a data-goto="screen-cadastro-choice" href="javascript:void(0)">Criar conta</a></p>
       <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
+      <p class="auth-footer-link auth-footer-links-row">
+        <a data-goto="screen-login-porteiro" href="javascript:void(0)">Acesso do porteiro</a>
+        <span aria-hidden="true">·</span>
+        <a data-goto="screen-login-admin" href="javascript:void(0)">Acesso administrativo</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 1A — LOGIN SÍNDICO
+     Layout dividido: imagem à esquerda (~40%) e formulário à direita —
+     usado em todas as telas de login/cadastro a partir daqui.
+     ========================================================================== -->
+<section id="screen-login-sindico" class="screen">
+  <div class="auth-split">
+    <div class="auth-split-media">
+      <img src="assets/img/sindico2.jpg" alt="Síndico a organizar as contas do condomínio">
+    </div>
+    <div class="auth-split-form">
+      <div class="auth-card">
+        <h1>Entrar como síndico</h1>
+        <p class="auth-subtitle">Mockup sem autenticação real — este formulário entra diretamente na área do síndico.</p>
+
+        <form id="login-form-sindico" class="crud-form">
+          <div class="form-row">
+            <label for="login-sindico-email">Email</label>
+            <input type="email" id="login-sindico-email" placeholder="sindico@exemplo.com" required>
+          </div>
+          <div class="form-row">
+            <label for="login-sindico-senha">Senha</label>
+            <input type="password" id="login-sindico-senha" placeholder="••••••••" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /auth/login</p>
+
+        <p class="auth-footer-link">Ainda não tem conta de síndico? <a data-goto="screen-cadastro-sindico" href="javascript:void(0)">Criar conta</a></p>
+        <p class="auth-footer-link"><a data-goto="screen-login-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 1B — LOGIN MORADOR
+     ========================================================================== -->
+<section id="screen-login-morador" class="screen">
+  <div class="auth-split">
+    <div class="auth-split-media">
+      <img src="assets/img/morador2.jpg" alt="Morador a reservar uma área comum">
+    </div>
+    <div class="auth-split-form">
+      <div class="auth-card">
+        <h1>Entrar como morador</h1>
+        <p class="auth-subtitle">Mockup sem autenticação real — este formulário entra diretamente na área do morador.</p>
+
+        <form id="login-form-morador" class="crud-form">
+          <div class="form-row">
+            <label for="login-morador-email">Email</label>
+            <input type="email" id="login-morador-email" placeholder="voce@exemplo.com" required>
+          </div>
+          <div class="form-row">
+            <label for="login-morador-senha">Senha</label>
+            <input type="password" id="login-morador-senha" placeholder="••••••••" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /auth/login</p>
+
+        <p class="auth-footer-link">Ainda não tem conta de morador? <a data-goto="screen-cadastro-morador" href="javascript:void(0)">Criar conta</a></p>
+        <p class="auth-footer-link"><a data-goto="screen-login-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 1B-2 — LOGIN PORTEIRO
+     A conta é criada pelo síndico (entidade `porteiros`) — não há cadastro
+     público aqui, só o login.
+     ========================================================================== -->
+<section id="screen-login-porteiro" class="screen">
+  <div class="auth-split">
+    <div class="auth-split-media">
+      <img src="assets/img/hero-condominio.jpg" alt="Entrada e portaria do condomínio">
+    </div>
+    <div class="auth-split-form">
+      <div class="auth-card">
+        <h1>Entrar como porteiro</h1>
+        <p class="auth-subtitle">Acesso criado pelo síndico do condomínio. Mockup sem autenticação real.</p>
+
+        <form id="login-form-porteiro" class="crud-form">
+          <div class="form-row">
+            <label for="login-porteiro-email">Email</label>
+            <input type="email" id="login-porteiro-email" placeholder="porteiro@exemplo.com" required>
+          </div>
+          <div class="form-row">
+            <label for="login-porteiro-senha">Senha</label>
+            <input type="password" id="login-porteiro-senha" placeholder="••••••••" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /auth/login</p>
+
+        <p class="auth-footer-link">Não tem conta? Fala com o síndico do teu condomínio.</p>
+        <p class="auth-footer-link"><a data-goto="screen-login-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     TELA 1C — LOGIN ADMINISTRAÇÃO DA PLATAFORMA
+     Acesso discreto (link pequeno na tela de escolha de login) — não é um
+     "papel do condomínio" como síndico/morador, por isso fica à parte.
+     ========================================================================== -->
+<section id="screen-login-admin" class="screen">
+  <div class="auth-split">
+    <div class="auth-split-media">
+      <img src="assets/img/hero-condominio.jpg" alt="Vista geral do condomínio">
+    </div>
+    <div class="auth-split-form">
+      <div class="auth-card">
+        <h1>Acesso administrativo</h1>
+        <p class="auth-subtitle">Área reservada à equipa da plataforma CONVIVA.</p>
+
+        <form id="login-form-admin" class="crud-form">
+          <div class="form-row">
+            <label for="login-admin-email">Email</label>
+            <input type="email" id="login-admin-email" placeholder="voce@plataforma.com" required>
+          </div>
+          <div class="form-row">
+            <label for="login-admin-senha">Senha</label>
+            <input type="password" id="login-admin-senha" placeholder="••••••••" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /auth/login</p>
+
+        <p class="auth-footer-link"><a data-goto="screen-login-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
     </div>
   </div>
 </section>
@@ -325,7 +496,7 @@
 
       </div>
 
-      <p class="auth-footer-link">Já tem conta? <a data-goto="screen-login" href="javascript:void(0)">Entrar</a></p>
+      <p class="auth-footer-link">Já tem conta? <a data-goto="screen-login-choice" href="javascript:void(0)">Entrar</a></p>
       <p class="auth-footer-link"><a data-goto="screen-landing" href="javascript:void(0)">&larr; Voltar à página inicial</a></p>
     </div>
   </div>
@@ -503,35 +674,40 @@
      TELA 2B — CADASTRO MORADOR (ainda sem unidade vinculada)
      ========================================================================== -->
 <section id="screen-cadastro-morador" class="screen">
-  <div class="auth-screen">
-    <div class="auth-card">
-      <h1>Criar conta de morador</h1>
-      <p class="auth-subtitle">O síndico vai vincular a sua unidade depois do cadastro.</p>
+  <div class="auth-split">
+    <div class="auth-split-media">
+      <img src="assets/img/morador1.jpg" alt="Morador a consultar a sua unidade pelo telemóvel">
+    </div>
+    <div class="auth-split-form">
+      <div class="auth-card">
+        <h1>Criar conta de morador</h1>
+        <p class="auth-subtitle">O síndico vai vincular a sua unidade depois do cadastro.</p>
 
-      <form id="form-cadastro-morador" class="crud-form">
-        <div class="form-row">
-          <label for="cm-nome">Nome completo</label>
-          <input type="text" id="cm-nome" required>
-        </div>
-        <div class="form-row">
-          <label for="cm-email">Email</label>
-          <input type="email" id="cm-email" required>
-        </div>
-        <div class="form-row">
-          <label for="cm-telefone">Telefone</label>
-          <input type="tel" id="cm-telefone" required>
-        </div>
-        <div class="form-row">
-          <label for="cm-senha">Senha</label>
-          <input type="password" id="cm-senha" required>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
-        </div>
-      </form>
-      <p class="api-note">Endpoint real: POST /morador-publico</p>
+        <form id="form-cadastro-morador" class="crud-form">
+          <div class="form-row">
+            <label for="cm-nome">Nome completo</label>
+            <input type="text" id="cm-nome" required>
+          </div>
+          <div class="form-row">
+            <label for="cm-email">Email</label>
+            <input type="email" id="cm-email" required>
+          </div>
+          <div class="form-row">
+            <label for="cm-telefone">Telefone</label>
+            <input type="tel" id="cm-telefone" required>
+          </div>
+          <div class="form-row">
+            <label for="cm-senha">Senha</label>
+            <input type="password" id="cm-senha" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+          </div>
+        </form>
+        <p class="api-note">Endpoint real: POST /morador-publico</p>
 
-      <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+        <p class="auth-footer-link"><a data-goto="screen-cadastro-choice" href="javascript:void(0)">&larr; Voltar</a></p>
+      </div>
     </div>
   </div>
 </section>
@@ -550,8 +726,7 @@
     <aside class="sidebar" id="app-sidebar">
       <div class="sidebar-header">
         <div class="landing-logo">
-          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CondoGest">
-          <span>CondoGest</span>
+          <img class="logo-mark" src="assets/img/logo.svg" alt="Logótipo da CONVIVA">
         </div>
         <span class="sidebar-role-badge" id="app-role-label">—</span>
       </div>
@@ -567,6 +742,18 @@
           <span data-icon="menu" data-icon-size="20"></span>
         </button>
         <span class="app-topbar-title">Área do <strong id="app-role-label-topbar">—</strong></span>
+
+        <div class="topbar-profile" id="topbar-profile">
+          <button type="button" class="topbar-profile-btn" id="btn-topbar-profile">
+            <span class="topbar-avatar" data-icon="user" data-icon-size="17"></span>
+            <span class="topbar-profile-name" id="topbar-profile-name">—</span>
+            <span data-icon="chevronRight" data-icon-size="13" class="topbar-profile-caret"></span>
+          </button>
+          <div class="topbar-profile-menu" id="topbar-profile-menu">
+            <button type="button" id="btn-topbar-editar-perfil"><span data-icon="edit" data-icon-size="15"></span> Editar perfil</button>
+            <button type="button" id="btn-topbar-logout"><span data-icon="logout" data-icon-size="15"></span> Sair</button>
+          </div>
+        </div>
       </div>
       <div class="app-content">
         <!-- Todas as telas de módulo (Início, CRUDs, Vincular, Minha Unidade)
@@ -582,6 +769,7 @@
 <script src="js/interactions.js"></script>
 <script src="js/data.js"></script>
 <script src="js/render.js"></script>
+<script src="js/charts.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

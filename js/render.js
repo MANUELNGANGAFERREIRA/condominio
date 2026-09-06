@@ -4,8 +4,8 @@
    Motor genérico de CRUD. Dado o objeto de configuração de uma entidade
    (ver data.js), estas funções constroem:
      - o formulário de criar/editar (buildForm)
-     - o grid de cartões de listagem (buildCardGrid) — cada entidade ganha
-       ícone + cor de acento próprios, atribuídos deterministicamente
+     - a tabela de listagem (buildTable) — cada entidade ganha ícone
+       próprio (usado no cabeçalho e nos estados vazios)
      - a legenda discreta com os endpoints reais (buildApiNote)
 
    Nenhuma destas funções conhece "moradores" ou "condomínios" especificamente
@@ -16,16 +16,27 @@
 let editingState = {}; // guarda, por entidade, o id do registro em edição (ou null)
 
 const ACCENT_PALETTE = ['#2954d6', '#0f8a72', '#7a4fd6', '#c9660f', '#c2417f', '#0f8fa8', '#4f7a1e', '#b23b3b'];
-const STAT_FIELD_HINTS = ['valor', 'preco', 'capacidade'];
 
 function nextId(entityKey) {
   const rows = DB[entityKey];
   return rows.length ? Math.max(...rows.map(r => r.id)) + 1 : 1;
 }
 
+// Devolve todos os itens de menu de um perfil, "achatando" os grupos
+// (usado sempre que for preciso procurar/percorrer itens sem interessar
+// se estão soltos ou dentro de uma secção).
+function flatMenuItems(role) {
+  const out = [];
+  (MENUS[role] || []).forEach(entry => {
+    if (entry.group) out.push(...entry.items);
+    else out.push(entry);
+  });
+  return out;
+}
+
 function entityIcon(entityKey) {
   for (const role in MENUS) {
-    const found = MENUS[role].find(m => m.entity === entityKey);
+    const found = flatMenuItems(role).find(m => m.entity === entityKey);
     if (found) return found.icon;
   }
   return 'grid';
@@ -86,56 +97,121 @@ function buildRefCombobox(idPrefix, field, currentId) {
   wrap.className = 'ref-combo neu-inset';
 
   const refRows = DB[field.ref.entity] || [];
-  const listId = `dl-${idPrefix}-${field.key}`;
-
   const text = document.createElement('input');
   text.type = 'text';
   text.id = `field-${idPrefix}-${field.key}`;
   text.className = 'ref-combo-input';
   text.autocomplete = 'off';
-  text.setAttribute('list', listId);
-  text.placeholder = field.placeholder || 'Digite o nome para pesquisar…';
+  text.placeholder = field.placeholder || 'Pesquisar e selecionar…';
+  text.setAttribute('role', 'combobox');
+  text.setAttribute('aria-expanded', 'false');
 
   const hidden = document.createElement('input');
   hidden.type = 'hidden';
   hidden.name = field.key;
   hidden.id = `field-${idPrefix}-${field.key}-id`;
 
-  const datalist = document.createElement('datalist');
-  datalist.id = listId;
-  refRows.forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = refLabelOf(field.ref, r);
-    datalist.appendChild(opt);
-  });
-
   const statusIcon = document.createElement('span');
   statusIcon.className = 'ref-combo-status';
   statusIcon.innerHTML = icon('search', 14);
 
+  const menu = document.createElement('div');
+  menu.className = 'ref-combo-menu';
+  menu.setAttribute('role', 'listbox');
+
+  let activeIndex = -1;
+  let visibleRows = refRows.slice();
+
+  function label(row) { return String(refLabelOf(field.ref, row) || ''); }
+
+  function closeMenu() {
+    menu.classList.remove('is-open');
+    text.setAttribute('aria-expanded', 'false');
+    activeIndex = -1;
+  }
+
+  function selectRow(row) {
+    text.value = label(row);
+    hidden.value = row.id;
+    wrap.classList.add('ref-combo-matched');
+    wrap.classList.remove('ref-combo-unmatched');
+    statusIcon.innerHTML = icon('check', 14);
+    closeMenu();
+  }
+
+  function renderMenu(query) {
+    const q = String(query || '').trim().toLocaleLowerCase('pt-PT');
+    visibleRows = refRows.filter(row => !q || label(row).toLocaleLowerCase('pt-PT').includes(q));
+    menu.innerHTML = '';
+
+    if (!visibleRows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'ref-combo-empty';
+      empty.textContent = 'Nenhum registo encontrado';
+      menu.appendChild(empty);
+    } else {
+      const hint = document.createElement('div');
+      hint.className = 'ref-combo-heading';
+      hint.textContent = `${visibleRows.length} opção${visibleRows.length === 1 ? '' : 'ões'} disponível${visibleRows.length === 1 ? '' : 'eis'}`;
+      menu.appendChild(hint);
+      visibleRows.forEach((row, index) => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'ref-combo-option';
+        option.setAttribute('role', 'option');
+        option.dataset.index = index;
+        option.innerHTML = `<span class="ref-combo-option-main">${label(row)}</span><span class="ref-combo-option-id">#${row.id}</span>`;
+        option.addEventListener('mousedown', e => e.preventDefault());
+        option.addEventListener('click', () => selectRow(row));
+        menu.appendChild(option);
+      });
+    }
+    activeIndex = -1;
+  }
+
+  function openMenu() {
+    renderMenu(text.value);
+    menu.classList.add('is-open');
+    text.setAttribute('aria-expanded', 'true');
+  }
+
   function sync() {
-    const match = refRows.find(r => refLabelOf(field.ref, r) === text.value);
+    const match = refRows.find(r => label(r).toLocaleLowerCase('pt-PT') === text.value.trim().toLocaleLowerCase('pt-PT'));
     hidden.value = match ? match.id : '';
     wrap.classList.toggle('ref-combo-matched', !!match);
     wrap.classList.toggle('ref-combo-unmatched', !match && text.value.trim() !== '');
     statusIcon.innerHTML = match ? icon('check', 14) : icon('search', 14);
   }
 
-  if (currentId !== undefined && currentId !== '' && currentId !== null) {
-    const match = refRows.find(r => r.id === Number(currentId));
-    if (match) { text.value = refLabelOf(field.ref, match); hidden.value = match.id; wrap.classList.add('ref-combo-matched'); statusIcon.innerHTML = icon('check', 14); }
+  function highlight(index) {
+    const options = [...menu.querySelectorAll('.ref-combo-option')];
+    options.forEach((option, i) => option.classList.toggle('is-active', i === index));
+    if (options[index]) options[index].scrollIntoView({ block: 'nearest' });
   }
 
-  text.addEventListener('input', sync);
-  text.addEventListener('change', sync);
+  if (currentId !== undefined && currentId !== '' && currentId !== null) {
+    const match = refRows.find(r => r.id === Number(currentId));
+    if (match) selectRow(match);
+  }
 
-  wrap.appendChild(statusIcon);
-  wrap.appendChild(text);
-  wrap.appendChild(hidden);
-  wrap.appendChild(datalist);
+  text.addEventListener('focus', openMenu);
+  text.addEventListener('input', () => { sync(); openMenu(); });
+  text.addEventListener('keydown', e => {
+    const options = visibleRows;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); if (!menu.classList.contains('is-open')) openMenu();
+      activeIndex = Math.min(options.length - 1, activeIndex + 1); highlight(activeIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault(); activeIndex = Math.max(0, activeIndex - 1); highlight(activeIndex);
+    } else if (e.key === 'Enter' && activeIndex >= 0 && options[activeIndex]) {
+      e.preventDefault(); selectRow(options[activeIndex]);
+    } else if (e.key === 'Escape') closeMenu();
+  });
+  text.addEventListener('blur', () => setTimeout(() => { sync(); closeMenu(); }, 150));
+
+  wrap.append(statusIcon, text, hidden, menu);
   return wrap;
 }
-
 /* ---------------------------------------------------------------------------
    Legenda discreta com o(s) endpoint(s) reais que um dev vai plugar depois.
    --------------------------------------------------------------------------- */
@@ -170,6 +246,11 @@ function buildForm(container, config) {
   config.fields.forEach(field => {
     // Campos "onlyCreate" (ex: senha) não aparecem ao editar
     if (field.onlyCreate && isEditing) return;
+    // Campos "hidden" nunca aparecem no formulário — são definidos por outra
+    // pessoa/perfil (ex: "visibilidade" é controlada pelo sistema, e as datas
+    // de entrada/saída de visitantes são preenchidas pelo porteiro na
+    // portaria, não pelo morador/síndico que só pré-regista a visita).
+    if (field.hidden) return;
 
     const row = document.createElement('div');
     row.className = 'form-row';
@@ -248,6 +329,12 @@ function buildForm(container, config) {
     const record = {};
     config.fields.forEach(field => {
       if (field.onlyCreate && isEditing) return; // mantém valor antigo (senha etc.)
+      if (field.hidden) {
+        // Campo não editável por este formulário: mantém o valor existente
+        // ao editar, ou usa um valor por omissão sensato ao criar.
+        record[field.key] = isEditing ? editItem[field.key] : (field.hiddenDefault !== undefined ? field.hiddenDefault : (field.options ? field.options[0] : ''));
+        return;
+      }
       record[field.key] = formData.get(field.key) || '';
     });
 
@@ -279,11 +366,11 @@ function buildForm(container, config) {
 }
 
 /* ---------------------------------------------------------------------------
-   Constrói o grid de cartões de uma entidade dentro de `container`.
-   Cada cartão ganha ícone + cor de acento próprios (identidade visual por
-   tipo de entidade) e as ações de editar/excluir só aparecem ao hover.
+   Constrói a tabela de uma entidade dentro de `container`: cabeçalho com
+   título, contagem e pesquisa, e uma linha por registo (mais "humano" e
+   fácil de escanear do que um grid de cartões repetidos).
    --------------------------------------------------------------------------- */
-function buildCardGrid(container, config) {
+function buildTable(container, config) {
   container.innerHTML = '';
 
   const wrapper = document.createElement('div');
@@ -300,89 +387,87 @@ function buildCardGrid(container, config) {
   headerRow.appendChild(countTag);
   wrapper.appendChild(headerRow);
 
-  const rows = DB[config.key];
-  const accent = entityAccent(config.key);
-  const iconName = entityIcon(config.key);
+  const toolbar = document.createElement('div');
+  toolbar.className = 'table-toolbar';
+  const searchInput = document.createElement('input');
+  searchInput.type = 'search';
+  searchInput.className = 'table-search-input';
+  searchInput.placeholder = 'Pesquise aqui…';
+  toolbar.appendChild(searchInput);
+  wrapper.appendChild(toolbar);
 
-  if (!rows.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.innerHTML = icon(iconName, 30) + '<div>Ainda não há registos aqui. Use o formulário ao lado para criar o primeiro.</div>';
-    wrapper.appendChild(empty);
-  } else {
-    const grid = document.createElement('div');
-    grid.className = 'entity-grid';
+  const iconName = entityIcon(config.key);
+  const tableSlot = document.createElement('div');
+  wrapper.appendChild(tableSlot);
+
+  function draw() {
+    tableSlot.innerHTML = '';
+    const term = searchInput.value.trim().toLowerCase();
+    const allRows = DB[config.key];
+    const rows = term
+      ? allRows.filter(row => config.columns.some(c => String(cellValue(config, row, c)).toLowerCase().includes(term)))
+      : allRows;
+
+    if (!allRows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = icon(iconName, 30) + '<div>Ainda não há registos aqui.' + (config.readonly ? '' : ' Use o formulário acima para criar o primeiro.') + '</div>';
+      tableSlot.appendChild(empty);
+      return;
+    }
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = icon('search', 30) + '<div>Nenhum resultado para "' + searchInput.value + '".</div>';
+      tableSlot.appendChild(empty);
+      return;
+    }
 
     const badgeCols = config.columns.filter(c => c === 'visibilidade' || c === 'estado');
-    const primaryCol = config.columns[0];
-    const isRefCol = c => (config.fields.find(f => f.key === c) || {}).type === 'ref';
-    const statCol = config.columns.find(c => !isRefCol(c) && STAT_FIELD_HINTS.some(hint => c.toLowerCase().includes(hint)) && rows.some(r => r[c] !== '' && !Number.isNaN(Number(r[c]))));
-    const otherCols = config.columns.filter(c => c !== primaryCol && c !== statCol && !badgeCols.includes(c));
 
+    const table = document.createElement('table');
+    table.className = 'crud-table';
+
+    const thead = document.createElement('thead');
+    const headTr = document.createElement('tr');
+    config.columns.forEach(c => {
+      const th = document.createElement('th');
+      th.textContent = columnLabel(config, c);
+      headTr.appendChild(th);
+    });
+    if (!config.readonly) {
+      const th = document.createElement('th');
+      th.className = 'crud-table-actions-col';
+      th.textContent = 'Ação';
+      headTr.appendChild(th);
+    }
+    thead.appendChild(headTr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
     rows.forEach(row => {
-      const card = document.createElement('div');
-      card.className = 'entity-card';
-      card.style.setProperty('--accent-c', accent);
-
-      const top = document.createElement('div');
-      top.className = 'entity-card-top';
-      top.innerHTML = `
-        <span class="entity-card-icon">${icon(iconName, 19)}</span>
-        <span class="entity-card-id">#${String(row.id).padStart(3, '0')}</span>
-      `;
-      card.appendChild(top);
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'entity-card-title';
-      titleEl.textContent = cellValue(config, row, primaryCol);
-      card.appendChild(titleEl);
-
-      if (statCol && row[statCol] !== '' && !Number.isNaN(Number(row[statCol]))) {
-        const statWrap = document.createElement('div');
-        statWrap.className = 'entity-card-stat';
-        const isCurrency = statCol.toLowerCase().includes('valor') || statCol.toLowerCase().includes('preco');
-        statWrap.innerHTML = `
-          <span class="brut-num entity-card-stat-value">${formatNumber(row[statCol])}${isCurrency ? ' Kz' : ''}</span>
-          <span class="entity-card-stat-label">${columnLabel(config, statCol)}</span>
-        `;
-        card.appendChild(statWrap);
-      }
-
-      if (otherCols.length) {
-        const fieldsWrap = document.createElement('div');
-        fieldsWrap.className = 'entity-card-fields';
-        otherCols.slice(0, 3).forEach(colKey => {
-          const fieldRow = document.createElement('div');
-          fieldRow.className = 'entity-card-field';
-          fieldRow.innerHTML = `
-            <span class="entity-card-field-label">${columnLabel(config, colKey)}</span>
-            <span class="entity-card-field-value">${cellValue(config, row, colKey)}</span>
-          `;
-          fieldsWrap.appendChild(fieldRow);
-        });
-        card.appendChild(fieldsWrap);
-      }
-
-      if (badgeCols.length) {
-        const badgesWrap = document.createElement('div');
-        badgesWrap.className = 'entity-card-badges';
-        badgeCols.forEach(colKey => {
-          const badge = document.createElement('span');
-          badge.className = 'badge ' + badgeClass(row[colKey]);
-          badge.textContent = formatCell(row[colKey]);
-          badgesWrap.appendChild(badge);
-        });
-        card.appendChild(badgesWrap);
-      }
+      const tr = document.createElement('tr');
+      config.columns.forEach(c => {
+        const td = document.createElement('td');
+        if (badgeCols.includes(c)) {
+          td.innerHTML = `<span class="badge ${badgeClass(row[c])}">${formatCell(row[c])}</span>`;
+        } else {
+          td.textContent = cellValue(config, row, c);
+        }
+        tr.appendChild(td);
+      });
 
       if (!config.readonly) {
+        const td = document.createElement('td');
+        td.className = 'crud-table-actions-col';
         const actionsWrap = document.createElement('div');
-        actionsWrap.className = 'entity-card-actions';
+        actionsWrap.className = 'crud-table-actions';
 
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
-        editBtn.className = 'card-edit-btn';
-        editBtn.innerHTML = icon('edit', 15) + '<span>Editar</span>';
+        editBtn.className = 'icon-action-btn';
+        editBtn.title = 'Editar';
+        editBtn.innerHTML = icon('edit', 15);
         editBtn.addEventListener('click', () => {
           editingState[config.key] = row.id;
           renderEntityScreen(config.key);
@@ -391,8 +476,9 @@ function buildCardGrid(container, config) {
 
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
-        delBtn.className = 'card-delete-btn';
-        delBtn.innerHTML = icon('trash', 15) + '<span>Excluir</span>';
+        delBtn.className = 'icon-action-btn icon-action-btn-danger';
+        delBtn.title = 'Excluir';
+        delBtn.innerHTML = icon('trash', 15);
         delBtn.addEventListener('click', () => {
           // ------------------------------------------------------------------
           // Endpoint real: DELETE /<recurso>/:id (ver config.endpoints.remove)
@@ -405,18 +491,23 @@ function buildCardGrid(container, config) {
         });
         actionsWrap.appendChild(delBtn);
 
-        card.appendChild(actionsWrap);
+        td.appendChild(actionsWrap);
+        tr.appendChild(td);
       }
 
-      grid.appendChild(card);
+      tbody.appendChild(tr);
     });
-
-    wrapper.appendChild(grid);
+    table.appendChild(tbody);
+    tableSlot.appendChild(table);
   }
+
+  searchInput.addEventListener('input', draw);
+  draw();
 
   wrapper.appendChild(buildApiNote({ list: config.endpoints.list }));
   container.appendChild(wrapper);
 }
+
 
 function columnLabel(config, colKey) {
   const field = config.fields.find(f => f.key === colKey);
@@ -464,7 +555,7 @@ function renderEntityScreen(entityKey) {
   screenBody.appendChild(heading);
 
   const layout = document.createElement('div');
-  layout.className = config.readonly ? 'crud-layout crud-layout-single' : 'crud-layout';
+  layout.className = 'crud-layout';
 
   if (!config.readonly) {
     const formContainer = document.createElement('div');
@@ -473,10 +564,10 @@ function renderEntityScreen(entityKey) {
     buildForm(formContainer, config);
   }
 
-  const gridContainer = document.createElement('div');
-  gridContainer.className = 'crud-table-container';
-  layout.appendChild(gridContainer);
-  buildCardGrid(gridContainer, config);
+  const tableContainer = document.createElement('div');
+  tableContainer.className = 'crud-table-container';
+  layout.appendChild(tableContainer);
+  buildTable(tableContainer, config);
 
   screenBody.appendChild(layout);
 }

@@ -6,7 +6,7 @@
    nenhum, é só CSS a reagir à mudança do atributo.
    ============================================================================ */
 
-const THEME_KEY = 'condogest-theme';
+const THEME_KEY = 'conviva-theme';
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);

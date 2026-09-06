@@ -51,6 +51,8 @@ const ICON_PATHS = {
   search:      '<circle cx="10.6" cy="10.6" r="6.6"/><line x1="15.4" y1="15.4" x2="20.6" y2="20.6"/>',
   bolt:        '<polygon points="13,2 4,14 11,14 9.5,22 20,9 12.5,9"/>',
   menu:        '<line x1="3.5" y1="6.5" x2="20.5" y2="6.5"/><line x1="3.5" y1="12" x2="20.5" y2="12"/><line x1="3.5" y1="17.5" x2="20.5" y2="17.5"/>',
+  vote:        '<rect x="3.4" y="9" width="17.2" height="12" rx="1.4"/><path d="M7.4 9V6.6a4.6 4.6 0 0 1 9.2 0V9"/><polyline points="8.6,14.6 11,17 15.6,12.2"/>',
+  user:        '<circle cx="12" cy="8" r="3.6"/><path d="M4.8 20c0-4 3.2-6.6 7.2-6.6s7.2 2.6 7.2 6.6"/>',
 };
 
 function icon(name, size) {

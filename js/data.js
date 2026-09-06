@@ -22,6 +22,13 @@ function campoVisibilidade() {
   return { key: 'visibilidade', label: 'Visibilidade', type: 'select', options: ['Ativo', 'Inativo'], required: true };
 }
 
+// Variante do campo acima para os módulos de autoatendimento do morador
+// (ex.: "Meus Veículos"): o próprio morador nunca deve ver nem definir este
+// estado — fica sempre "Ativo" por trás dos panos, controlado pelo sistema.
+function campoVisibilidadeOculta() {
+  return { key: 'visibilidade', label: 'Visibilidade', type: 'select', options: ['Ativo', 'Inativo'], required: true, hidden: true };
+}
+
 const ENTITIES = {
 
   /* ==========================================================================
@@ -220,6 +227,47 @@ const ENTITIES = {
     ],
   },
 
+  porteiros: {
+    key: 'porteiros',
+    label: 'Porteiros',
+    labelSingular: 'Porteiro',
+    role: 'sindico',
+    // O síndico cria a conta de acesso do porteiro (email + senha); essa
+    // conta entra depois pela aba "Porteiro" na tela de login (ver
+    // screen-login-porteiro em index.html).
+    fields: [
+      { key: 'nome', label: 'Nome', type: 'text', required: true },
+      { key: 'email', label: 'Email (login do porteiro)', type: 'email', required: true },
+      { key: 'telefone', label: 'Telefone', type: 'tel', required: true },
+      { key: 'id_porta', label: 'Porta', type: 'ref', ref: { entity: 'portas', display: 'nome' }, required: false },
+      { key: 'senha', label: 'Senha', type: 'password', required: true, onlyCreate: true },
+      campoVisibilidade(),
+    ],
+    columns: ['nome', 'email', 'telefone', 'id_porta', 'visibilidade'],
+    endpoints: { list: 'GET /porteiro', create: 'POST /porteiro', update: 'PUT /porteiro/:id', remove: 'DELETE /porteiro/:id' },
+    mock: [
+      { id: 1, nome: 'Rui Bastos', email: 'rui.porteiro@jardinskilamba.co.ao', telefone: '921 555 000', id_porta: 1, senha: '', visibilidade: 'Ativo' },
+    ],
+  },
+
+  portas: {
+    key: 'portas',
+    label: 'Portas',
+    labelSingular: 'Porta',
+    role: 'sindico',
+    fields: [
+      { key: 'nome', label: 'Nome', type: 'text', required: true, placeholder: 'Ex.: Portão Principal' },
+      { key: 'tipo', label: 'Tipo', type: 'select', options: ['Veicular', 'Pedonal'], required: true },
+      campoVisibilidade(),
+    ],
+    columns: ['nome', 'tipo', 'visibilidade'],
+    endpoints: { list: 'GET /porta', create: 'POST /porta', update: 'PUT /porta/:id', remove: 'DELETE /porta/:id' },
+    mock: [
+      { id: 1, nome: 'Portão Principal', tipo: 'Veicular', visibilidade: 'Ativo' },
+      { id: 2, nome: 'Entrada Pedonal', tipo: 'Pedonal', visibilidade: 'Ativo' },
+    ],
+  },
+
   areasComuns: {
     key: 'areasComuns',
     label: 'Áreas Comuns',
@@ -274,6 +322,28 @@ const ENTITIES = {
     mock: [
       { id: 1, titulo: 'Corte de água programado', mensagem: 'No dia 18/08, das 08h às 12h, haverá corte de água para manutenção da cisterna.' },
       { id: 2, titulo: 'Assembleia geral', mensagem: 'Assembleia geral marcada para o dia 30/08 às 18h no salão de festas.' },
+    ],
+  },
+
+  votacoes: {
+    key: 'votacoes',
+    label: 'Votações',
+    labelSingular: 'Votação',
+    role: 'sindico',
+    // Só o síndico cria a votação e define as opções; o morador só vota
+    // (ver tela "Votações" do morador, montada à parte em app.js).
+    fields: [
+      { key: 'titulo', label: 'Título', type: 'text', required: true },
+      { key: 'descricao', label: 'Descrição', type: 'textarea', required: false },
+      { key: 'opcoes', label: 'Opções (uma por linha)', type: 'textarea', required: true, placeholder: 'Ex.: Aprovar\nRejeitar' },
+      { key: 'data_limite', label: 'Data Limite', type: 'date', required: true },
+      { key: 'estado', label: 'Estado', type: 'select', options: ['Aberta', 'Encerrada'], required: true },
+    ],
+    columns: ['titulo', 'data_limite', 'estado'],
+    endpoints: { list: 'GET /votacao', create: 'POST /votacao', update: 'PUT /votacao/:id', remove: 'DELETE /votacao/:id' },
+    mock: [
+      { id: 1, titulo: 'Pintura da fachada', descricao: 'Escolha da cor da fachada principal do condomínio.', opcoes: 'Branco\nCinza claro\nBege', data_limite: '2026-09-15', estado: 'Aberta' },
+      { id: 2, titulo: 'Horário da piscina', descricao: 'Ajuste do horário de funcionamento da piscina nos fins de semana.', opcoes: 'Manter atual\nAlargar até às 21h', data_limite: '2026-08-10', estado: 'Encerrada' },
     ],
   },
 
@@ -343,6 +413,7 @@ const ENTITIES = {
     mock: [
       { id: 1, mes_pago: '2026-07-01', estado: 'Pago', data_pagamento: '2026-07-05', id_taxa: 1 },
       { id: 2, mes_pago: '2026-08-01', estado: 'Pendente', data_pagamento: '', id_taxa: 1 },
+      { id: 3, mes_pago: '2026-06-01', estado: 'Atrasado', data_pagamento: '', id_taxa: 1 },
     ],
   },
 
@@ -361,6 +432,8 @@ const ENTITIES = {
     endpoints: { list: 'GET /ocorrencia', create: 'POST /ocorrencia', update: 'PUT /ocorrencia/:id', remove: 'DELETE /ocorrencia/:id' },
     mock: [
       { id: 1, titulo: 'Lâmpada queimada no corredor', descricao: 'Corredor do bloco B, 2º andar.', estado: 'Pendente', visibilidade: 'Ativo' },
+      { id: 2, titulo: 'Portão da garagem a fazer ruído', descricao: 'Rangido ao abrir/fechar.', estado: 'Em resolução', visibilidade: 'Ativo' },
+      { id: 3, titulo: 'Torneira a pingar na área comum', descricao: 'Casa de banho junto à piscina.', estado: 'Resolvido', visibilidade: 'Ativo' },
     ],
   },
 
@@ -388,8 +461,10 @@ const ENTITIES = {
     role: 'sindico',
     fields: [
       { key: 'nome', label: 'Nome', type: 'text', required: true },
-      { key: 'data_entrada', label: 'Data de Entrada', type: 'datetime-local', required: true },
-      { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false },
+      // A entrada/saída da visita é registada pelo porteiro na portaria, não
+      // aqui — ver a tela "Visitas" do perfil Porteiro em app.js.
+      { key: 'data_entrada', label: 'Data de Entrada', type: 'datetime-local', required: true, hidden: true, hiddenDefault: '' },
+      { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false, hidden: true, hiddenDefault: '' },
       campoVisibilidade(),
     ],
     columns: ['nome', 'data_entrada', 'data_saida', 'visibilidade'],
@@ -413,9 +488,9 @@ const ENTITIES = {
     fields: [
       { key: 'placa', label: 'Placa', type: 'text', required: true },
       { key: 'nome_motorista', label: 'Nome do Motorista', type: 'text', required: true },
-      campoVisibilidade(),
+      campoVisibilidadeOculta(),
     ],
-    columns: ['placa', 'nome_motorista', 'visibilidade'],
+    columns: ['placa', 'nome_motorista'],
     endpoints: { list: 'GET /morador/veiculo', create: 'POST /morador/veiculo', update: 'PUT /morador/veiculo/:id', remove: 'DELETE /morador/veiculo/:id' },
     mock: [
       { id: 1, placa: 'LD-12-34-BO', nome_motorista: 'João Neto', visibilidade: 'Ativo' },
@@ -429,14 +504,16 @@ const ENTITIES = {
     role: 'morador',
     fields: [
       { key: 'nome', label: 'Nome do Visitante', type: 'text', required: true },
-      { key: 'data_entrada', label: 'Data de Entrada', type: 'datetime-local', required: true },
-      { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false },
-      campoVisibilidade(),
+      // O porteiro é quem regista a entrada/saída real na portaria — o
+      // morador só pré-anuncia o nome do visitante esperado.
+      { key: 'data_entrada', label: 'Data de Entrada', type: 'datetime-local', required: true, hidden: true, hiddenDefault: '' },
+      { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false, hidden: true, hiddenDefault: '' },
+      campoVisibilidadeOculta(),
     ],
-    columns: ['nome', 'data_entrada', 'data_saida', 'visibilidade'],
+    columns: ['nome', 'data_entrada', 'data_saida'],
     endpoints: { list: 'GET /morador/visitante', create: 'POST /morador/visitante', update: 'PUT /morador/visitante/:id', remove: 'DELETE /morador/visitante/:id' },
     mock: [
-      { id: 1, nome: 'Carlos Mendes', data_entrada: '2026-08-14T10:00', data_saida: '', visibilidade: 'Ativo' },
+      { id: 1, nome: 'Carlos Mendes', data_entrada: '', data_saida: '', visibilidade: 'Ativo' },
     ],
   },
 
@@ -450,9 +527,9 @@ const ENTITIES = {
       { key: 'hora_inicio', label: 'Hora de Início', type: 'text', placeholder: '10:00', required: true },
       { key: 'hora_termino', label: 'Hora de Término', type: 'text', placeholder: '14:00', required: true },
       { key: 'id_area_comum', label: 'Área Comum', type: 'ref', ref: { entity: 'areasComuns', display: 'nome' }, required: true },
-      campoVisibilidade(),
+      campoVisibilidadeOculta(),
     ],
-    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum', 'visibilidade'],
+    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum'],
     endpoints: { list: 'GET /morador/reserva', create: 'POST /morador/reserva', update: 'PUT /morador/reserva/:id', remove: 'DELETE /morador/reserva/:id' },
     mock: [
       { id: 1, data_reserva: '2026-08-22', hora_inicio: '15:00', hora_termino: '18:00', id_area_comum: 2, visibilidade: 'Ativo' },
@@ -468,9 +545,9 @@ const ENTITIES = {
       { key: 'titulo', label: 'Título', type: 'text', required: true },
       { key: 'descricao', label: 'Descrição', type: 'textarea', required: true },
       { key: 'estado', label: 'Estado', type: 'select', options: ['Pendente', 'Em resolução', 'Resolvido'], required: true },
-      campoVisibilidade(),
+      campoVisibilidadeOculta(),
     ],
-    columns: ['titulo', 'estado', 'visibilidade'],
+    columns: ['titulo', 'estado'],
     endpoints: { list: 'GET /morador/ocorrencia', create: 'POST /morador/ocorrencia', update: 'PUT /morador/ocorrencia/:id', remove: 'DELETE /morador/ocorrencia/:id' },
     mock: [
       { id: 1, titulo: 'Vazamento na cozinha', descricao: 'Vazamento pequeno sob a pia.', estado: 'Em resolução', visibilidade: 'Ativo' },
@@ -527,6 +604,25 @@ const ENTITIES = {
     endpoints: { list: 'GET /morador/area-comum' },
     mock: [],
   },
+
+  /* ==========================================================================
+     ÁREA PORTEIRO
+     Conta criada pelo síndico (ver entidade `porteiros`). O porteiro não cria
+     nem edita nada aqui — só consulta a lista de portas do condomínio e usa a
+     tela dedicada "Visitas" (ver renderPorteiroVisitasScreen em app.js) para
+     registar entradas/saídas e conferir viaturas.
+     ========================================================================== */
+  portasView: {
+    key: 'portasView',
+    label: 'Portas',
+    labelSingular: 'Porta',
+    role: 'porteiro',
+    readonly: true,
+    fields: [],
+    columns: ['nome', 'tipo', 'visibilidade'],
+    endpoints: { list: 'GET /porteiro/porta' },
+    mock: [],
+  },
 };
 
 // Corrige referências que precisam copiar mock data de outras entidades
@@ -535,6 +631,7 @@ const ENTITIES = {
 ENTITIES.comunicadosView.mock = ENTITIES.comunicados.mock.map(item => ({ ...item }));
 ENTITIES.regrasView.mock = ENTITIES.regras.mock.map(item => ({ ...item }));
 ENTITIES.areasComunsView.mock = ENTITIES.areasComuns.mock.map(item => ({ ...item }));
+ENTITIES.portasView.mock = ENTITIES.portas.mock.map(item => ({ ...item }));
 
 /* ============================================================================
    "Banco de dados" em memória. Cada chave de ENTITIES recebe uma cópia do seu
@@ -558,48 +655,125 @@ const VINCULOS = [
   { id: 1, id_unidade: 1, id_morador: 1 },
 ];
 
+// Registro extra: votos já dados (tela "Votações" do morador). Cada morador
+// só pode votar uma vez por votação — ver renderVotacoesMoradorScreen em app.js.
+// MORADOR_LOGADO_ID simula o morador da sessão atual (mockup sem auth real).
+const MORADOR_LOGADO_ID = 1;
+const VOTOS = [
+  { id: 1, id_votacao: 2, id_morador: 1, opcao: 'Manter atual' },
+];
+
 /* ============================================================================
    Menus laterais por perfil (usados para gerar a sidebar e as telas
    automaticamente a partir das entidades acima).
+   Cada perfil é uma lista de "secções": itens soltos (sem grupo, ex.:
+   "Início") ficam sempre visíveis; itens dentro de um `group` ficam debaixo
+   de um cabeçalho clicável que expande/recolhe a sublista — like the
+   reference screenshot ("GERENCIAMENTO DE RESERVAS", etc.).
    ============================================================================ */
 const MENUS = {
   admin: [
     { type: 'home', label: 'Início', icon: 'home' },
-    { type: 'entity', label: 'Centralidades', icon: 'mapPin', entity: 'centralidades' },
-    { type: 'entity', label: 'Tipos de Condomínio', icon: 'layers', entity: 'tiposCondominio' },
-    { type: 'entity', label: 'Tipos de Pagamento', icon: 'creditCard', entity: 'tiposPagamento' },
-    { type: 'entity', label: 'Planos', icon: 'package', entity: 'planos' },
-    { type: 'entity', label: 'Administradores', icon: 'shield', entity: 'administradores' },
-    { type: 'entity', label: 'Condomínios', icon: 'building', entity: 'condominios' },
-    { type: 'entity', label: 'Usuários', icon: 'grid', entity: 'usuarios' },
+    {
+      group: 'Plataforma', icon: 'layers',
+      items: [
+        { type: 'entity', label: 'Centralidades', icon: 'mapPin', entity: 'centralidades' },
+        { type: 'entity', label: 'Tipos de Condomínio', icon: 'layers', entity: 'tiposCondominio' },
+        { type: 'entity', label: 'Tipos de Pagamento', icon: 'creditCard', entity: 'tiposPagamento' },
+        { type: 'entity', label: 'Planos', icon: 'package', entity: 'planos' },
+      ],
+    },
+    {
+      group: 'Contas', icon: 'shield',
+      items: [
+        { type: 'entity', label: 'Administradores', icon: 'shield', entity: 'administradores' },
+        { type: 'entity', label: 'Condomínios', icon: 'building', entity: 'condominios' },
+        { type: 'entity', label: 'Usuários', icon: 'grid', entity: 'usuarios' },
+      ],
+    },
   ],
   sindico: [
     { type: 'home', label: 'Início', icon: 'home' },
-    { type: 'entity', label: 'Moradores', icon: 'users', entity: 'moradores' },
-    { type: 'entity', label: 'Unidades', icon: 'door', entity: 'unidades' },
-    { type: 'vincular', label: 'Vincular Morador', icon: 'link' },
-    { type: 'entity', label: 'Funcionários', icon: 'wrench', entity: 'funcionarios' },
-    { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComuns' },
-    { type: 'entity', label: 'Reservas', icon: 'calendar', entity: 'reservas' },
-    { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicados' },
-    { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regras' },
-    { type: 'entity', label: 'Despesas', icon: 'wallet', entity: 'despesas' },
-    { type: 'entity', label: 'Taxas', icon: 'receipt', entity: 'taxas' },
-    { type: 'entity', label: 'Pagamentos', icon: 'coins', entity: 'pagamentos' },
-    { type: 'entity', label: 'Ocorrências', icon: 'alert', entity: 'ocorrencias' },
-    { type: 'entity', label: 'Veículos', icon: 'car', entity: 'veiculos' },
-    { type: 'entity', label: 'Visitantes', icon: 'walker', entity: 'visitantes' },
+    {
+      group: 'Gestão de Moradores', icon: 'users',
+      items: [
+        { type: 'entity', label: 'Moradores', icon: 'users', entity: 'moradores' },
+        { type: 'entity', label: 'Unidades', icon: 'door', entity: 'unidades' },
+        { type: 'vincular', label: 'Vincular Morador', icon: 'link' },
+      ],
+    },
+    {
+      group: 'Equipa e Portaria', icon: 'wrench',
+      items: [
+        { type: 'entity', label: 'Funcionários', icon: 'wrench', entity: 'funcionarios' },
+        { type: 'entity', label: 'Porteiros', icon: 'shield', entity: 'porteiros' },
+        { type: 'entity', label: 'Portas', icon: 'door', entity: 'portas' },
+      ],
+    },
+    {
+      group: 'Espaços e Reservas', icon: 'waves',
+      items: [
+        { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComuns' },
+        { type: 'entity', label: 'Reservas', icon: 'calendar', entity: 'reservas' },
+      ],
+    },
+    {
+      group: 'Comunicação', icon: 'megaphone',
+      items: [
+        { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicados' },
+        { type: 'entity', label: 'Votações', icon: 'vote', entity: 'votacoes' },
+        { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regras' },
+      ],
+    },
+    {
+      group: 'Financeiro', icon: 'wallet',
+      items: [
+        { type: 'entity', label: 'Despesas', icon: 'wallet', entity: 'despesas' },
+        { type: 'entity', label: 'Taxas', icon: 'receipt', entity: 'taxas' },
+        { type: 'entity', label: 'Pagamentos', icon: 'coins', entity: 'pagamentos' },
+      ],
+    },
+    {
+      group: 'Segurança e Ocorrências', icon: 'alert',
+      items: [
+        { type: 'entity', label: 'Ocorrências', icon: 'alert', entity: 'ocorrencias' },
+        { type: 'entity', label: 'Veículos', icon: 'car', entity: 'veiculos' },
+        { type: 'entity', label: 'Visitantes', icon: 'walker', entity: 'visitantes' },
+      ],
+    },
   ],
   morador: [
     { type: 'home', label: 'Início', icon: 'home' },
     { type: 'minhaUnidade', label: 'Minha Unidade', icon: 'door' },
-    { type: 'entity', label: 'Meus Veículos', icon: 'car', entity: 'meusVeiculos' },
-    { type: 'entity', label: 'Minhas Visitas', icon: 'walker', entity: 'minhasVisitas' },
-    { type: 'entity', label: 'Minhas Reservas', icon: 'calendar', entity: 'minhasReservas' },
-    { type: 'entity', label: 'Minhas Ocorrências', icon: 'alert', entity: 'minhasOcorrencias' },
-    { type: 'entity', label: 'Meus Pagamentos', icon: 'coins', entity: 'meusPagamentos' },
-    { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicadosView' },
-    { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regrasView' },
-    { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComunsView' },
+    {
+      group: 'Os Meus Dados', icon: 'car',
+      items: [
+        { type: 'entity', label: 'Meus Veículos', icon: 'car', entity: 'meusVeiculos' },
+        { type: 'entity', label: 'Minhas Visitas', icon: 'walker', entity: 'minhasVisitas' },
+        { type: 'entity', label: 'Minhas Reservas', icon: 'calendar', entity: 'minhasReservas' },
+        { type: 'entity', label: 'Minhas Ocorrências', icon: 'alert', entity: 'minhasOcorrencias' },
+        { type: 'entity', label: 'Meus Pagamentos', icon: 'coins', entity: 'meusPagamentos' },
+      ],
+    },
+    {
+      group: 'O Condomínio', icon: 'megaphone',
+      items: [
+        { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicadosView' },
+        { type: 'votar', label: 'Votações', icon: 'vote' },
+        { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regrasView' },
+        { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComunsView' },
+      ],
+    },
+  ],
+  porteiro: [
+    { type: 'home', label: 'Início', icon: 'home' },
+    {
+      group: 'Portaria', icon: 'shield',
+      items: [
+        { type: 'visitasPorteiro', label: 'Visitas', icon: 'walker' },
+        { type: 'veiculosPorteiro', label: 'Veículos do Condomínio', icon: 'car' },
+        { type: 'entity', label: 'Portas', icon: 'door', entity: 'portasView' },
+      ],
+    },
   ],
 };
