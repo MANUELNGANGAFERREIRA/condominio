@@ -392,7 +392,9 @@ function buildTable(container, config) {
   const searchInput = document.createElement('input');
   searchInput.type = 'search';
   searchInput.className = 'table-search-input';
-  searchInput.placeholder = 'Pesquise aqui…';
+  searchInput.placeholder = config.key === 'condominios'
+    ? 'Pesquisar condomínio, endereço ou tipo...'
+    : 'Pesquise aqui…';
   toolbar.appendChild(searchInput);
   wrapper.appendChild(toolbar);
 
@@ -553,6 +555,13 @@ function renderEntityScreen(entityKey) {
     heading.appendChild(tag);
   }
   screenBody.appendChild(heading);
+
+  if (entityKey === 'anuncios') {
+    const info = document.createElement('div');
+    info.className = 'ads-admin-intro card';
+    info.innerHTML = `<div class="ads-admin-intro-icon">${icon('megaphone', 24)}</div><div><strong>Central de Publicidade / ADS</strong><p>Aqui o Administrador publica e gere os banners comerciais que aparecem automaticamente no carrossel de publicidade do CONVIVA.</p></div><span>ADMIN · PUBLICIDADE</span>`;
+    screenBody.appendChild(info);
+  }
 
   const layout = document.createElement('div');
   layout.className = 'crud-layout';

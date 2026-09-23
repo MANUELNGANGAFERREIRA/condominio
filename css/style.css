@@ -1276,3 +1276,300 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 .ref-combo-option-id { flex:0 0 auto; padding:3px 7px; border-radius:999px; background:var(--surface-2); color:var(--text-3); font-size:.68rem; font-weight:700; }
 .ref-combo-empty { padding:18px 14px; text-align:center; color:var(--text-3); font-size:.82rem; }
 @keyframes refComboIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+
+/* ========================================================================== 
+   NOVOS MÓDULOS — CONVIVA
+   ========================================================================== */
+.sidebar-section-open .sidebar-section-list{display:block}
+@media (min-width: 900px){.sidebar-section-list{display:block!important}.sidebar-section-caret{transform:rotate(90deg);}.sidebar-section-header{cursor:default}}
+/* Publicidade / ADS — carrossel simples e infinito */
+.ads-carousel-simple{position:relative;width:100%;margin:0 0 24px;border-radius:16px;overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:0 10px 28px rgba(18,40,90,.07)}
+.ads-label{position:absolute;z-index:4;top:10px;left:12px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:rgba(0,0,0,.48);backdrop-filter:blur(7px);color:#fff;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
+.ads-label span{width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.18)}
+.ads-viewport{width:100%;overflow:hidden}
+.ads-track{display:flex;width:100%;will-change:transform}
+.ads-slide-simple{position:relative;display:block;flex:0 0 100%;width:100%;aspect-ratio:1200/300;background:var(--surface-2);text-decoration:none;overflow:hidden}
+.ads-slide-simple img{display:block;width:100%;height:100%;object-fit:cover}
+.ads-slide-simple:hover img{filter:brightness(.97)}
+.ads-slide-fallback{height:100%;display:flex;flex-direction:column;justify-content:center;padding:30px 7%;background:linear-gradient(110deg,var(--primary),#6d8fff);color:#fff}.ads-slide-fallback strong{font-size:clamp(20px,3vw,38px)}.ads-slide-fallback span{margin-top:6px;font-size:clamp(12px,1.5vw,17px);opacity:.9}
+.ads-admin-intro{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:15px;padding:17px 20px;margin-bottom:20px;border:1px solid rgba(41,84,214,.16);background:linear-gradient(135deg,var(--surface),var(--primary-soft));border-radius:18px}.ads-admin-intro-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--primary);color:#fff;box-shadow:0 8px 20px rgba(41,84,214,.2)}.ads-admin-intro strong{display:block;font-size:15px}.ads-admin-intro p{margin:4px 0 0;color:var(--text-2);font-size:12px;line-height:1.5}.ads-admin-intro>span{font-size:9px;font-weight:900;letter-spacing:.1em;color:var(--primary);padding:7px 9px;border-radius:999px;background:var(--surface)}
+@media(max-width:700px){.ads-slide-simple{aspect-ratio:1200/430}.ads-admin-intro{grid-template-columns:42px 1fr}.ads-admin-intro-icon{width:42px;height:42px}.ads-admin-intro>span{grid-column:2}}
+
+.admin-finance-head{display:flex;justify-content:space-between;gap:20px;margin-bottom:14px}.admin-finance-head>div{display:flex;flex-direction:column;gap:5px}.admin-finance-head span,.admin-metric-list span{font-size:12px;color:var(--text-3)}.finance-secondary{font-size:20px}.admin-chart-slot{min-height:230px}.admin-metric-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-metric-list div{padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);display:flex;justify-content:space-between;align-items:center}.admin-metric-list strong{font-size:24px}
+@media(max-width:900px){.ad-slide{grid-template-columns:1fr;gap:12px;padding-right:28px}.ad-slide-art{min-height:170px;max-height:190px}.ad-slide-content h3{font-size:27px}.ads-prev,.ads-next{top:43%}}
+@media(max-width:560px){.ads-carousel{padding:14px 12px 13px;border-radius:18px}.ads-track{min-height:360px}.ad-slide{padding:5px 27px 8px 5px}.ad-slide-art{display:flex;min-height:150px}.ad-slide-content p{font-size:13px}.ads-prev,.ads-next{width:32px;height:32px;font-size:20px;left:auto}.ads-prev{right:48px;top:17px;transform:none}.ads-next{right:10px;top:17px;transform:none}.ads-prev:hover,.ads-next:hover{transform:scale(1.05)}.ads-carousel-topline{padding-right:80px}.ad-slide-content{padding-left:5px}}
+.ads-admin-intro{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:15px;padding:17px 20px;margin-bottom:20px;border:1px solid rgba(41,84,214,.16);background:linear-gradient(135deg,var(--surface),var(--primary-soft));border-radius:18px}.ads-admin-intro-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--primary);color:#fff;box-shadow:0 8px 20px rgba(41,84,214,.2)}.ads-admin-intro strong{display:block;font-size:15px}.ads-admin-intro p{margin:4px 0 0;color:var(--text-2);font-size:12px;line-height:1.5}.ads-admin-intro>span{font-size:9px;font-weight:900;letter-spacing:.1em;color:var(--primary);padding:7px 9px;border-radius:999px;background:var(--surface)}
+@media(max-width:650px){.ads-admin-intro{grid-template-columns:42px 1fr}.ads-admin-intro-icon{width:42px;height:42px}.ads-admin-intro>span{grid-column:2}}
+/* Ajuste final do carrossel ADS: mais compacto e proporcional */
+.ads-carousel-simple{max-width:100%;margin:0 auto 20px;border-radius:14px}
+.ads-slide-simple{aspect-ratio:1200/260;max-height:220px}
+.ads-slide-simple img{object-fit:cover;object-position:center}
+.ads-label{top:9px;left:10px;padding:4px 8px;font-size:8px}
+@media(max-width:700px){.ads-slide-simple{aspect-ratio:1200/330;max-height:none}}
+
+/* --------------------------------------------------------------------------
+   ADMIN — acabamento executivo do painel inicial
+   -------------------------------------------------------------------------- */
+.admin-finance-head-pro { align-items:stretch; gap:18px; margin-bottom:2px; }
+.admin-finance-primary { flex:1; min-width:0; padding:15px 17px; border:1px solid var(--border); border-radius:12px; background:linear-gradient(135deg,var(--surface-2),var(--surface)); }
+.admin-finance-primary span,.admin-finance-secondary span { display:block; color:var(--text-3); font-size:.68rem; }
+.admin-finance-primary small { display:block; margin-top:5px; color:var(--text-3); font-size:.64rem; }
+.admin-finance-secondary { min-width:250px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.admin-finance-secondary > div { padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); display:flex; flex-direction:column; justify-content:center; }
+.finance-secondary { display:block; margin-top:5px; color:var(--text-0); font-size:1rem; font-weight:800; letter-spacing:-.02em; }
+.admin-chart-note { margin:8px 0 2px; color:var(--text-3); font-size:.66rem; line-height:1.4; }
+.admin-chart-slot { width:100%; min-width:0; }
+.admin-chart-slot-xl { margin-top:2px; }
+.professional-bars-large { gap:17px; }
+.professional-bars-large .bar-chart-row { grid-template-columns:minmax(120px,175px) 1fr auto; gap:14px; }
+.professional-bars-large .bar-chart-track { height:13px; }
+.professional-bars-large .bar-chart-value { font-size:.84rem; }
+.line-chart-y-label { font-size:8px; fill:var(--text-3); }
+.line-chart-value-label { font-size:8px; font-weight:700; fill:var(--text-1); }
+.admin-overview-grid { width:100%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+.admin-overview-item { display:flex; align-items:center; gap:10px; min-width:0; padding:13px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); }
+.admin-overview-icon { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:10px; }
+.admin-overview-icon.blue { color:var(--primary); background:var(--primary-soft); }
+.admin-overview-icon.purple { color:var(--accent-purple,var(--primary)); background:color-mix(in srgb,var(--accent-purple,var(--primary)) 10%,var(--surface)); }
+.admin-overview-icon.green { color:var(--ok-fg); background:color-mix(in srgb,var(--ok-fg) 10%,var(--surface)); }
+.admin-overview-icon.orange { color:var(--warn-fg); background:color-mix(in srgb,var(--warn-fg) 10%,var(--surface)); }
+.admin-overview-item div { min-width:0; }
+.admin-overview-item small,.admin-overview-item em { display:block; color:var(--text-3); font-size:.64rem; font-style:normal; }
+.admin-overview-item strong { display:block; margin:3px 0 2px; color:var(--text-0); font-size:1.12rem; line-height:1; }
+
+@media (max-width:900px) {
+  .admin-finance-head-pro { flex-direction:column; }
+  .admin-finance-secondary { min-width:0; }
+  .admin-overview-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:520px) {
+  .admin-finance-secondary { grid-template-columns:1fr; }
+  .admin-overview-grid { grid-template-columns:1fr; }
+  .line-chart-value-label { display:none; }
+}
+
+/* --------------------------------------------------------------------------
+   ADMIN — refinamento da composição financeira
+   -------------------------------------------------------------------------- */
+.admin-finance-panel .home-panel-body { padding-top:12px; }
+.admin-finance-panel .admin-finance-head-pro { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr); gap:12px; }
+.admin-finance-panel .admin-finance-primary { min-height:94px; display:flex; flex-direction:column; justify-content:center; padding:14px 17px; }
+.admin-finance-panel .admin-finance-secondary { min-width:0; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.admin-finance-panel .admin-finance-secondary > div { min-height:94px; padding:13px 14px; }
+.admin-finance-panel .finance-big { font-size:1.9rem; margin-top:4px; }
+.admin-finance-panel .finance-secondary { font-size:1.18rem; }
+.finance-mini-caption { display:block; margin-top:3px; color:var(--text-3); font-size:.61rem; }
+.admin-finance-panel .admin-chart-note { margin:9px 2px 0; }
+.admin-finance-panel .admin-chart-slot-xl { margin-top:0; }
+.admin-half-panel { min-height:100%; }
+.admin-half-panel .home-panel-body { min-height:285px; }
+.admin-half-panel .home-panel-body > div { width:100%; }
+
+@media (max-width:900px) {
+  .admin-finance-panel .admin-finance-head-pro { grid-template-columns:1fr; }
+  .admin-half-panel .home-panel-body { min-height:250px; }
+}
+@media (max-width:520px) {
+  .admin-finance-panel .admin-finance-secondary { grid-template-columns:1fr; }
+  .admin-finance-panel .finance-big { font-size:1.6rem; }
+}
+
+/* --------------------------------------------------------------------------
+   ADMIN — Receita: gráfico como elemento principal
+   -------------------------------------------------------------------------- */
+.admin-finance-panel .home-panel-body { padding:14px 16px 16px; }
+.admin-finance-panel .admin-finance-primary-main {
+  width:100%;
+  min-height:88px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:14px 18px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:linear-gradient(135deg,var(--surface-2),var(--surface));
+}
+.admin-finance-panel .finance-big { font-size:2.05rem; line-height:1.08; margin-top:5px; }
+.admin-finance-panel .admin-chart-note-finance { margin:10px 2px 4px; }
+.admin-finance-panel .admin-chart-slot-xl {
+  width:100%;
+  min-height:430px;
+  margin:0;
+  padding:2px 0 0;
+}
+.admin-finance-panel .admin-chart-slot-xl svg,
+.admin-finance-panel .admin-chart-slot-xl canvas { max-width:100%; }
+.admin-finance-panel .admin-finance-secondary-bottom {
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.admin-finance-panel .admin-finance-secondary-bottom > div {
+  min-height:70px;
+  box-sizing:border-box;
+  padding:12px 15px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface-2);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+@media (max-width:700px) {
+  .admin-finance-panel .admin-chart-slot-xl { min-height:360px; }
+  .admin-finance-panel .admin-finance-secondary-bottom { grid-template-columns:1fr; }
+  .admin-finance-panel .finance-big { font-size:1.75rem; }
+}
+
+
+/* ==========================================================================
+   ADMIN — Receita arrecadada: composição final
+   --------------------------------------------------------------------------
+   Este bloco afeta exclusivamente o painel financeiro do Admin.
+   ========================================================================== */
+.admin-finance-panel {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.admin-finance-panel .home-panel-body {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 18px 18px;
+}
+
+.admin-finance-panel .admin-finance-primary-main {
+  width: 100%;
+  min-height: 96px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--primary) 7%, var(--surface)),
+      var(--surface));
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-finance-panel .admin-finance-primary-main span {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--text-3);
+}
+
+.admin-finance-panel .admin-finance-primary-main small {
+  margin-top: 7px;
+  font-size: .66rem;
+  color: var(--text-3);
+}
+
+.admin-finance-panel .finance-big {
+  margin-top: 5px;
+  font-size: clamp(1.85rem, 3vw, 2.35rem);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+
+.admin-finance-panel .admin-chart-note-finance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 12px 0 4px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: .66rem;
+  line-height: 1.45;
+}
+
+.admin-finance-panel .admin-chart-note-finance::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.admin-finance-panel .admin-chart-slot-xl {
+  width: 100%;
+  min-height: 480px;
+  margin: 0;
+  padding: 6px 0 0;
+  box-sizing: border-box;
+}
+
+.admin-finance-panel .admin-chart-slot-xl .advanced-line-chart,
+.admin-finance-panel .admin-chart-slot-xl .line-chart-svg {
+  width: 100%;
+}
+
+.admin-finance-panel .admin-chart-slot-xl .line-chart-svg {
+  height: auto;
+  min-height: 430px;
+}
+
+.admin-finance-panel .admin-finance-secondary-bottom {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-finance-panel .admin-finance-secondary-bottom > div {
+  min-height: 74px;
+  box-sizing: border-box;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.admin-finance-panel .admin-finance-secondary-bottom > div:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+  .admin-finance-panel .home-panel-body {
+    padding: 13px 14px 15px;
+  }
+
+  .admin-finance-panel .admin-chart-slot-xl {
+    min-height: 360px;
+  }
+
+  .admin-finance-panel .admin-chart-slot-xl .line-chart-svg {
+    min-height: 340px;
+  }
+
+  .admin-finance-panel .admin-finance-secondary-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-finance-panel .finance-big {
+    font-size: 1.75rem;
+  }
+}

@@ -22,7 +22,7 @@ function buildBarChart(container, items, opts) {
 
   const max = Math.max(1, ...items.map(i => Number(i.value)));
   const wrap = document.createElement('div');
-  wrap.className = 'bar-chart professional-bars';
+  wrap.className = 'bar-chart professional-bars' + (opts.largeValues ? ' professional-bars-large' : '');
 
   items.forEach(item => {
     const pct = Math.max(0, Math.min(100, (Number(item.value) / max) * 100));
@@ -79,6 +79,14 @@ function buildLineChart(container, points, labels, opts) {
   const xLabels = (labels || []).map((l,i) =>
     `<text x="${coords[i][0]}" y="${h-8}" class="line-chart-axis-label" text-anchor="middle">${l}</text>`
   ).join('');
+  const yLabels = [0, .25, .5, .75, 1].map(t => {
+    const value = max - range * t;
+    const y = top + plotH * t + 3;
+    return `<text x="${left-9}" y="${y}" class="line-chart-y-label" text-anchor="end">${chartNumber(Math.round(value))}${opts.suffix || ''}</text>`;
+  }).join('');
+  const valueLabels = opts.showValues ? coords.map((c,i) =>
+    `<text x="${c[0]}" y="${Math.max(14,c[1]-10)}" class="line-chart-value-label" text-anchor="middle">${chartNumber(points[i])}${opts.suffix || ''}</text>`
+  ).join('') : '';
 
   container.innerHTML = `
     <div class="advanced-line-chart">
@@ -91,9 +99,11 @@ function buildLineChart(container, points, labels, opts) {
           </linearGradient>
         </defs>
         ${grid}
+        ${yLabels}
         <path d="${area}" fill="url(#${id})" class="chart-area"/>
         <path d="${line}" class="chart-line"/>
         ${dots}
+        ${valueLabels}
         ${xLabels}
       </svg>
     </div>

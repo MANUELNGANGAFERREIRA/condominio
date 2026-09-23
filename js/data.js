@@ -605,6 +605,71 @@ const ENTITIES = {
     mock: [],
   },
 
+
+  sindicos: {
+    key:'sindicos',label:'Síndicos',labelSingular:'Síndico',role:'admin',
+    fields:[{key:'nome',label:'Nome',type:'text',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'telefone',label:'Telefone',type:'tel',required:true},{key:'condominio',label:'Condomínio',type:'text',required:true},{key:'estado',label:'Estado',type:'select',options:['Ativo','Inativo'],required:true}],
+    columns:['nome','email','telefone','condominio','estado'],endpoints:{list:'GET /sindicos',create:'POST /sindicos',update:'PUT /sindicos/:id',remove:'DELETE /sindicos/:id'},
+    mock:[{id:1,nome:'João Manuel',email:'joao@condominio.ao',telefone:'923 111 222',condominio:'Jardins do Kilamba',estado:'Ativo'},{id:2,nome:'Ana Paula',email:'ana@condominio.ao',telefone:'924 333 444',condominio:'Residencial Nova Vida',estado:'Ativo'}]
+  },
+
+  anuncios: {
+    key: 'anuncios', label: 'Publicidade / ADS', labelSingular: 'Publicidade', role: 'admin',
+    fields: [
+      { key: 'titulo', label: 'Título da publicidade', type: 'text', required: true },
+      { key: 'anunciante', label: 'Anunciante / Marca', type: 'text', required: true },
+      { key: 'categoria', label: 'Categoria', type: 'select', options: ['Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
+      { key: 'descricao', label: 'Texto da publicidade', type: 'textarea', required: true },
+      { key: 'imagem', label: 'Imagem / Banner (URL)', type: 'url', required: false },
+      { key: 'cta', label: 'Texto do botão', type: 'text', required: false },
+      { key: 'link', label: 'Link de destino', type: 'url', required: false },
+      { key: 'publico', label: 'Público', type: 'select', options: ['Todos','Síndicos','Moradores','Porteiros'], required: true },
+      { key: 'data_inicio', label: 'Data inicial', type: 'date', required: true },
+      { key: 'data_fim', label: 'Data final', type: 'date', required: true },
+      { key: 'estado', label: 'Estado', type: 'select', options: ['Ativo','Inativo','Agendado'], required: true },
+      { key: 'prioridade', label: 'Destaque', type: 'select', options: ['Normal','Alta'], required: true }
+    ],
+    columns: ['titulo','anunciante','categoria','publico','data_inicio','data_fim','estado','prioridade'],
+    endpoints: { list:'GET /anuncios', create:'POST /anuncios', update:'PUT /anuncios/:id', remove:'DELETE /anuncios/:id' },
+    mock: [
+      { id:1, titulo:'Internet Fibra para a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Tecnologia', descricao:'Tenha uma ligação rápida e estável para trabalhar, estudar e aproveitar o seu entretenimento em casa.', imagem:'assets/img/ads/ad-fibra.svg', cta:'Conhecer oferta', link:'#', publico:'Todos', data_inicio:'2026-09-20', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
+      { id:2, titulo:'Proteja a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Casa e Condomínio', descricao:'Soluções modernas de segurança e monitorização para deixar a sua família mais tranquila.', imagem:'assets/img/ads/ad-seguranca.svg', cta:'Ver solução', link:'#', publico:'Moradores', data_inicio:'2026-09-22', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' },
+      { id:3, titulo:'Energia solar para o seu lar', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Descubra alternativas de energia solar para reduzir custos e aumentar a autonomia da sua residência.', imagem:'assets/img/ads/ad-solar.svg', cta:'Saber mais', link:'#', publico:'Todos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
+      { id:4, titulo:'Serviços para o seu condomínio', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Encontre soluções de limpeza, manutenção e assistência para facilitar a gestão do dia a dia.', imagem:'assets/img/ads/ad-servicos.svg', cta:'Ver serviços', link:'#', publico:'Síndicos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' }
+    ]
+  },
+
+  manutencoes: {
+    key:'manutencoes', label:'Manutenções', labelSingular:'Manutenção', role:'sindico',
+    fields:[
+      {key:'titulo',label:'Título',type:'text',required:true},{key:'local',label:'Local',type:'text',required:true},
+      {key:'descricao',label:'Descrição',type:'textarea',required:true},{key:'fornecedor',label:'Fornecedor',type:'text',required:false},
+      {key:'data_abertura',label:'Data de abertura',type:'date',required:true},{key:'data_prevista',label:'Data prevista',type:'date',required:false},
+      {key:'custo',label:'Custo (Kz)',type:'number',required:false},{key:'prioridade',label:'Prioridade',type:'select',options:['Baixa','Normal','Alta','Urgente'],required:true},
+      {key:'estado',label:'Estado',type:'select',options:['Pendente','Agendada','Em andamento','Concluída','Cancelada'],required:true}
+    ],
+    columns:['titulo','local','fornecedor','data_prevista','custo','prioridade','estado'],
+    endpoints:{list:'GET /manutencoes',create:'POST /manutencoes',update:'PUT /manutencoes/:id',remove:'DELETE /manutencoes/:id'},
+    mock:[
+      {id:1,titulo:'Revisão do elevador',local:'Bloco A',descricao:'Inspeção preventiva.',fornecedor:'Lift Angola',data_abertura:'2026-09-05',data_prevista:'2026-09-28',custo:85000,prioridade:'Alta',estado:'Agendada'},
+      {id:2,titulo:'Jardinagem',local:'Área exterior',descricao:'Poda e manutenção.',fornecedor:'Verde Mais',data_abertura:'2026-09-10',data_prevista:'2026-09-25',custo:32000,prioridade:'Normal',estado:'Em andamento'}
+    ]
+  },
+
+  documentos: {
+    key:'documentos',label:'Documentos',labelSingular:'Documento',role:'sindico',
+    fields:[{key:'nome',label:'Nome',type:'text',required:true},{key:'categoria',label:'Categoria',type:'select',options:['Ata','Regulamento','Contrato','Financeiro','Administrativo','Outro'],required:true},{key:'descricao',label:'Descrição',type:'textarea',required:false},{key:'data',label:'Data',type:'date',required:true},{key:'ficheiro',label:'Ficheiro (URL)',type:'url',required:false}],
+    columns:['nome','categoria','data','descricao'], endpoints:{list:'GET /documentos',create:'POST /documentos',update:'PUT /documentos/:id',remove:'DELETE /documentos/:id'},
+    mock:[{id:1,nome:'Regulamento interno',categoria:'Regulamento',descricao:'Normas de convivência.',data:'2026-01-12',ficheiro:''},{id:2,nome:'Ata da assembleia',categoria:'Ata',descricao:'Ata da assembleia anual.',data:'2026-03-18',ficheiro:''}]
+  },
+
+  funcionariosCasa: {
+    key:'funcionariosCasa',label:'Funcionários da Minha Casa',labelSingular:'Funcionário',role:'morador',
+    fields:[{key:'nome',label:'Nome',type:'text',required:true},{key:'funcao',label:'Função',type:'select',options:['Empregada doméstica','Jardineiro','Motorista','Cuidador','Outro'],required:true},{key:'documento',label:'Documento',type:'text',required:true},{key:'telefone',label:'Telefone',type:'tel',required:true},{key:'data_entrada',label:'Data de entrada',type:'date',required:true},{key:'estado',label:'Estado',type:'select',options:['Ativo','Inativo'],required:true}],
+    columns:['nome','funcao','documento','telefone','data_entrada','estado'],endpoints:{list:'GET /morador/funcionarios-casa',create:'POST /morador/funcionarios-casa',update:'PUT /morador/funcionarios-casa/:id',remove:'DELETE /morador/funcionarios-casa/:id'},
+    mock:[{id:1,nome:'Maria José',funcao:'Empregada doméstica',documento:'009876543LA042',telefone:'923 400 120',data_entrada:'2026-02-01',estado:'Ativo'},{id:2,nome:'Carlos Pedro',funcao:'Jardineiro',documento:'004321987LA042',telefone:'925 555 100',data_entrada:'2026-04-12',estado:'Ativo'}]
+  },
+
   /* ==========================================================================
      ÁREA PORTEIRO
      Conta criada pelo síndico (ver entidade `porteiros`). O porteiro não cria
@@ -681,6 +746,7 @@ const MENUS = {
         { type: 'entity', label: 'Tipos de Condomínio', icon: 'layers', entity: 'tiposCondominio' },
         { type: 'entity', label: 'Tipos de Pagamento', icon: 'creditCard', entity: 'tiposPagamento' },
         { type: 'entity', label: 'Planos', icon: 'package', entity: 'planos' },
+        { type: 'entity', label: 'Publicidade / ADS', icon: 'megaphone', entity: 'anuncios' },
       ],
     },
     {
@@ -689,8 +755,17 @@ const MENUS = {
         { type: 'entity', label: 'Administradores', icon: 'shield', entity: 'administradores' },
         { type: 'entity', label: 'Condomínios', icon: 'building', entity: 'condominios' },
         { type: 'entity', label: 'Usuários', icon: 'grid', entity: 'usuarios' },
+        { type: 'entity', label: 'Síndicos', icon: 'shield', entity: 'sindicos' },
+        { type: 'entity', label: 'Moradores', icon: 'users', entity: 'moradores' },
+        { type: 'entity', label: 'Funcionários', icon: 'wrench', entity: 'funcionarios' },
+        { type: 'entity', label: 'Porteiros', icon: 'shield', entity: 'porteiros' },
       ],
     },
+    { group: 'Financeiro', icon: 'wallet', items: [
+        { type: 'entity', label: 'Pagamentos', icon: 'coins', entity: 'pagamentos' },
+        { type: 'entity', label: 'Taxas', icon: 'receipt', entity: 'taxas' },
+        { type: 'entity', label: 'Despesas', icon: 'wallet', entity: 'despesas' },
+      ] },
   ],
   sindico: [
     { type: 'home', label: 'Início', icon: 'home' },
@@ -708,6 +783,8 @@ const MENUS = {
         { type: 'entity', label: 'Funcionários', icon: 'wrench', entity: 'funcionarios' },
         { type: 'entity', label: 'Porteiros', icon: 'shield', entity: 'porteiros' },
         { type: 'entity', label: 'Portas', icon: 'door', entity: 'portas' },
+        { type: 'entity', label: 'Manutenções', icon: 'wrench', entity: 'manutencoes' },
+        { type: 'entity', label: 'Documentos', icon: 'fileText', entity: 'documentos' },
       ],
     },
     {
@@ -721,6 +798,7 @@ const MENUS = {
       group: 'Comunicação', icon: 'megaphone',
       items: [
         { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicados' },
+        { type: 'custom', label: 'Chat do Condomínio', icon: 'message', screen: 'chat' },
         { type: 'entity', label: 'Votações', icon: 'vote', entity: 'votacoes' },
         { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regras' },
       ],
@@ -752,13 +830,18 @@ const MENUS = {
         { type: 'entity', label: 'Minhas Visitas', icon: 'walker', entity: 'minhasVisitas' },
         { type: 'entity', label: 'Minhas Reservas', icon: 'calendar', entity: 'minhasReservas' },
         { type: 'entity', label: 'Minhas Ocorrências', icon: 'alert', entity: 'minhasOcorrencias' },
+        { type: 'custom', label: 'Minha Mensalidade', icon: 'receipt', screen: 'mensalidade' },
+        { type: 'custom', label: 'Pagar Mensalidade', icon: 'creditCard', screen: 'pagar' },
         { type: 'entity', label: 'Meus Pagamentos', icon: 'coins', entity: 'meusPagamentos' },
+        { type: 'entity', label: 'Funcionários da Minha Casa', icon: 'users', entity: 'funcionariosCasa' },
       ],
     },
     {
       group: 'O Condomínio', icon: 'megaphone',
       items: [
+        { type: 'custom', label: 'Chat do Condomínio', icon: 'message', screen: 'chat' },
         { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicadosView' },
+        { type: 'custom', label: 'Manutenções', icon: 'wrench', screen: 'manutencoesMorador' },
         { type: 'votar', label: 'Votações', icon: 'vote' },
         { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regrasView' },
         { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComunsView' },
@@ -773,6 +856,7 @@ const MENUS = {
         { type: 'visitasPorteiro', label: 'Visitas', icon: 'walker' },
         { type: 'veiculosPorteiro', label: 'Veículos do Condomínio', icon: 'car' },
         { type: 'entity', label: 'Portas', icon: 'door', entity: 'portasView' },
+        
       ],
     },
   ],

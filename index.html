@@ -133,6 +133,34 @@
     </div>
   </section>
 
+  <section class="landing-founder-section landing-section">
+    <div class="landing-founder-card">
+      <div class="landing-founder-photo"><img src="assets/img/fundador.jpg" alt="Fundador do CONVIVA"></div>
+      <div class="landing-founder-copy">
+        <span class="landing-hero-eyebrow">Visão e liderança</span>
+        <h2>Fundador do CONVIVA</h2>
+        <p>Uma visão focada em tornar a gestão de condomínios mais organizada, transparente e acessível através da tecnologia.</p>
+        <div class="founder-meta"><strong>Manuel Ferreira</strong><span>Fundador e criador da plataforma</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section landing-organigram-section">
+    <div class="landing-section-head">
+      <h2>Estrutura do condomínio</h2>
+      <p class="landing-section-sub">Conheça visualmente a estrutura de gestão e operação do condomínio.</p>
+    </div>
+    <button type="button" class="organigram-image-button" id="btn-open-organigram">
+      <img src="assets/img/organigrama-condominio.png" alt="Organigrama do condomínio">
+      <span>Ampliar organigrama</span>
+    </button>
+  </section>
+
+  <div class="image-lightbox" id="organigram-lightbox" aria-hidden="true">
+    <button type="button" class="image-lightbox-close" id="close-organigram" aria-label="Fechar">×</button>
+    <img src="assets/img/organigrama-condominio.png" alt="Organigrama do condomínio ampliado">
+  </div>
+
   <section class="landing-section" id="como-funciona">
     <div class="landing-section-head">
       <h2>Como funciona</h2>
@@ -731,9 +759,7 @@
         <span class="sidebar-role-badge" id="app-role-label">—</span>
       </div>
       <nav class="sidebar-nav" id="app-sidebar-nav"></nav>
-      <div class="sidebar-footer">
-        <button id="btn-logout" class="btn btn-secondary btn-block">Sair</button>
-      </div>
+      <div class="sidebar-footer"></div>
     </aside>
 
     <main class="app-main">
@@ -741,7 +767,7 @@
         <button type="button" class="menu-toggle" id="btn-menu-toggle" aria-label="Abrir menu">
           <span data-icon="menu" data-icon-size="20"></span>
         </button>
-        <span class="app-topbar-title">Área do <strong id="app-role-label-topbar">—</strong></span>
+        <span class="app-topbar-title" aria-hidden="true"></span>
 
         <div class="topbar-profile" id="topbar-profile">
           <button type="button" class="topbar-profile-btn" id="btn-topbar-profile">
@@ -768,6 +794,7 @@
 <script src="js/icons.js"></script>
 <script src="js/interactions.js"></script>
 <script src="js/data.js"></script>
+<script src="js/demo-seed.js"></script>
 <script src="js/render.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>
