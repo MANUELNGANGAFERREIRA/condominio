@@ -147,19 +147,53 @@
 
   <section class="landing-section landing-organigram-section">
     <div class="landing-section-head">
+      <span class="landing-hero-eyebrow">Organização</span>
       <h2>Estrutura do condomínio</h2>
-      <p class="landing-section-sub">Conheça visualmente a estrutura de gestão e operação do condomínio.</p>
+      <p class="landing-section-sub">Uma visão simples de quem gere o condomínio e de como as principais áreas se relacionam.</p>
     </div>
-    <button type="button" class="organigram-image-button" id="btn-open-organigram">
-      <img src="assets/img/organigrama-condominio.png" alt="Organigrama do condomínio">
-      <span>Ampliar organigrama</span>
-    </button>
-  </section>
 
-  <div class="image-lightbox" id="organigram-lightbox" aria-hidden="true">
-    <button type="button" class="image-lightbox-close" id="close-organigram" aria-label="Fechar">×</button>
-    <img src="assets/img/organigrama-condominio.png" alt="Organigrama do condomínio ampliado">
-  </div>
+    <div class="organigram" aria-label="Organigrama da estrutura do condomínio">
+      <div class="org-node org-node-platform">
+        <span class="org-node-icon" data-icon="shield" data-icon-size="18"></span>
+        <div><strong>Administrador da Plataforma</strong><small>Gestão da plataforma CONVIVA</small></div>
+      </div>
+      <div class="org-connector org-connector-v"></div>
+
+      <div class="org-node org-node-sindico">
+        <span class="org-node-icon" data-icon="building" data-icon-size="18"></span>
+        <div><strong>Síndico</strong><small>Administração do condomínio</small></div>
+      </div>
+
+      <div class="org-connector org-connector-branches"></div>
+      <div class="org-branch-grid">
+        <article class="org-branch">
+          <div class="org-node org-node-role role-moradores">
+            <span class="org-node-icon" data-icon="users" data-icon-size="18"></span>
+            <div><strong>Moradores</strong><small>Unidades e participação</small></div>
+          </div>
+        </article>
+        <article class="org-branch">
+          <div class="org-node org-node-role role-portaria">
+            <span class="org-node-icon" data-icon="shield" data-icon-size="18"></span>
+            <div><strong>Portaria / Porteiros</strong><small>Controlo de acessos e visitas</small></div>
+          </div>
+        </article>
+        <article class="org-branch">
+          <div class="org-node org-node-role role-funcionarios">
+            <span class="org-node-icon" data-icon="wrench" data-icon-size="18"></span>
+            <div><strong>Funcionários</strong><small>Operação e manutenção</small></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="org-modules-head"><span>Áreas geridas no CONVIVA</span></div>
+      <div class="org-module-grid">
+        <div class="org-module"><span data-icon="door" data-icon-size="17"></span><div><strong>Unidades e áreas comuns</strong><small>Cadastro, espaços e reservas</small></div></div>
+        <div class="org-module"><span data-icon="wallet" data-icon-size="17"></span><div><strong>Financeiro e pagamentos</strong><small>Taxas, cobranças e despesas</small></div></div>
+        <div class="org-module"><span data-icon="fileText" data-icon-size="17"></span><div><strong>Manutenções e documentos</strong><small>Serviços, documentos e ocorrências</small></div></div>
+      </div>
+    </div>
+  </section>
 
   <section class="landing-section" id="como-funciona">
     <div class="landing-section-head">
@@ -628,54 +662,177 @@
           <button type="button" class="btn btn-secondary" id="btn-plano-voltar">&larr; Voltar</button>
           <button type="button" class="btn btn-primary" id="btn-plano-continuar">Continuar para pagamento</button>
         </div>
-        <p class="api-note">Endpoint real: POST /assinatura</p>
+        <p class="api-note"></p>
       </div>
 
-      <!-- PASSO 3 — Pagamento (simulado) -->
+      <!-- PASSO 3 — Método de pagamento -->
       <div class="signup-panel" data-panel="3">
-        <div class="signup-card-icon"><span data-icon="creditCard" data-icon-size="26"></span></div>
-        <h1>Pagamento</h1>
-        <p class="auth-subtitle">Ambiente simulado — nenhum valor é cobrado agora. Já preparado para ligar a um gateway real (Stripe, Multicaixa Express, etc.).</p>
+        <div class="checkout-shell">
+          <div class="checkout-main">
+            <header class="checkout-header">
+              <span class="payment-eyebrow"><span data-icon="shield" data-icon-size="14"></span> Pagamento seguro</span>
+              <h1>Escolha como pretende pagar</h1>
+              <p>Selecione o método e siga apenas as instruções necessárias para concluir a subscrição.</p>
+            </header>
 
-        <div class="signup-order-summary">
-          <span>Plano <strong id="summary-plan-name">Profissional</strong></span>
-          <span id="summary-plan-price">35.000 Kz/mês</span>
+            <form id="form-pagamento" class="checkout-form" novalidate>
+              <section class="checkout-section" aria-labelledby="checkout-methods-title">
+                <div class="checkout-section-head">
+                  <span class="checkout-step-num">1</span>
+                  <div>
+                    <h2 id="checkout-methods-title">Método de pagamento</h2>
+                    <p>Escolha uma das opções abaixo</p>
+                  </div>
+                </div>
+
+                <div class="payment-methods" role="radiogroup" aria-label="Método de pagamento">
+                  <label class="payment-method-option is-selected" data-payment-method="express">
+                    <input type="radio" name="signup-payment-method" value="express" checked>
+                    <span class="payment-method-radio" aria-hidden="true"></span>
+                    <span class="payment-method-logo payment-method-logo-express" aria-hidden="true">MX</span>
+                    <span class="payment-method-copy">
+                      <strong>Multicaixa Express</strong>
+                      <small>Confirme o pagamento diretamente no telemóvel</small>
+                    </span>
+                    <span class="payment-method-badge">Rápido</span>
+                  </label>
+
+                  <label class="payment-method-option" data-payment-method="reference">
+                    <input type="radio" name="signup-payment-method" value="reference">
+                    <span class="payment-method-radio" aria-hidden="true"></span>
+                    <span class="payment-method-logo payment-method-logo-reference" aria-hidden="true">MC</span>
+                    <span class="payment-method-copy">
+                      <strong>Referência Multicaixa</strong>
+                      <small>ATM, Internet Banking ou Multicaixa Express</small>
+                    </span>
+                    <span class="payment-method-badge">Flexível</span>
+                  </label>
+
+                  <label class="payment-method-option" data-payment-method="transfer">
+                    <input type="radio" name="signup-payment-method" value="transfer">
+                    <span class="payment-method-radio" aria-hidden="true"></span>
+                    <span class="payment-method-logo payment-method-logo-transfer" aria-hidden="true">TB</span>
+                    <span class="payment-method-copy">
+                      <strong>Transferência bancária</strong>
+                      <small>Transfira o valor e envie o comprovativo</small>
+                    </span>
+                    <span class="payment-method-badge">Manual</span>
+                  </label>
+                </div>
+              </section>
+
+              <section class="checkout-section checkout-instructions" aria-labelledby="checkout-instructions-title">
+                <div class="checkout-section-head">
+                  <span class="checkout-step-num">2</span>
+                  <div>
+                    <h2 id="checkout-instructions-title">Dados e instruções</h2>
+                    <p>Siga os passos do método selecionado</p>
+                  </div>
+                </div>
+
+                <div class="payment-method-detail is-visible" data-payment-detail="express">
+                  <div class="payment-detail-title">
+                    <div>
+                      <span class="payment-detail-eyebrow">Pagamento online</span>
+                      <h3>Multicaixa Express</h3>
+                    </div>
+                    <span class="payment-live-badge"><i></i> Instantâneo</span>
+                  </div>
+                  <ol class="payment-steps-list">
+                    <li><strong>Continuar</strong> — o pedido de pagamento é criado.</li>
+                    <li><strong>Abrir o Multicaixa Express</strong> — confirme no telemóvel.</li>
+                    <li><strong>Concluído</strong> — a subscrição fica ativa após a confirmação.</li>
+                  </ol>
+                </div>
+
+                <div class="payment-method-detail" data-payment-detail="reference">
+                  <div class="payment-detail-title">
+                    <div>
+                      <span class="payment-detail-eyebrow">Pagamento por referência</span>
+                      <h3>Referência Multicaixa</h3>
+                    </div>
+                    <span class="payment-live-badge"><i></i> Disponível</span>
+                  </div>
+                  <p class="payment-detail-lead">Utilize estes dados em ATM, Internet Banking ou Multicaixa Express.</p>
+                  <div class="reference-box">
+                    <div><span>Entidade</span><strong id="signup-reference-entity">10123</strong></div>
+                    <div><span>Referência</span><strong id="signup-reference-number">000 000 000</strong></div>
+                    <div><span>Valor</span><strong id="signup-reference-amount">35.000 Kz</strong></div>
+                  </div>
+                  <p class="payment-detail-hint">A referência será atualizada quando o pagamento estiver pronto a ser efetuado.</p>
+                </div>
+
+                <div class="payment-method-detail" data-payment-detail="transfer">
+                  <div class="payment-detail-title">
+                    <div>
+                      <span class="payment-detail-eyebrow">Pagamento por transferência</span>
+                      <h3>Transferência bancária</h3>
+                    </div>
+                    <span class="payment-live-badge payment-live-badge-manual">Validação manual</span>
+                  </div>
+                  <p class="payment-detail-lead">Transfira o valor para a conta abaixo e anexe o comprovativo.</p>
+                  <div class="bank-details-card">
+                    <span class="bank-details-title">Dados para transferência</span>
+                    <div><span>Banco</span><strong>BFA</strong></div>
+                    <div><span>IBAN</span><strong>AO06.0006.2536.0120.3011.0</strong></div>
+                    <div><span>Titular</span><strong>EFSI SOLUÇÕES-COM.GERAL E PREST.SERV.LDA</strong></div>
+                  </div>
+                  <div class="payment-upload">
+                    <label for="pg-comprovativo">
+                      <span class="payment-upload-icon" data-icon="receipt" data-icon-size="18"></span>
+                      <span>
+                        <strong>Comprovativo da transferência</strong>
+                        <small>PDF, JPG ou PNG · até 10 MB</small>
+                      </span>
+                      <span class="payment-upload-action">Escolher ficheiro</span>
+                    </label>
+                    <input type="file" id="pg-comprovativo" accept="image/*,.pdf">
+                  </div>
+                </div>
+              </section>
+
+              <div class="checkout-actions">
+                <button type="button" class="btn btn-secondary" id="btn-pagamento-voltar">Voltar</button>
+                <button type="submit" class="btn btn-primary" id="btn-pagamento-confirmar">Confirmar pagamento</button>
+              </div>
+            </form>
+          </div>
+
+          <aside class="checkout-summary" aria-label="Resumo do pagamento">
+            <span class="checkout-summary-eyebrow">Resumo</span>
+            <h2>Subscrição CONVIVA</h2>
+            <div class="checkout-summary-plan">
+              <span>Plano</span>
+              <strong id="summary-plan-name">Profissional</strong>
+            </div>
+            <div class="checkout-summary-rows">
+              <div class="checkout-summary-row">
+                <span>Período</span>
+                <strong>Mensal</strong>
+              </div>
+              <div class="checkout-summary-row">
+                <span>Subtotal</span>
+                <strong id="summary-plan-subtotal">35.000 Kz</strong>
+              </div>
+            </div>
+            <div class="checkout-summary-total">
+              <span>Total</span>
+              <strong id="summary-plan-price">35.000 Kz/mês</strong>
+            </div>
+            <p class="checkout-summary-note">
+              <span data-icon="lock" data-icon-size="14"></span>
+              <span>Os seus dados são tratados de forma segura. Pode alterar o método antes de confirmar.</span>
+            </p>
+          </aside>
         </div>
-
-        <form id="form-pagamento" class="crud-form" novalidate>
-          <div class="form-row">
-            <label for="pg-nome">Nome no cartão</label>
-            <input type="text" id="pg-nome" placeholder="Como está impresso no cartão" required>
-          </div>
-          <div class="form-row">
-            <label for="pg-numero">Número do cartão</label>
-            <input type="text" id="pg-numero" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" required>
-          </div>
-          <div class="form-row-group">
-            <div class="form-row">
-              <label for="pg-validade">Validade</label>
-              <input type="text" id="pg-validade" placeholder="MM/AA" inputmode="numeric" maxlength="5" required>
-            </div>
-            <div class="form-row">
-              <label for="pg-cvc">CVC</label>
-              <input type="text" id="pg-cvc" placeholder="123" inputmode="numeric" maxlength="4" required>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" id="btn-pagamento-voltar">&larr; Voltar</button>
-            <button type="submit" class="btn btn-primary" id="btn-pagamento-confirmar">Confirmar e pagar</button>
-          </div>
-        </form>
-        <p class="signup-secure-note"><span data-icon="lock" data-icon-size="14"></span>Pagamento simulado neste mockup — o checkout e a encriptação reais entram com a integração do backend.</p>
-        <p class="api-note">Endpoint real: POST /pagamentos/checkout</p>
       </div>
 
-      <!-- PASSO 3B — Processando pagamento (transição simulada) -->
+<!-- PASSO 3B — Processando pagamento (transição simulada) -->
       <div class="signup-panel" data-panel="processing">
         <div class="signup-processing">
           <span class="signup-spinner"></span>
           <h1>A processar o pagamento…</h1>
-          <p class="auth-subtitle">Simulação local — é aqui que o pedido seguiria para o gateway de pagamento real.</p>
+          <p class="auth-subtitle">Aguarde um momento enquanto registamos o seu pedido de pagamento.</p>
         </div>
       </div>
 
@@ -684,14 +841,14 @@
         <div class="signup-success">
           <span class="signup-success-icon" data-icon="check" data-icon-size="26"></span>
           <h1>Conta criada com sucesso!</h1>
-          <p class="auth-subtitle">Pagamento simulado confirmado. O acesso do síndico já está liberado — pode entrar e configurar o seu condomínio.</p>
+          <p class="auth-subtitle">Pedido de pagamento registado. Depois da confirmação do método escolhido, o acesso do síndico fica liberado.</p>
           <div class="signup-order-summary">
             <span>Plano <strong id="success-plan-name">Profissional</strong></span>
             <span id="success-plan-price">35.000 Kz/mês</span>
           </div>
           <button type="button" class="btn btn-primary btn-block" id="btn-signup-finalizar">Entrar na plataforma</button>
         </div>
-        <p class="api-note">Endpoint real: POST /condominio → POST /pagamentos/checkout → POST /auth/login</p>
+        <p class="api-note"></p>
       </div>
 
     </div>

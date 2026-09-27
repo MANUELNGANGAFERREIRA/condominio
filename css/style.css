@@ -1573,3 +1573,1468 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
     font-size: 1.75rem;
   }
 }
+
+/* ============================================================================
+   CHECKOUT DE PAGAMENTOS — layout profissional e responsivo
+   Desktop: coluna principal (métodos + instruções) + resumo lateral
+   Tablet / mobile: empilhamento natural, sem overflow
+   ============================================================================ */
+
+/* —— Shell geral —— */
+.checkout-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 28px;
+  align-items: start;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.checkout-shell-resident {
+  max-width: 1080px;
+}
+
+.checkout-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.checkout-header {
+  margin-bottom: 22px;
+}
+.checkout-header h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-0);
+}
+.checkout-header p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.checkout-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.checkout-page-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.checkout-page-top h1 {
+  margin: 0 0 4px;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+.checkout-page-top p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.85rem;
+}
+.checkout-page-top .btn-sm {
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+}
+
+/* —— Formulário / secções —— */
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.checkout-section {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.checkout-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.checkout-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.checkout-section-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-0);
+  font-weight: 700;
+}
+.checkout-section-head p {
+  margin: 3px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+/* —— Métodos de pagamento —— */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.payment-method-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  min-height: 72px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  box-sizing: border-box;
+}
+.payment-method-option:hover {
+  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-strong));
+}
+.payment-method-option.is-selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.payment-method-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.payment-method-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.payment-method-option.is-selected .payment-method-radio {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: inset 0 0 0 4px var(--surface);
+}
+.payment-method-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+.payment-method-logo-reference { background: #3d6f95; }
+.payment-method-logo-transfer { background: #6a7180; }
+.payment-method-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.payment-method-copy strong {
+  font-size: 0.88rem;
+  color: var(--text-0);
+  line-height: 1.25;
+}
+.payment-method-copy small {
+  font-size: 0.72rem;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.payment-method-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: start;
+  margin-top: 2px;
+}
+
+/* —— Instruções / detalhe do método —— */
+.payment-method-detail {
+  display: none;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-sizing: border-box;
+}
+.payment-method-detail.is-visible {
+  display: block;
+  animation: signup-panel-in 0.18s var(--ease);
+}
+
+.payment-detail-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.payment-detail-eyebrow {
+  display: block;
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.payment-detail-title h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: var(--text-0);
+}
+.payment-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ok-fg) 25%, var(--border));
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.payment-live-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.payment-live-badge-manual {
+  color: var(--text-2);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.payment-detail-lead {
+  margin: 0 0 14px;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.payment-detail-hint {
+  margin: 12px 0 0;
+  color: var(--text-3);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.payment-steps-list {
+  margin: 0;
+  padding: 0 0 0 1.15rem;
+  color: var(--text-1);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.payment-steps-list li {
+  margin-bottom: 8px;
+}
+.payment-steps-list li:last-child {
+  margin-bottom: 0;
+}
+.payment-steps-list strong {
+  color: var(--text-0);
+}
+
+/* —— Referência Multicaixa —— */
+.reference-box {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.reference-box > div {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  min-width: 0;
+}
+.reference-box span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-3);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.reference-box strong {
+  display: block;
+  color: var(--text-0);
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+/* —— Dados bancários —— */
+.bank-details-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  margin-bottom: 14px;
+}
+.bank-details-title {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bank-details-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.bank-details-card > div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.bank-details-card > div span {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.bank-details-card > div strong {
+  color: var(--text-0);
+  text-align: right;
+  word-break: break-all;
+}
+
+/* —— Upload comprovativo —— */
+.payment-upload {
+  position: relative;
+}
+.payment-upload input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.payment-upload label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.payment-upload label:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.payment-upload-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: var(--primary-soft);
+  flex-shrink: 0;
+}
+.payment-upload label > span:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+.payment-upload label strong {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-0);
+}
+.payment-upload label small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  color: var(--text-3);
+}
+.payment-upload-action {
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--primary);
+  background: var(--surface-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* —— Ações (botões) —— */
+.checkout-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 4px;
+}
+.checkout-actions .btn-primary {
+  min-width: 200px;
+}
+.checkout-actions .btn-secondary {
+  min-width: 110px;
+}
+
+/* —— Resumo lateral —— */
+.checkout-summary {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  position: sticky;
+  top: 24px;
+  box-sizing: border-box;
+}
+.checkout-summary-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.checkout-summary h2 {
+  margin: 0 0 18px;
+  font-size: 1.05rem;
+  color: var(--text-0);
+  line-height: 1.3;
+}
+.checkout-summary-plan {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.checkout-summary-plan span { color: var(--text-3); }
+.checkout-summary-plan strong { color: var(--text-0); text-align: right; }
+
+.checkout-summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 4px;
+}
+.checkout-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+.checkout-summary-row:last-child { border-bottom: 0; }
+.checkout-summary-row span { color: var(--text-3); }
+.checkout-summary-row strong { color: var(--text-1); text-align: right; }
+
+.checkout-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 0 0;
+  border-top: 1.5px solid var(--border-strong);
+}
+.checkout-summary-total span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.checkout-summary-total strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-align: right;
+  letter-spacing: -0.02em;
+}
+
+.checkout-summary-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.checkout-summary-note [data-icon] {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* —— Signup: alargar o card no passo de pagamento —— */
+.signup-card:has(.signup-panel[data-panel="3"].active) {
+  width: min(1120px, calc(100vw - 48px));
+  max-width: 1120px;
+  padding: 36px 40px 32px;
+  overflow: visible;
+}
+
+/* Overview da mensalidade (lista) — mantém legível */
+.payment-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.payment-main-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.payment-main-card > span {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+.payment-main-card > strong {
+  font-size: 1.75rem;
+  color: var(--text-0);
+  letter-spacing: -0.02em;
+}
+.payment-main-card > small {
+  color: var(--text-2);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+.payment-main-card .btn {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+.payment-info-card {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.payment-info-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+.payment-info-card > div span { color: var(--text-3); }
+.payment-info-card > div strong { color: var(--text-0); text-align: right; }
+.payment-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.payment-history > div {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.84rem;
+}
+.payment-history > div:last-child { border-bottom: 0; }
+
+/* ============================================================================
+   RESPONSIVIDADE — breakpoints reais
+   ============================================================================ */
+
+/* Laptop / tablet landscape */
+@media (max-width: 1100px) {
+  .signup-card:has(.signup-panel[data-panel="3"].active) {
+    width: min(960px, calc(100vw - 36px));
+    padding: 28px 28px 26px;
+  }
+  .checkout-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+    gap: 20px;
+  }
+  .checkout-section { padding: 18px; }
+  .payment-method-option {
+    min-height: 66px;
+    padding: 12px 14px;
+    grid-template-columns: 18px 38px minmax(0, 1fr) auto;
+  }
+  .payment-method-logo { width: 36px; height: 36px; }
+  .payment-method-badge { display: none; }
+  .reference-box { grid-template-columns: 1fr; }
+}
+
+/* Tablet portrait — uma coluna quando o espaço é insuficiente */
+@media (max-width: 900px) {
+  .checkout-shell,
+  .checkout-shell-resident {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    max-width: 640px;
+  }
+  .checkout-summary {
+    position: static;
+    order: -1; /* resumo no topo no fluxo mobile/tablet estreito */
+  }
+  .signup-card:has(.signup-panel[data-panel="3"].active) {
+    width: min(640px, calc(100vw - 24px));
+    padding: 24px 20px;
+  }
+  .payment-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 620px) {
+  .signup-card:has(.signup-panel[data-panel="3"].active) {
+    width: calc(100vw - 16px);
+    max-width: none;
+    padding: 20px 14px 18px;
+  }
+  .checkout-header h1 {
+    font-size: 1.28rem;
+  }
+  .checkout-section {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .payment-method-option {
+    grid-template-columns: 18px 36px minmax(0, 1fr);
+    min-height: 64px;
+    padding: 11px 12px;
+    gap: 10px;
+  }
+  .payment-method-logo {
+    width: 34px;
+    height: 34px;
+    font-size: 0.62rem;
+  }
+  .payment-method-copy strong { font-size: 0.82rem; }
+  .payment-method-copy small { font-size: 0.68rem; }
+  .checkout-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .checkout-actions .btn-primary,
+  .checkout-actions .btn-secondary {
+    width: 100%;
+    min-width: 0;
+  }
+  .checkout-page-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .checkout-summary {
+    padding: 18px;
+  }
+  .checkout-summary-total strong {
+    font-size: 1.15rem;
+  }
+  .payment-upload label {
+    flex-wrap: wrap;
+  }
+  .payment-upload-action {
+    margin-left: 48px;
+  }
+  .bank-details-card > div {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .bank-details-card > div strong {
+    text-align: left;
+  }
+  .payment-history > div {
+    grid-template-columns: 1fr auto;
+    gap: 6px 12px;
+  }
+  .payment-history > div strong {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Extra small */
+@media (max-width: 380px) {
+  .payment-method-option {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+  .payment-method-logo {
+    display: none;
+  }
+}
+
+
+/* ============================================================================
+   COMPLEMENTOS DE INTERFACE — revisão visual
+   ============================================================================ */
+
+/* Chat do condomínio */
+.chat-shell {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  min-height: 620px;
+  overflow: hidden;
+  padding: 0;
+}
+.chat-members {
+  min-width: 0;
+  padding: 22px;
+  border-right: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.chat-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.chat-title h2 { margin: 3px 0 0; font-size: 1.05rem; }
+.chat-online {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
+  color: var(--ok-fg);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.chat-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-0);
+  outline: none;
+}
+.chat-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.chat-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.chat-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.chat-member:hover { background: var(--surface); }
+.chat-member > div { min-width: 0; }
+.chat-member strong,
+.chat-member small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-member strong { font-size: .82rem; color: var(--text-0); }
+.chat-member small { margin-top: 2px; font-size: .68rem; color: var(--text-3); }
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: .78rem;
+  font-weight: 800;
+}
+.chat-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.chat-main > header {
+  min-height: 72px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.chat-main > header strong,
+.chat-main > header small { display: block; }
+.chat-main > header strong { font-size: .92rem; color: var(--text-0); }
+.chat-main > header small { margin-top: 3px; color: var(--text-3); font-size: .72rem; }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  font-size: .68rem;
+  font-weight: 700;
+}
+.status-ok { color: var(--ok-fg); background: var(--ok-bg); border: 1px solid var(--ok-line); }
+.status-ok::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 28%),
+    var(--bg);
+}
+.chat-message {
+  display: flex;
+  max-width: min(78%, 620px);
+}
+.chat-message.mine {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+.chat-bubble {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.chat-message.mine .chat-bubble {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+  background: var(--primary-soft);
+  border-radius: 14px 14px 4px 14px;
+}
+.chat-bubble strong,
+.chat-bubble p,
+.chat-bubble small { display: block; }
+.chat-bubble strong { font-size: .72rem; color: var(--primary); margin-bottom: 4px; }
+.chat-bubble p { margin: 0; color: var(--text-1); font-size: .82rem; line-height: 1.5; overflow-wrap: anywhere; }
+.chat-bubble small { margin-top: 6px; color: var(--text-3); font-size: .63rem; text-align: right; }
+.chat-compose {
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-compose input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  background: var(--surface-2);
+  color: var(--text-0);
+  outline: none;
+}
+.chat-compose input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* Comunicados */
+.announcement-list { display: grid; gap: 10px; max-width: 900px; }
+.announcement-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr) 20px;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  padding: 15px 16px;
+  color: inherit;
+  cursor: pointer;
+}
+.announcement-item > span:nth-child(2) { min-width: 0; }
+.announcement-item strong,
+.announcement-item small { display: block; }
+.announcement-item strong { color: var(--text-0); font-size: .86rem; }
+.announcement-item small {
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: .73rem;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.announcement-icon,
+.communication-detail-icon {
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-radius: 11px;
+}
+.announcement-icon { width: 42px; height: 42px; }
+.communication-detail {
+  max-width: 820px;
+  padding: 28px;
+}
+.communication-detail-icon { width: 52px; height: 52px; margin-bottom: 16px; }
+.communication-detail h2 { margin: 7px 0 4px; font-size: 1.45rem; }
+.communication-date { margin: 0 0 20px; color: var(--text-3); font-size: .75rem; }
+.communication-body { color: var(--text-1); line-height: 1.7; font-size: .88rem; }
+.communication-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* Manutenções */
+.maintenance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+}
+.maintenance-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0,1fr);
+  gap: 14px;
+  padding: 18px;
+}
+.maintenance-icon {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.maintenance-card h3 { margin: 7px 0 5px; font-size: .94rem; }
+.maintenance-card p { margin: 0; color: var(--text-2); font-size: .75rem; line-height: 1.5; }
+.maintenance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin-top: 13px;
+  color: var(--text-3);
+  font-size: .68rem;
+}
+
+/* Landing — fundador e organigrama */
+.landing-founder-card {
+  display: grid;
+  grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.landing-founder-photo { min-height: 320px; }
+.landing-founder-photo img {
+  width: 100%; height: 100%;
+  display: block; object-fit: cover;
+}
+.landing-founder-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(24px, 5vw, 48px);
+}
+.landing-founder-copy h2 { margin: 8px 0 10px; font-size: clamp(1.45rem, 3vw, 2rem); }
+.landing-founder-copy p { max-width: 58ch; margin: 0; color: var(--text-2); line-height: 1.65; }
+.founder-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.founder-meta strong { color: var(--text-0); font-size: .9rem; }
+.founder-meta span { color: var(--text-3); font-size: .72rem; }
+
+.organigram {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+.org-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: min(100%, 410px);
+  margin: 0 auto;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.org-node strong, .org-node small { display: block; }
+.org-node strong { color: var(--text-0); font-size: .8rem; }
+.org-node small { margin-top: 3px; color: var(--text-3); font-size: .67rem; line-height: 1.4; }
+.org-node-icon {
+  width: 38px; height: 38px;
+  flex: 0 0 38px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.org-node-platform { border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); }
+.org-node-sindico { width: min(100%, 360px); }
+.org-connector-v {
+  width: 2px; height: 28px;
+  margin: 0 auto;
+  background: var(--border-strong);
+}
+.org-connector-branches {
+  width: 68%;
+  height: 24px;
+  margin: 0 auto;
+  border-top: 2px solid var(--border-strong);
+  position: relative;
+}
+.org-connector-branches::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 24px;
+  background: var(--border-strong);
+}
+.org-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.org-branch .org-node { width: 100%; }
+.role-moradores { border-color: color-mix(in srgb, var(--primary) 25%, var(--border)); }
+.role-portaria { border-color: color-mix(in srgb, #8b6ad8 25%, var(--border)); }
+.role-funcionarios { border-color: color-mix(in srgb, #c58a2a 25%, var(--border)); }
+.org-modules-head {
+  margin: 28px 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-3);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.org-modules-head::before, .org-modules-head::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+.org-module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+}
+.org-module {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.org-module > span { color: var(--primary); flex: 0 0 auto; }
+.org-module strong, .org-module small { display: block; }
+.org-module strong { color: var(--text-0); font-size: .74rem; }
+.org-module small { margin-top: 3px; color: var(--text-3); font-size: .64rem; line-height: 1.4; }
+
+/* Tabelas largas e layouts CRUD especiais */
+.responsive-table {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.responsive-table .crud-table { min-width: 700px; }
+.crud-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr);
+  gap: 18px;
+  align-items: start;
+}
+.crud-form-container,
+.crud-table-container { min-width: 0; }
+
+/* Badges de perfil/estado que aparecem em componentes dinâmicos */
+.role-funcionarios,
+.role-moradores,
+.role-portaria { background: var(--surface); }
+
+/* Detalhes do checkout que não tinham regra própria */
+.checkout-instructions { min-width: 0; }
+.payment-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ok-fg);
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.payment-method-logo-express { background: var(--primary); }
+.payment-detail-eyebrow {
+  display: block;
+  color: var(--primary);
+  font-size: .65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.payment-detail-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.payment-detail-title h3 { margin: 4px 0 0; font-size: 1rem; color: var(--text-0); }
+.payment-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+  border: 1px solid var(--ok-line);
+  font-size: .64rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.payment-live-badge i {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.payment-live-badge-manual {
+  color: var(--warn-fg);
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+}
+.payment-method-detail {
+  display: none;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.payment-method-detail.is-visible { display: block; }
+.payment-steps-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-2);
+  font-size: .78rem;
+  line-height: 1.7;
+}
+.payment-detail-lead,
+.payment-detail-hint {
+  margin: 0 0 13px;
+  color: var(--text-2);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+.payment-detail-hint { margin: 12px 0 0; color: var(--text-3); }
+.bank-details-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+.bank-details-title {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-0);
+  font-size: .72rem;
+  font-weight: 800;
+}
+.bank-details-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: .7rem;
+}
+.bank-details-card > div span { color: var(--text-3); }
+.bank-details-card > div strong { color: var(--text-1); text-align: right; overflow-wrap: anywhere; }
+.payment-upload { margin-top: 12px; }
+.payment-upload label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 11px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.payment-upload input { position: absolute; opacity: 0; pointer-events: none; }
+.payment-upload-icon { color: var(--primary); flex: 0 0 auto; }
+.payment-upload label > span:nth-child(2) { min-width: 0; flex: 1; }
+.payment-upload label strong,
+.payment-upload label small { display: block; }
+.payment-upload label strong { color: var(--text-0); font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.payment-upload label small { margin-top: 2px; color: var(--text-3); font-size: .62rem; }
+.payment-upload-action {
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: .65rem;
+  font-weight: 700;
+}
+
+
+@media (max-width: 900px) {
+  .chat-shell { grid-template-columns: 1fr; min-height: 0; }
+  .chat-members {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-member-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+  .chat-main { min-height: 540px; }
+  .landing-founder-card { grid-template-columns: 1fr; }
+  .landing-founder-photo { min-height: 260px; max-height: 320px; }
+  .org-branch-grid,
+  .org-module-grid { grid-template-columns: 1fr; }
+  .org-connector-branches { width: 2px; height: 24px; border-top: 0; background: var(--border-strong); }
+  .org-connector-branches::after { display: none; }
+  .crud-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .chat-members { padding: 16px; }
+  .chat-member-list { grid-template-columns: 1fr; }
+  .chat-main > header { padding: 13px 15px; }
+  .chat-messages { padding: 15px; }
+  .chat-message { max-width: 90%; }
+  .chat-compose { padding: 11px; }
+  .chat-compose .btn { padding-inline: 14px; }
+  .announcement-item { grid-template-columns: 38px minmax(0,1fr) 18px; padding: 12px; }
+  .announcement-icon { width: 38px; height: 38px; }
+  .communication-detail { padding: 20px; }
+  .communication-footer { flex-direction: column; }
+  .maintenance-grid { grid-template-columns: 1fr; }
+  .org-node { padding: 12px; }
+  .org-modules-head { margin-top: 22px; }
+}
+
+.choice-screen { width: 100%; box-sizing: border-box; }
+.home-fallback-card {
+  max-width: 760px;
+  padding: 24px;
+}
+.home-fallback-card h3 { margin: 0 0 8px; }
+.home-fallback-card p { margin: 0 0 18px; color: var(--text-2); line-height: 1.55; }
+.landing-founder-section,
+.landing-organigram-section { overflow: visible; }
+.org-node-role { min-height: 66px; }
+
+
+/* =========================================================
+   Layout de gestão em coluna
+   Formulário em cima + lista/conteúdo em baixo
+   ========================================================= */
+
+.page-content .management-layout,
+.page-content .content-split,
+.page-content .two-column-layout,
+.page-content .section-grid,
+.page-content .crud-layout,
+.page-content .management-grid,
+.page-content .data-management,
+.page-content .form-list-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.page-content .management-layout > *,
+.page-content .content-split > *,
+.page-content .two-column-layout > *,
+.page-content .section-grid > *,
+.page-content .crud-layout > *,
+.page-content .management-grid > *,
+.page-content .data-management > *,
+.page-content .form-list-layout > * {
+  min-width: 0;
+}
+
+/* Quando o primeiro bloco é o formulário, ele permanece no topo. */
+.page-content .management-layout,
+.page-content .content-split,
+.page-content .two-column-layout,
+.page-content .section-grid,
+.page-content .crud-layout,
+.page-content .management-grid,
+.page-content .data-management,
+.page-content .form-list-layout {
+  display: grid !important;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Formulários e painéis ocupam toda a largura disponível. */
+.page-content .management-layout .form-panel,
+.page-content .content-split .form-panel,
+.page-content .two-column-layout .form-panel,
+.page-content .section-grid .form-panel,
+.page-content .crud-layout .form-panel,
+.page-content .management-grid .form-panel,
+.page-content .data-management .form-panel,
+.page-content .form-list-layout .form-panel,
+.page-content .management-layout .card,
+.page-content .content-split .card,
+.page-content .two-column-layout .card,
+.page-content .section-grid .card,
+.page-content .crud-layout .card,
+.page-content .management-grid .card,
+.page-content .data-management .card,
+.page-content .form-list-layout .card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Listas/tabelas abaixo do formulário. */
+.page-content .management-layout .list-panel,
+.page-content .content-split .list-panel,
+.page-content .two-column-layout .list-panel,
+.page-content .section-grid .list-panel,
+.page-content .crud-layout .list-panel,
+.page-content .management-grid .list-panel,
+.page-content .data-management .list-panel,
+.page-content .form-list-layout .list-panel {
+  width: 100%;
+}
+
+/* Em telas pequenas, manter o mesmo comportamento sem criar
+   margens laterais desnecessárias. */
+@media (max-width: 900px) {
+  .page-content .management-layout,
+  .page-content .content-split,
+  .page-content .two-column-layout,
+  .page-content .section-grid,
+  .page-content .crud-layout,
+  .page-content .management-grid,
+  .page-content .data-management,
+  .page-content .form-list-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px;
+  }
+}
+
+
+/* =========================================================
+   GESTÃO DESKTOP — formulário em cima e lista em baixo
+   O mobile já usava uma coluna; esta regra aplica o mesmo
+   comportamento também no desktop, sem alterar o restante
+   do sistema.
+   ========================================================= */
+@media (min-width: 901px) {
+  .crud-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 22px !important;
+    align-items: start;
+  }
+
+  .crud-form-container,
+  .crud-table-container {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .crud-form-container {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .crud-table-container {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

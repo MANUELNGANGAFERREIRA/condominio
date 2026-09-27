@@ -74,13 +74,14 @@ const ENTITIES = {
     labelSingular: 'Tipo de Pagamento',
     role: 'admin',
     fields: [
-      { key: 'tipo_pagamento', label: 'Tipo de Pagamento', type: 'select', options: ['Cash', 'Referência', 'Transferência'], required: true },
+      { key: 'tipo_pagamento', label: 'Tipo de Pagamento', type: 'select', options: ['Multicaixa Express', 'Referência Multicaixa', 'Transferência Bancária'], required: true },
     ],
     columns: ['tipo_pagamento'],
     endpoints: { list: 'GET /tipos-pagamento', create: 'POST /tipos-pagamento', update: 'PUT /tipos-pagamento/:id', remove: 'DELETE /tipos-pagamento/:id' },
     mock: [
-      { id: 1, tipo_pagamento: 'Referência' },
-      { id: 2, tipo_pagamento: 'Transferência' },
+      { id: 1, tipo_pagamento: 'Multicaixa Express' },
+      { id: 2, tipo_pagamento: 'Referência Multicaixa' },
+      { id: 3, tipo_pagamento: 'Transferência Bancária' },
     ],
   },
 
@@ -408,12 +409,12 @@ const ENTITIES = {
       { key: 'data_pagamento', label: 'Data do Pagamento', type: 'date', required: false },
       { key: 'id_taxa', label: 'Taxa', type: 'ref', ref: { entity: 'taxas', display: r => `Kz ${Number(r.valor_taxa).toLocaleString('pt-PT')} · venc. ${r.data_limite}` }, required: true },
     ],
-    columns: ['mes_pago', 'estado', 'data_pagamento', 'id_taxa'],
+    columns: ['mes_pago', 'estado', 'data_pagamento', 'metodo_pagamento', 'id_taxa'],
     endpoints: { list: 'GET /pagamento', create: 'POST /pagamento', update: 'PUT /pagamento/:id', remove: 'DELETE /pagamento/:id' },
     mock: [
-      { id: 1, mes_pago: '2026-07-01', estado: 'Pago', data_pagamento: '2026-07-05', id_taxa: 1 },
-      { id: 2, mes_pago: '2026-08-01', estado: 'Pendente', data_pagamento: '', id_taxa: 1 },
-      { id: 3, mes_pago: '2026-06-01', estado: 'Atrasado', data_pagamento: '', id_taxa: 1 },
+      { id: 1, mes_pago: '2026-07-01', estado: 'Pago', data_pagamento: '2026-07-05', metodo_pagamento: 'Multicaixa Express', id_taxa: 1 },
+      { id: 2, mes_pago: '2026-08-01', estado: 'Pendente', data_pagamento: '', metodo_pagamento: 'Referência Multicaixa', id_taxa: 1 },
+      { id: 3, mes_pago: '2026-06-01', estado: 'Atrasado', data_pagamento: '', metodo_pagamento: 'Transferência Bancária', id_taxa: 1 },
     ],
   },
 
@@ -561,11 +562,11 @@ const ENTITIES = {
     role: 'morador',
     readonly: true,
     fields: [],
-    columns: ['mes_pago', 'estado', 'data_pagamento', 'id_taxa'],
+    columns: ['mes_pago', 'estado', 'data_pagamento', 'metodo_pagamento', 'id_taxa'],
     endpoints: { list: 'GET /morador/pagamento' },
     mock: [
-      { id: 1, mes_pago: '2026-07-01', estado: 'Pago', data_pagamento: '2026-07-05', id_taxa: 1 },
-      { id: 2, mes_pago: '2026-08-01', estado: 'Pendente', data_pagamento: '', id_taxa: 1 },
+      { id: 1, mes_pago: '2026-07-01', estado: 'Pago', data_pagamento: '2026-07-05', metodo_pagamento: 'Multicaixa Express', id_taxa: 1 },
+      { id: 2, mes_pago: '2026-08-01', estado: 'Pendente', data_pagamento: '', metodo_pagamento: 'Referência Multicaixa', id_taxa: 1 },
     ],
   },
 

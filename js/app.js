@@ -104,14 +104,32 @@ function initCadastro() {
    --------------------------------------------------------------------------- */
 function initCadastroSindicoWizard() {
   const wizard = document.getElementById('screen-cadastro-sindico');
+  if (!wizard) return;
   const panels = wizard.querySelectorAll('.signup-panel');
   const steps = wizard.querySelectorAll('.signup-step');
   let selectedPlan = { name: 'Profissional', price: '35.000 Kz/mês' };
+  let selectedPaymentMethod = 'express';
+
+  const PAYMENT_METHODS = {
+    express: {
+      label: 'Multicaixa Express',
+      provider: 'Pagamento online',
+      success: 'Pedido Multicaixa Express criado. Em produção, a confirmação do pagamento será atualizada automaticamente.'
+    },
+    reference: {
+      label: 'Referência Multicaixa',
+      provider: 'Pagamento por referência',
+      success: 'Referência de pagamento registada. Em produção, a confirmação será atualizada automaticamente.'
+    },
+    transfer: {
+      label: 'Transferência bancária',
+      provider: 'Validação manual CONVIVA',
+      success: 'Comprovativo enviado para validação. O acesso será liberado após a confirmação da transferência.'
+    }
+  };
 
   function goToPanel(panelId) {
     panels.forEach(p => p.classList.toggle('active', p.dataset.panel === String(panelId)));
-    // O passo "processing" é uma transição visual do passo 3 (pagamento),
-    // por isso mantém o indicador de passos em "3" enquanto ele é mostrado.
     const stepNum = panelId === 'processing' ? 3 : Number(panelId);
     steps.forEach(s => {
       const n = Number(s.dataset.step);
@@ -120,12 +138,26 @@ function initCadastroSindicoWizard() {
     });
   }
 
+  function updatePaymentMethod() {
+    wizard.querySelectorAll('.payment-method-option').forEach(option => {
+      const active = option.dataset.paymentMethod === selectedPaymentMethod;
+      option.classList.toggle('is-selected', active);
+    });
+    wizard.querySelectorAll('[data-payment-detail]').forEach(detail => {
+      detail.classList.toggle('is-visible', detail.dataset.paymentDetail === selectedPaymentMethod);
+    });
+
+    const amount = selectedPlan.price.replace('/mês', '').trim();
+    const amountEl = document.getElementById('signup-reference-amount');
+    if (amountEl) amountEl.textContent = amount;
+    const subtotalEl = document.getElementById('summary-plan-subtotal');
+    if (subtotalEl) subtotalEl.textContent = amount;
+  }
+
   // -------- Passo 1 → 2 (dados do condomínio) --------
   document.getElementById('form-cadastro-sindico').addEventListener('submit', e => {
     e.preventDefault();
-    // ------------------------------------------------------------------
-    // Endpoint real: POST /condominio  (cria o condomínio + o login do síndico)
-    // ------------------------------------------------------------------
+    // Backend real: POST /condominio (cria o condomínio + o login do síndico)
     if (!e.target.checkValidity()) { e.target.reportValidity(); return; }
     goToPanel(2);
   });
@@ -134,58 +166,72 @@ function initCadastroSindicoWizard() {
   document.getElementById('btn-plano-voltar').addEventListener('click', () => goToPanel(1));
   document.getElementById('btn-plano-continuar').addEventListener('click', () => {
     const chosen = wizard.querySelector('input[name="signup-plan"]:checked');
+    if (!chosen) { showToast('Selecione um plano para continuar.'); return; }
     const option = chosen.closest('.signup-plan-option');
     selectedPlan = { name: chosen.value, price: option.dataset.planPrice };
     document.getElementById('summary-plan-name').textContent = selectedPlan.name;
     document.getElementById('summary-plan-price').textContent = selectedPlan.price;
+    const subtotalEl = document.getElementById('summary-plan-subtotal');
+    if (subtotalEl) subtotalEl.textContent = selectedPlan.price.replace('/mês', '').trim();
+    updatePaymentMethod();
     goToPanel(3);
   });
 
-  // -------- Passo 3 (pagamento) --------
-  document.getElementById('btn-pagamento-voltar').addEventListener('click', () => goToPanel(2));
+  // -------- Passo 3 — seleção do método de pagamento --------
+  wizard.querySelectorAll('input[name="signup-payment-method"]').forEach(input => {
+    input.addEventListener('change', () => {
+      selectedPaymentMethod = input.value;
+      updatePaymentMethod();
+    });
+  });
 
-  // Formatação cosmética dos campos do cartão (mockup — sem validação real de bandeira/Luhn)
-  const numeroInput = document.getElementById('pg-numero');
-  numeroInput.addEventListener('input', () => {
-    numeroInput.value = numeroInput.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  });
-  const validadeInput = document.getElementById('pg-validade');
-  validadeInput.addEventListener('input', () => {
-    let v = validadeInput.value.replace(/\D/g, '').slice(0, 4);
-    if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
-    validadeInput.value = v;
-  });
-  const cvcInput = document.getElementById('pg-cvc');
-  cvcInput.addEventListener('input', () => { cvcInput.value = cvcInput.value.replace(/\D/g, '').slice(0, 4); });
+  document.getElementById('btn-pagamento-voltar').addEventListener('click', () => goToPanel(2));
 
   document.getElementById('form-pagamento').addEventListener('submit', e => {
     e.preventDefault();
-    // ------------------------------------------------------------------
-    // Endpoint real: POST /pagamentos/checkout  { plano, dados_cartao (tokenizados no gateway) }
-    // O ideal em produção é nunca enviar o número do cartão diretamente ao
-    // nosso backend — usar o SDK do gateway (Stripe, Multicaixa Express, etc.)
-    // para tokenizar no cliente e enviar só o token.
-    // ------------------------------------------------------------------
-    if (!e.target.checkValidity()) { e.target.reportValidity(); return; }
+    const receipt = document.getElementById('pg-comprovativo');
+
+    if (selectedPaymentMethod === 'transfer' && receipt && !receipt.files.length) {
+      receipt.setCustomValidity('Carregue o comprovativo da transferência para continuar.');
+      receipt.reportValidity();
+      receipt.setCustomValidity('');
+      return;
+    }
+
     goToPanel('processing');
     setTimeout(() => {
+      const method = PAYMENT_METHODS[selectedPaymentMethod];
       document.getElementById('success-plan-name').textContent = selectedPlan.name;
-      document.getElementById('success-plan-price').textContent = selectedPlan.price;
+      document.getElementById('success-plan-price').textContent = `${method.label} · ${selectedPlan.price}`;
+      const successText = wizard.querySelector('[data-payment-success]');
+      if (successText) successText.textContent = method.success;
       goToPanel(4);
-    }, 1500);
+    }, 1200);
   });
 
-  // -------- Passo 4 (confirmação) → login liberado --------
+  // -------- Passo 4 (confirmação) → login --------
   document.getElementById('btn-signup-finalizar').addEventListener('click', () => {
-    // ------------------------------------------------------------------
-    // Endpoint real: POST /auth/login  (sessão iniciada automaticamente
-    // depois de o pagamento e o cadastro serem confirmados no backend)
-    // ------------------------------------------------------------------
+    // Backend real: após confirmação do pagamento, criar sessão e iniciar login.
     document.getElementById('form-cadastro-sindico').reset();
     document.getElementById('form-pagamento').reset();
+    const expressRadio = wizard.querySelector('input[name="signup-payment-method"][value="express"]');
+    if (expressRadio) expressRadio.checked = true;
+    selectedPaymentMethod = 'express';
+    updatePaymentMethod();
     goToPanel(1);
     showScreen('screen-login-sindico');
   });
+
+  updatePaymentMethod();
+
+  const pgReceipt = document.getElementById('pg-comprovativo');
+  if (pgReceipt) {
+    pgReceipt.addEventListener('change', () => {
+      const label = pgReceipt.closest('.payment-upload')?.querySelector('label strong');
+      const file = pgReceipt.files && pgReceipt.files[0];
+      if (label && file) label.textContent = file.name;
+    });
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -430,27 +476,234 @@ function renderChatScreen(){
   const messages=[['João Manuel','Bom dia a todos. A manutenção do elevador está agendada.','09:12'],['Maria José','Obrigada pelo aviso.','09:18'],['Síndico','A equipa técnica estará no Bloco A às 14h.','09:26'],['Carlos Pedro','Perfeito, obrigado.','09:31']];
   card.innerHTML=`<aside class="chat-members"><div class="chat-title"><div><span class="home-eyebrow">Comunidade</span><h2>Chat do Condomínio</h2></div><span class="chat-online">${messages.length+8} membros</span></div><input class="chat-search" placeholder="Pesquisar conversa..."><div class="chat-member-list">${['Síndico','Maria José','João Manuel','Carlos Pedro','Ana Paula'].map((n,i)=>`<div class="chat-member"><span class="chat-avatar">${n[0]}</span><div><strong>${n}</strong><small>${i===0?'Administrador do condomínio':'Morador'}</small></div></div>`).join('')}</div></aside><section class="chat-main"><header><div><strong>Grupo do condomínio</strong><small>Todos os membros autorizados</small></div><span class="status-badge status-ok">Online</span></header><div class="chat-messages"></div><form class="chat-compose"><input required placeholder="Escreva uma mensagem..."><button class="btn btn-primary" type="submit">Enviar</button></form></section>`;
   const list=card.querySelector('.chat-messages'); messages.forEach((m,i)=>{const el=document.createElement('div');el.className='chat-message '+(i===2?'mine':'');el.innerHTML=`<div class="chat-bubble"><strong>${m[0]}</strong><p>${m[1]}</p><small>${m[2]}</small></div>`;list.appendChild(el);});
-  card.querySelector('.chat-compose').addEventListener('submit',e=>{e.preventDefault();const input=e.target.querySelector('input');const el=document.createElement('div');el.className='chat-message mine';el.innerHTML=`<div class="chat-bubble"><strong>Você</strong><p>${input.value.replace(/[<>]/g,'')}</p><small>agora</small></div>`;list.appendChild(el);input.value='';list.scrollTop=list.scrollHeight;showToast('Mensagem enviada.');});
+  card.querySelector('.chat-compose').addEventListener('submit',e=>{e.preventDefault();const input=e.target.querySelector('input');const value=input.value.trim();if(!value)return;const el=document.createElement('div');el.className='chat-message mine';el.innerHTML=`<div class="chat-bubble"><strong>Você</strong><p>${value.replace(/[<>]/g,'')}</p><small>agora</small></div>`;list.appendChild(el);input.value='';list.scrollTop=list.scrollHeight;showToast('Mensagem enviada.');});
+  const chatSearch=card.querySelector('.chat-search');
+  if(chatSearch){
+    chatSearch.addEventListener('input',()=>{
+      const q=chatSearch.value.trim().toLowerCase();
+      card.querySelectorAll('.chat-member').forEach(member=>{
+        member.hidden=!member.textContent.toLowerCase().includes(q);
+      });
+    });
+  }
   body.appendChild(card);
 }
 
 function renderMensalidadeScreen(){
   const body=document.getElementById('generic-screen-body'); body.innerHTML=''; const taxa=(DB.taxas||[])[0]||{valor_taxa:0,valor_multa:0,data_limite:'—'};
-  body.innerHTML=`<div class="screen-heading"><h2>Minha Mensalidade</h2><span class="readonly-tag">Valor definido pelo condomínio</span></div><div class="payment-overview-grid"><div class="payment-main-card card"><span>Mensalidade atual</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><small>Vencimento: ${taxa.data_limite}</small><button class="btn btn-primary" id="btn-pay-now">Pagar mensalidade</button></div><div class="payment-info-card card"><div><span>Multa por atraso</span><strong>${formatNumber(taxa.valor_multa)} Kz</strong></div><div><span>Estado</span><strong class="badge badge-yellow">Pendente</strong></div><div><span>Referência</span><strong>CONVIVA-2026-08</strong></div></div></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico recente</h3></div><div class="payment-history">${(DB.meusPagamentos||[]).map(p=>`<div><span>${p.mes_pago}</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><span class="badge ${p.estado==='Pago'?'badge-green':p.estado==='Atrasado'?'badge-red':'badge-yellow'}">${p.estado}</span></div>`).join('')}</div></div>`;
+  body.innerHTML=`<div class="screen-heading"><h2>Minha Mensalidade</h2><span class="readonly-tag">Valor definido pelo condomínio</span></div><div class="payment-overview-grid"><div class="payment-main-card card"><span>Mensalidade atual</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><small>Vencimento: ${taxa.data_limite}</small><button class="btn btn-primary" id="btn-pay-now">Pagar mensalidade</button></div><div class="payment-info-card card"><div><span>Multa por atraso</span><strong>${formatNumber(taxa.valor_multa)} Kz</strong></div><div><span>Estado</span><strong class="badge badge-yellow">Pendente</strong></div><div><span>Métodos</span><strong>Express · Referência · Transferência</strong></div></div></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico recente</h3></div><div class="payment-history">${(DB.meusPagamentos||[]).map(p=>`<div><span>${p.mes_pago}</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><span class="badge ${p.estado==='Pago'?'badge-green':p.estado==='Atrasado'?'badge-red':'badge-yellow'}">${p.estado}</span></div>`).join('')}</div></div>`;
   body.querySelector('#btn-pay-now').onclick=()=>renderPagarMensalidadeScreen();
 }
 
 function renderPagarMensalidadeScreen(){
-  const body=document.getElementById('generic-screen-body'); body.innerHTML=''; const taxa=(DB.taxas||[])[0]||{valor_taxa:0,data_limite:'—'};
-  body.innerHTML=`<div class="screen-heading"><h2>Pagar Mensalidade</h2></div><div class="pay-layout"><form class="form-card glass pay-form"><div class="form-card-header"><h3>Confirmar pagamento</h3><p>O valor da mensalidade é definido pelo condomínio e não pode ser alterado.</p></div><div class="pay-amount"><span>Valor a pagar</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong></div><label>Mês de referência<select required><option>Setembro 2026</option><option>Agosto 2026</option></select></label><label>Método de pagamento<select required><option>Referência</option><option>Transferência bancária</option><option>Multicaixa Express</option></select></label><label>Referência<input value="CONVIVA-2026-09-001" readonly></label><button class="btn btn-primary btn-block" type="submit">Confirmar pagamento</button></form><div class="payment-steps card"><div><span>01</span><strong>Confirmar mensalidade</strong><p>Confira o mês e o valor.</p></div><div><span>02</span><strong>Escolher método</strong><p>Use o método disponível.</p></div><div><span>03</span><strong>Receber comprovativo</strong><p>O comprovativo fica disponível no histórico.</p></div></div></div>`;
-  body.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const id=(DB.meusPagamentos||[]).length+1;DB.meusPagamentos.push({id,mes_pago:'2026-09-01',estado:'Pago',data_pagamento:new Date().toISOString().slice(0,10),id_taxa:taxa.id||1});showToast('Pagamento registado com sucesso.');renderMeusPagamentosScreen();});
+  const body=document.getElementById('generic-screen-body');
+  body.innerHTML='';
+  const taxa=(DB.taxas||[])[0]||{id:1,valor_taxa:0,data_limite:'—'};
+  const amount=formatNumber(taxa.valor_taxa)+' Kz';
+  const reference='CONVIVA-2026-'+String(taxa.id||1).padStart(3,'0');
+  const unit=(DB.me||DB.user||{}).unidade||(DB.unidades&&DB.unidades[0]&&DB.unidades[0].codigo)||'—';
+
+  body.innerHTML=`
+    <div class="checkout-page">
+      <header class="checkout-page-top">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-payment-back">← Voltar</button>
+        <div>
+          <h1>Pagar Mensalidade</h1>
+          <p>Escolha o método e conclua o pagamento com segurança.</p>
+        </div>
+      </header>
+
+      <div class="checkout-shell checkout-shell-resident">
+        <div class="checkout-main">
+          <form id="resident-payment-form" class="checkout-form" novalidate>
+            <section class="checkout-section" aria-labelledby="res-methods-title">
+              <div class="checkout-section-head">
+                <span class="checkout-step-num">1</span>
+                <div>
+                  <h2 id="res-methods-title">Método de pagamento</h2>
+                  <p>Escolha uma das opções abaixo</p>
+                </div>
+              </div>
+              <div class="payment-methods" role="radiogroup" aria-label="Método de pagamento">
+                <label class="payment-method-option is-selected" data-resident-method="express">
+                  <input type="radio" name="resident-payment-method" value="express" checked>
+                  <span class="payment-method-radio" aria-hidden="true"></span>
+                  <span class="payment-method-logo payment-method-logo-express" aria-hidden="true">MX</span>
+                  <span class="payment-method-copy">
+                    <strong>Multicaixa Express</strong>
+                    <small>Confirme o pedido no seu telemóvel</small>
+                  </span>
+                  <span class="payment-method-badge">Rápido</span>
+                </label>
+                <label class="payment-method-option" data-resident-method="reference">
+                  <input type="radio" name="resident-payment-method" value="reference">
+                  <span class="payment-method-radio" aria-hidden="true"></span>
+                  <span class="payment-method-logo payment-method-logo-reference" aria-hidden="true">MC</span>
+                  <span class="payment-method-copy">
+                    <strong>Referência Multicaixa</strong>
+                    <small>ATM, Internet Banking ou Express</small>
+                  </span>
+                  <span class="payment-method-badge">Flexível</span>
+                </label>
+                <label class="payment-method-option" data-resident-method="transfer">
+                  <input type="radio" name="resident-payment-method" value="transfer">
+                  <span class="payment-method-radio" aria-hidden="true"></span>
+                  <span class="payment-method-logo payment-method-logo-transfer" aria-hidden="true">TB</span>
+                  <span class="payment-method-copy">
+                    <strong>Transferência bancária</strong>
+                    <small>Envie o comprovativo para validação</small>
+                  </span>
+                  <span class="payment-method-badge">Manual</span>
+                </label>
+              </div>
+            </section>
+
+            <section class="checkout-section checkout-instructions">
+              <div class="checkout-section-head">
+                <span class="checkout-step-num">2</span>
+                <div>
+                  <h2>Dados e instruções</h2>
+                  <p>Siga os passos do método selecionado</p>
+                </div>
+              </div>
+
+              <div class="payment-method-detail is-visible" data-resident-detail="express">
+                <div class="payment-detail-title">
+                  <div>
+                    <span class="payment-detail-eyebrow">Pagamento online</span>
+                    <h3>Multicaixa Express</h3>
+                  </div>
+                  <span class="payment-live-badge"><i></i> Instantâneo</span>
+                </div>
+                <ol class="payment-steps-list">
+                  <li><strong>Confirmar</strong> — o pedido de pagamento é criado.</li>
+                  <li><strong>Abrir o Multicaixa Express</strong> — valide no telemóvel.</li>
+                  <li><strong>Concluído</strong> — o estado atualiza automaticamente.</li>
+                </ol>
+              </div>
+
+              <div class="payment-method-detail" data-resident-detail="reference">
+                <div class="payment-detail-title">
+                  <div>
+                    <span class="payment-detail-eyebrow">Pagamento por referência</span>
+                    <h3>Referência Multicaixa</h3>
+                  </div>
+                  <span class="payment-live-badge"><i></i> Disponível</span>
+                </div>
+                <p class="payment-detail-lead">Utilize os dados abaixo para pagar por ATM, Internet Banking ou Multicaixa Express.</p>
+                <div class="reference-box">
+                  <div><span>Entidade</span><strong>10123</strong></div>
+                  <div><span>Referência</span><strong>${reference}</strong></div>
+                  <div><span>Valor</span><strong>${amount}</strong></div>
+                </div>
+                <p class="payment-detail-hint">A referência apresentada corresponde a este pagamento.</p>
+              </div>
+
+              <div class="payment-method-detail" data-resident-detail="transfer">
+                <div class="payment-detail-title">
+                  <div>
+                    <span class="payment-detail-eyebrow">Pagamento por transferência</span>
+                    <h3>Transferência bancária</h3>
+                  </div>
+                  <span class="payment-live-badge payment-live-badge-manual">Validação manual</span>
+                </div>
+                <p class="payment-detail-lead">Faça a transferência e carregue o comprovativo para validação.</p>
+                <div class="bank-details-card">
+                  <span class="bank-details-title">Dados para transferência</span>
+                  <div><span>Banco</span><strong>BFA</strong></div>
+                  <div><span>IBAN</span><strong>AO06.0006.2536.0120.3011.0</strong></div>
+                  <div><span>Titular</span><strong>EFSI SOLUÇÕES-COM.GERAL E PREST.SERV.LDA</strong></div>
+                </div>
+                <div class="payment-upload">
+                  <label for="resident-receipt">
+                    <span class="payment-upload-icon" data-icon="receipt" data-icon-size="18"></span>
+                    <span>
+                      <strong>Carregar comprovativo</strong>
+                      <small>PDF, JPG ou PNG · até 10 MB</small>
+                    </span>
+                    <span class="payment-upload-action">Escolher ficheiro</span>
+                  </label>
+                  <input id="resident-receipt" type="file" accept="image/*,.pdf">
+                </div>
+              </div>
+            </section>
+
+            <div class="checkout-actions">
+              <button type="button" class="btn btn-secondary" id="btn-payment-back-bottom">Voltar</button>
+              <button type="submit" class="btn btn-primary">Confirmar pagamento</button>
+            </div>
+          </form>
+        </div>
+
+        <aside class="checkout-summary" aria-label="Resumo do pagamento">
+          <span class="checkout-summary-eyebrow">Resumo</span>
+          <h2>Mensalidade do condomínio</h2>
+          <div class="checkout-summary-plan">
+            <span>Descrição</span>
+            <strong>Mensalidade</strong>
+          </div>
+          <div class="checkout-summary-rows">
+            <div class="checkout-summary-row">
+              <span>Unidade</span>
+              <strong>${unit}</strong>
+            </div>
+            <div class="checkout-summary-row">
+              <span>Vencimento</span>
+              <strong>${taxa.data_limite}</strong>
+            </div>
+            <div class="checkout-summary-row">
+              <span>Subtotal</span>
+              <strong>${amount}</strong>
+            </div>
+          </div>
+          <div class="checkout-summary-total">
+            <span>Total</span>
+            <strong>${amount}</strong>
+          </div>
+          <p class="checkout-summary-note">
+            <span data-icon="shield" data-icon-size="14"></span>
+            <span>Após o pagamento, pode acompanhar o estado em <strong>Meus Pagamentos</strong>.</span>
+          </p>
+        </aside>
+      </div>
+    </div>`;
+
+  renderIcons(body);
+
+  const residentReceiptInput = body.querySelector('#resident-receipt');
+  if (residentReceiptInput) residentReceiptInput.addEventListener('change', () => {
+    const label = residentReceiptInput.closest('.payment-upload')?.querySelector('label strong');
+    const file = residentReceiptInput.files && residentReceiptInput.files[0];
+    if (label && file) label.textContent = file.name;
+  });
+
+  let method='express';
+  const refresh=()=>{
+    body.querySelectorAll('[data-resident-method]').forEach(card=>card.classList.toggle('is-selected',card.dataset.residentMethod===method));
+    body.querySelectorAll('[data-resident-detail]').forEach(detail=>detail.classList.toggle('is-visible',detail.dataset.residentDetail===method));
+  };
+  body.querySelectorAll('input[name="resident-payment-method"]').forEach(input=>input.addEventListener('change',()=>{method=input.value;refresh();}));
+  const goBack=()=>renderMensalidadeScreen();
+  body.querySelector('#btn-payment-back').onclick=goBack;
+  const backBottom=body.querySelector('#btn-payment-back-bottom');
+  if(backBottom) backBottom.onclick=goBack;
+  body.querySelector('#resident-payment-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const receipt=body.querySelector('#resident-receipt');
+    if(method==='transfer' && !receipt.files.length){receipt.setCustomValidity('Carregue o comprovativo da transferência.');receipt.reportValidity();receipt.setCustomValidity('');return;}
+    const id=(DB.meusPagamentos||[]).length+1;
+    const state=method==='transfer'?'Pendente':'Pago';
+    DB.meusPagamentos.push({id,mes_pago:'2026-09-01',estado:state,data_pagamento:state==='Pago'?new Date().toISOString().slice(0,10):'',id_taxa:taxa.id||1,metodo_pagamento:method==='express'?'Multicaixa Express':method==='reference'?'Referência Multicaixa':'Transferência bancária'});
+    showToast(state==='Pago'?'Pagamento registado com sucesso.':'Comprovativo enviado para validação.');
+    renderMeusPagamentosScreen();
+  });
 }
 
 function renderMeusPagamentosScreen(){
   const body=document.getElementById('generic-screen-body');body.innerHTML=''; const taxa=(DB.taxas||[])[0]||{valor_taxa:0};
   const rows=DB.meusPagamentos||[];
-  body.innerHTML=`<div class="screen-heading"><h2>Meus Pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico de pagamentos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por mês ou estado..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Mês</th><th>Valor</th><th>Estado</th><th>Data</th><th>Ações</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
-  const draw=()=>{const q=(document.getElementById('payment-search').value||'').toLowerCase();document.getElementById('payments-body').innerHTML=rows.filter(r=>(r.mes_pago+' '+r.estado).toLowerCase().includes(q)).map(r=>`<tr><td>${r.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td><span class="badge ${r.estado==='Pago'?'badge-green':r.estado==='Atrasado'?'badge-red':'badge-yellow'}">${r.estado}</span></td><td>${r.data_pagamento||'—'}</td><td><button class="icon-action-btn" data-receipt="${r.id}" title="Baixar comprovativo">${icon('receipt',15)}</button></td></tr>`).join('')||'<tr><td colspan="5">Nenhum pagamento encontrado.</td></tr>';document.querySelectorAll('[data-receipt]').forEach(b=>b.onclick=()=>downloadReceipt(Number(b.dataset.receipt)));};
+  body.innerHTML=`<div class="screen-heading"><h2>Meus Pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico de pagamentos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por mês, método ou estado..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Mês</th><th>Valor</th><th>Método</th><th>Estado</th><th>Data</th><th>Ações</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
+  const draw=()=>{const q=(document.getElementById('payment-search').value||'').toLowerCase();document.getElementById('payments-body').innerHTML=rows.filter(r=>(r.mes_pago+' '+r.estado+' '+(r.metodo_pagamento||'')).toLowerCase().includes(q)).map(r=>`<tr><td>${r.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${r.metodo_pagamento||'—'}</td><td><span class="badge ${r.estado==='Pago'?'badge-green':r.estado==='Atrasado'?'badge-red':'badge-yellow'}">${r.estado}</span></td><td>${r.data_pagamento||'—'}</td><td><button class="icon-action-btn" data-receipt="${r.id}" title="Baixar comprovativo">${icon('receipt',15)}</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';document.querySelectorAll('[data-receipt]').forEach(b=>b.onclick=()=>downloadReceipt(Number(b.dataset.receipt)));};
   draw();document.getElementById('payment-search').oninput=draw;document.getElementById('btn-new-payment').onclick=()=>renderPagarMensalidadeScreen();
 }
 function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r)return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Comprovativo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Comprovativo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Mês</span><strong>${r.mes_pago}</strong></div><div class=\"row\"><span>Valor</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>CONVIVA-${r.id}</strong></div></div></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`comprovativo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Comprovativo preparado para download.');}
@@ -1610,14 +1863,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const legacyLogout = document.getElementById('btn-logout');
   if (legacyLogout) legacyLogout.addEventListener('click', logout);
 
-  const organigramBtn = document.getElementById('btn-open-organigram');
-  const organigramBox = document.getElementById('organigram-lightbox');
-  const organigramClose = document.getElementById('close-organigram');
-  if (organigramBtn && organigramBox) {
-    organigramBtn.addEventListener('click', () => organigramBox.classList.add('open'));
-    organigramClose?.addEventListener('click', () => organigramBox.classList.remove('open'));
-    organigramBox.addEventListener('click', e => { if (e.target === organigramBox) organigramBox.classList.remove('open'); });
-  }
   initMobileMenu();
   initTopbarProfile();
   initLandingMenu();
