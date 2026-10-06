@@ -10,6 +10,7 @@
 
 const ICON_PATHS = {
   home:        '<path d="M4 11 12 4l8 7"/><path d="M6 10v10h5v-6h2v6h5V10"/>',
+  image:       '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.8"/><path d="M3 16.5l4.5-4.5 3 3 4-5 5.5 6.5"/>',
   building:    '<rect x="5" y="3" width="14" height="18" rx="1.2"/><rect x="8" y="6.4" width="2.2" height="2.2"/><rect x="13.8" y="6.4" width="2.2" height="2.2"/><rect x="8" y="10.8" width="2.2" height="2.2"/><rect x="13.8" y="10.8" width="2.2" height="2.2"/><rect x="8" y="15.2" width="2.2" height="2.2"/><rect x="13.8" y="15.2" width="2.2" height="2.2"/>',
   door:        '<rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.6" cy="12" r="0.9" fill="currentColor" stroke="none"/>',
   users:       '<circle cx="9" cy="8" r="3.1"/><path d="M3.8 20c0-3.4 2.3-5.6 5.2-5.6s5.2 2.2 5.2 5.6"/><circle cx="17" cy="9" r="2.3"/><path d="M15.4 14.6c2.4.2 4.2 2.2 4.2 5"/>',
@@ -18,6 +19,8 @@ const ICON_PATHS = {
   waves:       '<path d="M2.5 11c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0 3.2 1.6 4.8 0"/><path d="M2.5 16.4c1.6-1.6 3.2-1.6 4.8 0s3.2 1.6 4.8 0 3.2-1.6 4.8 0 3.2 1.6 4.8 0"/>',
   calendar:    '<rect x="3.2" y="5" width="17.6" height="15.5" rx="1.6"/><line x1="3.2" y1="9.6" x2="20.8" y2="9.6"/><line x1="7.6" y1="3" x2="7.6" y2="6.8"/><line x1="16.4" y1="3" x2="16.4" y2="6.8"/>',
   megaphone:   '<path d="M3 10v4h3.6l7 3.6V6.4l-7 3.6z"/><path d="M17 9.4a3.6 3.6 0 0 1 0 5.2"/><path d="M6.6 14.2 8 19.6h2.4l-1-4.6"/>',
+  fileText:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+  download:    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>',
   scroll:      '<rect x="5.4" y="3.6" width="13.2" height="16.8" rx="1.6"/><line x1="8.4" y1="8.4" x2="15.6" y2="8.4"/><line x1="8.4" y1="12" x2="15.6" y2="12"/><line x1="8.4" y1="15.6" x2="13" y2="15.6"/>',
   wallet:      '<rect x="3" y="6.4" width="18" height="12.8" rx="1.8"/><path d="M15.6 12.4h3.6v3.2h-3.6z"/><line x1="3" y1="10" x2="21" y2="10"/>',
   receipt:     '<path d="M5.4 3h13.2v18l-2.2-1.5-2.2 1.5-2.2-1.5-2.2 1.5-2.2-1.5-2.2 1.5z"/><line x1="8.2" y1="8" x2="15.8" y2="8"/><line x1="8.2" y1="12" x2="15.8" y2="12"/>',

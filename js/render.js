@@ -243,25 +243,321 @@ function buildForm(container, config) {
   form.className = 'crud-form';
   form.noValidate = true;
 
+  // Helpers for special field types
+  function buildImageUpload(field, currentValue) {
+    const wrap = document.createElement('div');
+    wrap.className = 'upload-image-wrap' + (field.avatar ? ' upload-image-avatar' : '');
+    wrap.dataset.fieldKey = field.key;
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = field.key;
+    hidden.id = `field-${config.key}-${field.key}`;
+    hidden.value = currentValue || '';
+
+    const zone = document.createElement('div');
+    zone.className = 'upload-zone' + (currentValue ? ' has-preview' : '');
+    zone.tabIndex = 0;
+
+    const empty = document.createElement('div');
+    empty.className = 'upload-empty';
+    empty.innerHTML = `
+      <div class="upload-empty-icon">${typeof icon === 'function' ? icon('image', 28) : '📷'}</div>
+      <strong>Upload de imagem</strong>
+      <span>Arraste uma imagem para aqui<br>ou selecione no computador</span>
+      <small>PNG, JPG, JPEG, GIF ou WEBP · Máx. 20 MB</small>
+      <button type="button" class="btn btn-secondary btn-small upload-select-btn">Selecionar imagem</button>
+    `;
+
+    const preview = document.createElement('div');
+    preview.className = 'upload-preview';
+    preview.innerHTML = `
+      <img alt="Pré-visualização" class="upload-preview-img">
+      <div class="upload-preview-actions">
+        <button type="button" class="btn btn-secondary btn-small upload-replace-btn">Substituir</button>
+        <button type="button" class="btn btn-danger btn-small upload-remove-btn">Remover</button>
+      </div>
+    `;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/png,image/jpeg,image/jpg,image/gif,image/webp';
+    fileInput.className = 'upload-file-input';
+    fileInput.hidden = true;
+
+    function showPreview(dataUrl) {
+      hidden.value = dataUrl;
+      preview.querySelector('.upload-preview-img').src = dataUrl;
+      zone.classList.add('has-preview');
+    }
+    function clearPreview() {
+      hidden.value = '';
+      preview.querySelector('.upload-preview-img').src = '';
+      zone.classList.remove('has-preview');
+      fileInput.value = '';
+    }
+    function handleFile(file) {
+      if (!file) return;
+      const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!allowed.includes(file.type) && !/\.(png|jpe?g|gif|webp)$/i.test(file.name)) {
+        showToast('Formato inválido. Use PNG, JPG, JPEG, GIF ou WEBP.');
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        showToast('A imagem excede o limite de 20 MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => showPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    empty.querySelector('.upload-select-btn').addEventListener('click', () => fileInput.click());
+    preview.querySelector('.upload-replace-btn').addEventListener('click', () => fileInput.click());
+    preview.querySelector('.upload-remove-btn').addEventListener('click', clearPreview);
+    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+    if (currentValue) showPreview(currentValue);
+
+    zone.appendChild(empty);
+    zone.appendChild(preview);
+    wrap.appendChild(hidden);
+    wrap.appendChild(zone);
+    wrap.appendChild(fileInput);
+    return wrap;
+  }
+
+  function buildDocumentUpload(field, currentValue) {
+    const wrap = document.createElement('div');
+    wrap.className = 'upload-doc-wrap';
+    wrap.dataset.fieldKey = field.key;
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = field.key;
+    hidden.id = `field-${config.key}-${field.key}`;
+    // Store JSON {name, size, data} or plain name string for compatibility
+    hidden.value = currentValue || '';
+
+    const zone = document.createElement('div');
+    zone.className = 'upload-doc-zone' + (currentValue ? ' has-file' : '');
+
+    const empty = document.createElement('div');
+    empty.className = 'upload-doc-empty';
+    empty.innerHTML = `
+      <strong>Arraste o documento para aqui</strong>
+      <span>ou selecione no computador</span>
+      <small>PDF, DOC, DOCX, XLS, XLSX e outros</small>
+      <button type="button" class="btn btn-secondary btn-small upload-select-btn">Selecionar ficheiro</button>
+    `;
+
+    const preview = document.createElement('div');
+    preview.className = 'upload-doc-preview';
+    preview.innerHTML = `
+      <div class="upload-doc-icon">📄</div>
+      <div class="upload-doc-info">
+        <strong class="upload-doc-name">documento.pdf</strong>
+        <span class="upload-doc-size">—</span>
+      </div>
+      <div class="upload-doc-actions">
+        <button type="button" class="btn btn-secondary btn-small upload-replace-btn">Substituir</button>
+        <button type="button" class="btn btn-danger btn-small upload-remove-btn">Remover</button>
+      </div>
+    `;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    fileInput.className = 'upload-file-input';
+    fileInput.hidden = true;
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    function showFile(name, size, dataUrl) {
+      const payload = JSON.stringify({ name, size, data: dataUrl || name });
+      hidden.value = payload;
+      preview.querySelector('.upload-doc-name').textContent = name;
+      preview.querySelector('.upload-doc-size').textContent = size ? formatSize(size) : '—';
+      zone.classList.add('has-file');
+    }
+    function clearFile() {
+      hidden.value = '';
+      zone.classList.remove('has-file');
+      fileInput.value = '';
+    }
+    function handleFile(file) {
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) {
+        showToast('O ficheiro excede o limite de 20 MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => showFile(file.name, file.size, reader.result);
+      reader.readAsDataURL(file);
+    }
+
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    empty.querySelector('.upload-select-btn').addEventListener('click', () => fileInput.click());
+    preview.querySelector('.upload-replace-btn').addEventListener('click', () => fileInput.click());
+    preview.querySelector('.upload-remove-btn').addEventListener('click', clearFile);
+    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+    if (currentValue) {
+      try {
+        const parsed = JSON.parse(currentValue);
+        showFile(parsed.name || 'documento', parsed.size || 0, parsed.data);
+      } catch {
+        showFile(String(currentValue).split('/').pop() || 'documento', 0, currentValue);
+      }
+    }
+
+    zone.appendChild(empty);
+    zone.appendChild(preview);
+    wrap.appendChild(hidden);
+    wrap.appendChild(zone);
+    wrap.appendChild(fileInput);
+    return wrap;
+  }
+
+  function buildPollOptions(field, currentValue) {
+    const wrap = document.createElement('div');
+    wrap.className = 'poll-options-wrap';
+    wrap.dataset.fieldKey = field.key;
+
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = field.key;
+    hidden.id = `field-${config.key}-${field.key}`;
+
+    const list = document.createElement('div');
+    list.className = 'poll-options-list';
+
+    let options = [];
+    if (currentValue) {
+      options = String(currentValue).split('\n').map(s => s.trim()).filter(Boolean);
+    }
+    if (options.length < 2) options = ['', ''];
+
+    function syncHidden() {
+      const vals = [...list.querySelectorAll('.poll-option-input')].map(i => i.value.trim()).filter(Boolean);
+      hidden.value = vals.join('\n');
+    }
+
+    function addOption(value) {
+      const row = document.createElement('div');
+      row.className = 'poll-option-row';
+      const idx = list.children.length + 1;
+      row.innerHTML = `
+        <label class="poll-option-label">Opção ${idx}</label>
+        <input type="text" class="poll-option-input" placeholder="Texto da opção" value="${(value || '').replace(/"/g, '&quot;')}">
+        <button type="button" class="btn btn-secondary btn-small poll-option-remove" title="Remover">Remover</button>
+      `;
+      const input = row.querySelector('.poll-option-input');
+      input.addEventListener('input', syncHidden);
+      row.querySelector('.poll-option-remove').addEventListener('click', () => {
+        if (list.children.length <= 2) {
+          showToast('É necessário pelo menos 2 opções.');
+          return;
+        }
+        row.remove();
+        // renumber
+        [...list.querySelectorAll('.poll-option-label')].forEach((lab, i) => { lab.textContent = `Opção ${i + 1}`; });
+        syncHidden();
+      });
+      list.appendChild(row);
+      syncHidden();
+    }
+
+    options.forEach(o => addOption(o));
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn btn-secondary btn-small poll-add-option';
+    addBtn.innerHTML = '+ Adicionar opção';
+    addBtn.addEventListener('click', () => {
+      if (list.children.length >= 12) {
+        showToast('Limite de 12 opções atingido.');
+        return;
+      }
+      addOption('');
+      list.lastElementChild.querySelector('input').focus();
+    });
+
+    wrap.appendChild(hidden);
+    wrap.appendChild(list);
+    wrap.appendChild(addBtn);
+    return wrap;
+  }
+
   config.fields.forEach(field => {
-    // Campos "onlyCreate" (ex: senha) não aparecem ao editar
     if (field.onlyCreate && isEditing) return;
-    // Campos "hidden" nunca aparecem no formulário — são definidos por outra
-    // pessoa/perfil (ex: "visibilidade" é controlada pelo sistema, e as datas
-    // de entrada/saída de visitantes são preenchidas pelo porteiro na
-    // portaria, não pelo morador/síndico que só pré-regista a visita).
     if (field.hidden) return;
 
     const row = document.createElement('div');
     row.className = 'form-row';
+    if (field.span === 2 || field.type === 'textarea' || field.type === 'image' || field.type === 'document' || field.type === 'poll-options') {
+      row.classList.add('form-row-full');
+    }
+    if (field.type === 'checkbox') row.classList.add('form-row-checkbox');
 
     const label = document.createElement('label');
     label.textContent = field.label + (field.required ? ' *' : '');
     label.htmlFor = `field-${config.key}-${field.key}`;
-    row.appendChild(label);
+    if (field.type !== 'checkbox') row.appendChild(label);
+
+    const currentVal = editItem && editItem[field.key] !== undefined ? editItem[field.key] : '';
 
     if (field.type === 'ref') {
-      row.appendChild(buildRefCombobox(config.key, field, editItem ? editItem[field.key] : ''));
+      row.appendChild(buildRefCombobox(config.key, field, currentVal));
+      form.appendChild(row);
+      return;
+    }
+
+    if (field.type === 'image') {
+      row.appendChild(buildImageUpload(field, currentVal));
+      form.appendChild(row);
+      return;
+    }
+
+    if (field.type === 'document') {
+      row.appendChild(buildDocumentUpload(field, currentVal));
+      form.appendChild(row);
+      return;
+    }
+
+    if (field.type === 'poll-options') {
+      row.appendChild(buildPollOptions(field, currentVal));
+      form.appendChild(row);
+      return;
+    }
+
+    if (field.type === 'checkbox') {
+      const checkWrap = document.createElement('label');
+      checkWrap.className = 'form-checkbox-label';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.id = `field-${config.key}-${field.key}`;
+      input.name = field.key;
+      input.checked = currentVal === true || currentVal === 'true' || currentVal === '1' || currentVal === 'Sim';
+      checkWrap.appendChild(input);
+      checkWrap.appendChild(document.createTextNode(' ' + field.label));
+      row.appendChild(checkWrap);
       form.appendChild(row);
       return;
     }
@@ -291,10 +587,7 @@ function buildForm(container, config) {
     input.id = `field-${config.key}-${field.key}`;
     input.name = field.key;
     if (field.required) input.required = true;
-
-    if (editItem && editItem[field.key] !== undefined) {
-      input.value = editItem[field.key];
-    }
+    if (currentVal !== undefined && currentVal !== null) input.value = currentVal;
 
     row.appendChild(input);
     form.appendChild(row);
@@ -328,27 +621,44 @@ function buildForm(container, config) {
     const formData = new FormData(form);
     const record = {};
     config.fields.forEach(field => {
-      if (field.onlyCreate && isEditing) return; // mantém valor antigo (senha etc.)
+      if (field.onlyCreate && isEditing) return;
       if (field.hidden) {
-        // Campo não editável por este formulário: mantém o valor existente
-        // ao editar, ou usa um valor por omissão sensato ao criar.
         record[field.key] = isEditing ? editItem[field.key] : (field.hiddenDefault !== undefined ? field.hiddenDefault : (field.options ? field.options[0] : ''));
+        return;
+      }
+      if (field.type === 'checkbox') {
+        const el = form.querySelector(`[name="${field.key}"]`);
+        record[field.key] = el && el.checked;
+        return;
+      }
+      if (field.type === 'poll-options') {
+        const val = formData.get(field.key) || '';
+        const opts = String(val).split('\n').map(s => s.trim()).filter(Boolean);
+        if (opts.length < 2) {
+          showToast('Adicione pelo menos 2 opções válidas à votação.');
+          e.stopImmediatePropagation();
+          return;
+        }
+        record[field.key] = opts.join('\n');
         return;
       }
       record[field.key] = formData.get(field.key) || '';
     });
 
+    // Validation for poll
+    if (config.key === 'votacoes') {
+      const opts = String(record.opcoes || '').split('\n').map(s => s.trim()).filter(Boolean);
+      if (opts.length < 2) {
+        showToast('Adicione pelo menos 2 opções válidas à votação.');
+        return;
+      }
+    }
+
     if (isEditing) {
-      // --------------------------------------------------------------------
-      // Endpoint real: PUT /<recurso>/:id  (ver config.endpoints.update)
-      // --------------------------------------------------------------------
       Object.assign(editItem, record);
       editingState[config.key] = null;
       showToast(`${config.labelSingular} atualizado(a).`);
     } else {
-      // --------------------------------------------------------------------
-      // Endpoint real: POST /<recurso>  (ver config.endpoints.create)
-      // --------------------------------------------------------------------
       const newRecord = { id: nextId(config.key), ...record };
       DB[config.key].push(newRecord);
       showToast(`${config.labelSingular} salvo(a) com sucesso.`);
@@ -358,6 +668,7 @@ function buildForm(container, config) {
   });
 
   wrapper.appendChild(form);
+  
   wrapper.appendChild(buildApiNote({
     create: config.endpoints.create,
     update: config.endpoints.update,
@@ -365,11 +676,6 @@ function buildForm(container, config) {
   container.appendChild(wrapper);
 }
 
-/* ---------------------------------------------------------------------------
-   Constrói a tabela de uma entidade dentro de `container`: cabeçalho com
-   título, contagem e pesquisa, e uma linha por registo (mais "humano" e
-   fácil de escanear do que um grid de cartões repetidos).
-   --------------------------------------------------------------------------- */
 function buildTable(container, config) {
   container.innerHTML = '';
 

@@ -466,6 +466,10 @@ function renderCustomScreen(screen) {
   if(screen==='chat') return renderChatScreen();
   if(screen==='mensalidade') return renderMensalidadeScreen();
   if(screen==='pagar') return renderPagarMensalidadeScreen();
+  if(screen==='credenciaisAdmin') return renderCredenciaisScreen('admin');
+  if(screen==='credenciaisSindico') return renderCredenciaisScreen('sindico');
+  if(screen==='relatorios') return renderRelatoriosScreen(true);
+  if(screen==='relatoriosMorador') return renderRelatoriosScreen(false);
   if(screen==='manutencoesMorador') return renderManutencoesMoradorScreen();
   if(screen==='pesquisaPortaria') return renderPesquisaPortariaScreen();
 }
@@ -495,6 +499,100 @@ function renderMensalidadeScreen(){
   body.querySelector('#btn-pay-now').onclick=()=>renderPagarMensalidadeScreen();
 }
 
+
+function renderCredenciaisScreen(role) {
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+  const entityKey = role === 'admin' ? 'credenciaisBancariasAdmin' : 'credenciaisBancariasSindico';
+  const title = role === 'admin'
+    ? 'Credenciais bancárias da Administração'
+    : 'Credenciais bancárias do Síndico';
+
+  const heading = document.createElement('div');
+  heading.className = 'screen-heading';
+  heading.innerHTML = `<h2>${title}</h2>`;
+  body.appendChild(heading);
+
+  const records = DB[entityKey] || [];
+  const record = records[0] || null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'crud-layout';
+
+  if (record && !editingState[entityKey]) {
+    const card = document.createElement('div');
+    card.className = 'bank-credentials-card glass';
+    card.innerHTML = `
+      <h3>Credenciais bancárias</h3>
+      <div class="bank-cred-field"><span>Titular</span><strong>${record.titular || '—'}</strong></div>
+      <div class="bank-cred-field"><span>Banco</span><strong>${record.banco || '—'}</strong></div>
+      <div class="bank-cred-field"><span>IBAN</span><strong>${record.iban || '—'}</strong></div>
+      <div class="bank-cred-field"><span>Número da conta</span><strong>${record.numero_conta || '—'}</strong></div>
+      <div class="bank-cred-field"><span>Tipo de conta</span><strong>${record.tipo_conta || '—'}</strong></div>
+      <div class="bank-credentials-actions">
+        <button type="button" class="btn btn-primary" id="btn-edit-credenciais">Editar credenciais</button>
+      </div>
+    `;
+    wrap.appendChild(card);
+    body.appendChild(wrap);
+    document.getElementById('btn-edit-credenciais').addEventListener('click', () => {
+      editingState[entityKey] = record.id;
+      renderCredenciaisScreen(role);
+    });
+    return;
+  }
+
+  // Form mode (create or edit)
+  const formContainer = document.createElement('div');
+  formContainer.className = 'crud-form-container';
+  if (!ENTITIES[entityKey]) {
+    body.innerHTML += '<p>Configuração em falta.</p>';
+    return;
+  }
+  // Ensure editing state for single record
+  if (record) editingState[entityKey] = record.id;
+  buildForm(formContainer, ENTITIES[entityKey]);
+  // Override submit to re-render credentials view
+  const form = formContainer.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', () => {
+      setTimeout(() => {
+        editingState[entityKey] = null;
+        renderCredenciaisScreen(role);
+      }, 50);
+    }, true);
+  }
+  wrap.appendChild(formContainer);
+  body.appendChild(wrap);
+}
+
+function showPaymentRecipientConfirm(credentials, onConfirm, onBack) {
+  const body = document.getElementById('generic-screen-body');
+  const overlay = document.createElement('div');
+  overlay.className = 'payment-confirm-overlay';
+  overlay.innerHTML = `
+    <div class="payment-confirm-card glass">
+      <h3>Confirmar destinatário</h3>
+      <p class="payment-confirm-lead">Está prestes a efectuar um pagamento para:</p>
+      <div class="payment-confirm-details">
+        <div class="bank-cred-field"><span>Titular</span><strong>${credentials.titular || '—'}</strong></div>
+        <div class="bank-cred-field"><span>Banco</span><strong>${credentials.banco || '—'}</strong></div>
+        <div class="bank-cred-field"><span>IBAN</span><strong>${credentials.iban || '—'}</strong></div>
+        ${credentials.numero_conta ? `<div class="bank-cred-field"><span>Número da conta</span><strong>${credentials.numero_conta}</strong></div>` : ''}
+      </div>
+      <p class="payment-confirm-note">Confirme que os dados apresentados correspondem ao destinatário pretendido. Esta é uma confirmação visual dos dados cadastrados — não constitui validação bancária automática.</p>
+      <div class="payment-confirm-actions">
+        <button type="button" class="btn btn-primary" id="btn-confirm-recipient">Confirmar e continuar</button>
+        <button type="button" class="btn btn-secondary" id="btn-back-recipient">Voltar</button>
+      </div>
+    </div>
+  `;
+  body.innerHTML = '';
+  body.appendChild(overlay);
+  document.getElementById('btn-confirm-recipient').addEventListener('click', onConfirm);
+  document.getElementById('btn-back-recipient').addEventListener('click', onBack);
+}
+
 function renderPagarMensalidadeScreen(){
   const body=document.getElementById('generic-screen-body');
   body.innerHTML='';
@@ -502,6 +600,10 @@ function renderPagarMensalidadeScreen(){
   const amount=formatNumber(taxa.valor_taxa)+' Kz';
   const reference='CONVIVA-2026-'+String(taxa.id||1).padStart(3,'0');
   const unit=(DB.me||DB.user||{}).unidade||(DB.unidades&&DB.unidades[0]&&DB.unidades[0].codigo)||'—';
+  const credSindico=(DB.credenciaisBancariasSindico&&DB.credenciaisBancariasSindico[0])||{titular:'Síndico do Condomínio',banco:'Banco X',iban:'AO06 0040 0000 9876 5432 1098 7',numero_conta:'9876543210'};
+  const credAdmin=(DB.credenciaisBancariasAdmin&&DB.credenciaisBancariasAdmin[0])||{titular:'Administração CONVIVA',banco:'Banco de Fomento Angola',iban:'AO06 0006 0000 1234 5678 9012 3',numero_conta:'1234567890'};
+  // Morador paga ao síndico
+  const destCred=credSindico;
 
   body.innerHTML=`
     <div class="checkout-page">
@@ -610,9 +712,9 @@ function renderPagarMensalidadeScreen(){
                 <p class="payment-detail-lead">Faça a transferência e carregue o comprovativo para validação.</p>
                 <div class="bank-details-card">
                   <span class="bank-details-title">Dados para transferência</span>
-                  <div><span>Banco</span><strong>BFA</strong></div>
-                  <div><span>IBAN</span><strong>AO06.0006.2536.0120.3011.0</strong></div>
-                  <div><span>Titular</span><strong>EFSI SOLUÇÕES-COM.GERAL E PREST.SERV.LDA</strong></div>
+                  <div><span>Banco</span><strong>${destCred.banco||'—'}</strong></div>
+                  <div><span>IBAN</span><strong>${destCred.iban||'—'}</strong></div>
+                  <div><span>Titular</span><strong>${destCred.titular||'—'}</strong></div>
                 </div>
                 <div class="payment-upload">
                   <label for="resident-receipt">
@@ -690,11 +792,20 @@ function renderPagarMensalidadeScreen(){
   body.querySelector('#resident-payment-form').addEventListener('submit',e=>{
     e.preventDefault();
     const receipt=body.querySelector('#resident-receipt');
-    if(method==='transfer' && !receipt.files.length){receipt.setCustomValidity('Carregue o comprovativo da transferência.');receipt.reportValidity();receipt.setCustomValidity('');return;}
-    const id=(DB.meusPagamentos||[]).length+1;
-    const state=method==='transfer'?'Pendente':'Pago';
-    DB.meusPagamentos.push({id,mes_pago:'2026-09-01',estado:state,data_pagamento:state==='Pago'?new Date().toISOString().slice(0,10):'',id_taxa:taxa.id||1,metodo_pagamento:method==='express'?'Multicaixa Express':method==='reference'?'Referência Multicaixa':'Transferência bancária'});
-    showToast(state==='Pago'?'Pagamento registado com sucesso.':'Comprovativo enviado para validação.');
+    if(method==='transfer' && receipt && !receipt.files.length){receipt.setCustomValidity('Carregue o comprovativo da transferência.');receipt.reportValidity();receipt.setCustomValidity('');return;}
+    
+    function finalizePayment(){
+      const id=(DB.meusPagamentos||[]).length+1;
+      const state=method==='transfer'?'Pendente':'Pago';
+      DB.meusPagamentos.push({id,mes_pago:'2026-09-01',estado:state,data_pagamento:state==='Pago'?new Date().toISOString().slice(0,10):'',id_taxa:taxa.id||1,metodo_pagamento:method==='express'?'Multicaixa Express':method==='reference'?'Referência Multicaixa':'Transferência bancária'});
+      showToast(state==='Pago'?'Pagamento registado com sucesso.':'Comprovativo enviado para validação.');
+    }
+    
+    if(method==='transfer'){
+      showPaymentRecipientConfirm(destCred, () => { finalizePayment(); renderMensalidadeScreen && renderMensalidadeScreen(); }, () => renderPagarMensalidadeScreen());
+      return;
+    }
+    finalizePayment();
     renderMeusPagamentosScreen();
   });
 }
@@ -710,6 +821,320 @@ function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);
 
 function renderManutencoesMoradorScreen(){
   const body=document.getElementById('generic-screen-body');body.innerHTML=`<div class="screen-heading"><h2>Manutenções do Condomínio</h2><span class="readonly-tag">Consulta</span></div><div class="maintenance-grid">${(DB.manutencoes||[]).map(m=>`<article class="maintenance-card card"><div class="maintenance-icon">${icon('wrench',22)}</div><div><span class="badge ${m.estado==='Concluída'?'badge-green':m.estado==='Cancelada'?'badge-red':'badge-yellow'}">${m.estado}</span><h3>${m.titulo}</h3><p>${m.descricao}</p><div class="maintenance-meta"><span>${icon('mapPin',14)} ${m.local}</span><span>${icon('calendar',14)} ${m.data_prevista||'Sem data'}</span><span>${formatNumber(m.custo||0)} Kz</span></div></div></article>`).join('')}</div>`;
+}
+
+
+/**
+ * Relatórios — lista por tipo (Financeiro, Cotas, Assembleias).
+ * canManage=true (síndico): pode publicar novos e remover.
+ * canManage=false (morador): só consulta e descarrega.
+ * Em sistemas reais o backend gera/envia; aqui o síndico publica o PDF e a lista mostra data + download.
+ */
+function renderRelatoriosScreen(canManage) {
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+
+  const heading = document.createElement('div');
+  heading.className = 'screen-heading';
+  heading.innerHTML = canManage
+    ? '<h2>Relatórios</h2><p class="home-intro" style="margin:0">Publique relatórios financeiros, de cotas e de assembleias. Os moradores veem a lista e podem descarregar.</p>'
+    : '<h2>Relatórios</h2><p class="home-intro" style="margin:0">Documentos disponibilizados pelo condomínio. Consulte pela data e descarregue quando precisar.</p>';
+  body.appendChild(heading);
+
+  if (!DB.relatorios) DB.relatorios = [];
+
+  let activeFilter = 'Todos';
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'reports-toolbar';
+  toolbar.innerHTML = `
+    <div class="reports-filters" role="tablist">
+      <button type="button" class="reports-filter is-active" data-filter="Todos">Todos</button>
+      <button type="button" class="reports-filter" data-filter="Financeiro">Financeiro</button>
+      <button type="button" class="reports-filter" data-filter="Cotas">Cotas</button>
+      <button type="button" class="reports-filter" data-filter="Assembleias">Assembleias</button>
+    </div>
+    ${canManage ? '<button type="button" class="btn btn-primary" id="btn-novo-relatorio">' + icon('plus', 16) + '<span>Publicar relatório</span></button>' : ''}
+  `;
+  body.appendChild(toolbar);
+
+  const listWrap = document.createElement('div');
+  listWrap.className = 'reports-list';
+  body.appendChild(listWrap);
+
+  const formHost = document.createElement('div');
+  formHost.id = 'relatorios-form-host';
+  formHost.hidden = true;
+  body.appendChild(formHost);
+
+  function formatDatePt(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = String(iso).split('-');
+    if (!y || !m || !d) return iso;
+    return `${d}/${m}/${y}`;
+  }
+
+  function tipoBadgeClass(tipo) {
+    if (tipo === 'Financeiro') return 'badge-blue';
+    if (tipo === 'Cotas') return 'badge-green';
+    if (tipo === 'Assembleias') return 'badge-yellow';
+    return 'badge-gray';
+  }
+
+  function downloadReport(r) {
+    // Se houver ficheiro em base64 (upload), descarrega; senão gera um PDF/HTML de demonstração
+    let payload = r.ficheiro;
+    let fileName = (r.titulo || 'relatorio').replace(/[^\w\-]+/g, '_').slice(0, 60) + '.pdf';
+    try {
+      if (payload && payload.startsWith('{')) {
+        const parsed = JSON.parse(payload);
+        if (parsed.data && String(parsed.data).startsWith('data:')) {
+          const a = document.createElement('a');
+          a.href = parsed.data;
+          a.download = parsed.name || fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          showToast('Download iniciado.');
+          return;
+        }
+        if (parsed.name) fileName = parsed.name;
+      } else if (payload && String(payload).startsWith('data:')) {
+        const a = document.createElement('a');
+        a.href = payload;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Download iniciado.');
+        return;
+      }
+    } catch (_) { /* fallback abaixo */ }
+
+    const html = `<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${r.titulo || 'Relatório'}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:24px;color:#1a1a2e}
+h1{font-size:1.4rem} .meta{color:#666;margin-bottom:24px} .box{border:1px solid #e2e8f0;border-radius:12px;padding:20px}</style></head>
+<body><p style="font-weight:700;letter-spacing:.04em;color:#4f46e5">CONVIVA</p>
+<h1>${r.titulo || 'Relatório'}</h1>
+<p class="meta">Tipo: ${r.tipo || '—'} · Data de envio: ${formatDatePt(r.data_envio)}</p>
+<div class="box"><p>${r.notas || 'Documento disponibilizado pela administração do condomínio.'}</p>
+<p style="margin-top:16px;font-size:.85rem;color:#888">Em produção este ficheiro seria o PDF oficial carregado pelo síndico.</p></div></body></html>`;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName.replace(/\.pdf$/i, '') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Relatório preparado para download.');
+  }
+
+  function drawList() {
+    const rows = (DB.relatorios || [])
+      .filter(r => activeFilter === 'Todos' || r.tipo === activeFilter)
+      .slice()
+      .sort((a, b) => String(b.data_envio || '').localeCompare(String(a.data_envio || '')));
+
+    if (!rows.length) {
+      listWrap.innerHTML = `<div class="reports-empty">
+        <p>Ainda não há relatórios${activeFilter !== 'Todos' ? ' deste tipo' : ''}.</p>
+        ${canManage ? '<p class="form-hint">Clique em «Publicar relatório» para disponibilizar o primeiro documento.</p>' : ''}
+      </div>`;
+      return;
+    }
+
+    listWrap.innerHTML = rows.map(r => `
+      <article class="report-row card" data-id="${r.id}">
+        <div class="report-row-main">
+          <span class="badge ${tipoBadgeClass(r.tipo)}">${r.tipo || '—'}</span>
+          <div class="report-row-copy">
+            <strong>${r.titulo || 'Relatório'}</strong>
+            <span class="report-row-date">Enviado em ${formatDatePt(r.data_envio)}</span>
+            ${r.notas ? `<span class="report-row-notes">${r.notas}</span>` : ''}
+          </div>
+        </div>
+        <div class="report-row-actions">
+          <button type="button" class="btn btn-secondary btn-small report-download" data-id="${r.id}">${icon('download', 14)}<span>Descarregar</span></button>
+          ${canManage ? `<button type="button" class="btn btn-danger btn-small report-remove" data-id="${r.id}">Remover</button>` : ''}
+        </div>
+      </article>
+    `).join('');
+
+    listWrap.querySelectorAll('.report-download').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = DB.relatorios.find(x => x.id === Number(btn.dataset.id));
+        if (r) downloadReport(r);
+      });
+    });
+    listWrap.querySelectorAll('.report-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('Remover este relatório da lista?')) return;
+        const id = Number(btn.dataset.id);
+        DB.relatorios = DB.relatorios.filter(x => x.id !== id);
+        showToast('Relatório removido.');
+        drawList();
+      });
+    });
+  }
+
+  toolbar.querySelectorAll('.reports-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      toolbar.querySelectorAll('.reports-filter').forEach(b => b.classList.toggle('is-active', b === btn));
+      drawList();
+    });
+  });
+
+  if (canManage) {
+    const btnNovo = toolbar.querySelector('#btn-novo-relatorio');
+    btnNovo.addEventListener('click', () => {
+      formHost.hidden = false;
+      formHost.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'form-card glass';
+      card.innerHTML = '<h3>Publicar relatório</h3><p class="form-hint">O documento fica disponível na lista com a data de envio. Os moradores podem descarregar.</p>';
+
+      const form = document.createElement('form');
+      form.className = 'crud-form';
+      form.noValidate = true;
+      form.innerHTML = `
+        <div class="form-row">
+          <label for="rel-tipo">Tipo de relatório *</label>
+          <select id="rel-tipo" required>
+            <option value="">Selecione...</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Cotas">Cotas</option>
+            <option value="Assembleias">Assembleias</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="rel-titulo">Título *</label>
+          <input type="text" id="rel-titulo" required placeholder="Ex.: Relatório financeiro — Setembro 2026">
+        </div>
+        <div class="form-row">
+          <label for="rel-data">Data de envio *</label>
+          <input type="date" id="rel-data" required>
+        </div>
+        <div class="form-row form-row-full">
+          <label>Ficheiro do relatório</label>
+          <div id="rel-doc-slot"></div>
+        </div>
+        <div class="form-row form-row-full">
+          <label for="rel-notas">Notas (opcional)</label>
+          <textarea id="rel-notas" rows="2" placeholder="Breve descrição"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Publicar</button>
+          <button type="button" class="btn btn-secondary" id="rel-cancel">Cancelar</button>
+        </div>
+      `;
+      card.appendChild(form);
+      formHost.appendChild(card);
+
+      // Document upload slot (reuse pattern)
+      const docSlot = form.querySelector('#rel-doc-slot');
+      const docHidden = document.createElement('input');
+      docHidden.type = 'hidden';
+      docHidden.id = 'rel-ficheiro';
+      const docZone = document.createElement('div');
+      docZone.className = 'upload-doc-zone';
+      docZone.innerHTML = `
+        <div class="upload-doc-empty">
+          <strong>Arraste o documento para aqui</strong>
+          <span>ou selecione no computador</span>
+          <small>PDF, DOC, DOCX, XLS, XLSX</small>
+          <button type="button" class="btn btn-secondary btn-small" id="rel-doc-pick">Selecionar ficheiro</button>
+        </div>
+        <div class="upload-doc-preview">
+          <div class="upload-doc-icon">📄</div>
+          <div class="upload-doc-info">
+            <strong class="upload-doc-name">documento</strong>
+            <span class="upload-doc-size">—</span>
+          </div>
+          <div class="upload-doc-actions">
+            <button type="button" class="btn btn-secondary btn-small" id="rel-doc-replace">Substituir</button>
+            <button type="button" class="btn btn-danger btn-small" id="rel-doc-remove">Remover</button>
+          </div>
+        </div>
+      `;
+      const docFile = document.createElement('input');
+      docFile.type = 'file';
+      docFile.accept = '.pdf,.doc,.docx,.xls,.xlsx,application/pdf';
+      docFile.hidden = true;
+      function setDoc(name, size, dataUrl) {
+        if (!name) {
+          docHidden.value = '';
+          docZone.classList.remove('has-file');
+          return;
+        }
+        docHidden.value = JSON.stringify({ name, size, data: dataUrl || name });
+        docZone.querySelector('.upload-doc-name').textContent = name;
+        docZone.querySelector('.upload-doc-size').textContent = size ? (size < 1024 * 1024 ? (size / 1024).toFixed(1) + ' KB' : (size / (1024 * 1024)).toFixed(1) + ' MB') : '—';
+        docZone.classList.add('has-file');
+      }
+      function onDoc(file) {
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) { showToast('Ficheiro demasiado grande (máx. 20 MB).'); return; }
+        const reader = new FileReader();
+        reader.onload = () => setDoc(file.name, file.size, reader.result);
+        reader.readAsDataURL(file);
+      }
+      docZone.addEventListener('dragover', e => { e.preventDefault(); docZone.classList.add('drag-over'); });
+      docZone.addEventListener('dragleave', () => docZone.classList.remove('drag-over'));
+      docZone.addEventListener('drop', e => { e.preventDefault(); docZone.classList.remove('drag-over'); onDoc(e.dataTransfer.files[0]); });
+      docZone.querySelector('#rel-doc-pick').addEventListener('click', () => docFile.click());
+      docZone.querySelector('#rel-doc-replace').addEventListener('click', () => docFile.click());
+      docZone.querySelector('#rel-doc-remove').addEventListener('click', () => { setDoc(null); docFile.value = ''; });
+      docFile.addEventListener('change', () => onDoc(docFile.files[0]));
+      docSlot.appendChild(docHidden);
+      docSlot.appendChild(docZone);
+      docSlot.appendChild(docFile);
+
+      // default date = today
+      const today = new Date();
+      form.querySelector('#rel-data').value = today.toISOString().slice(0, 10);
+
+      form.querySelector('#rel-cancel').addEventListener('click', () => {
+        formHost.hidden = true;
+        formHost.innerHTML = '';
+      });
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const tipo = form.querySelector('#rel-tipo').value;
+        const titulo = form.querySelector('#rel-titulo').value.trim();
+        const data_envio = form.querySelector('#rel-data').value;
+        if (!tipo || !titulo || !data_envio) {
+          showToast('Preencha tipo, título e data.');
+          return;
+        }
+        const id = (DB.relatorios.reduce((m, r) => Math.max(m, r.id || 0), 0) || 0) + 1;
+        DB.relatorios.push({
+          id,
+          tipo,
+          titulo,
+          data_envio,
+          ficheiro: docHidden.value || '',
+          notas: form.querySelector('#rel-notas').value.trim(),
+        });
+        showToast('Relatório publicado.');
+        formHost.hidden = true;
+        formHost.innerHTML = '';
+        drawList();
+      });
+
+      formHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  drawList();
+  body.appendChild(buildApiNote({
+    list: 'GET /relatorio',
+    create: canManage ? 'POST /relatorio' : undefined,
+    download: 'GET /relatorio/:id/download',
+  }));
 }
 
 function renderPerfilScreen() {
@@ -732,7 +1157,7 @@ function renderPerfilScreen() {
   const banner = document.createElement('div');
   banner.className = 'profile-banner card';
   banner.innerHTML = `
-    <span class="profile-banner-avatar">${icon('user', 30)}</span>
+    <div class="profile-banner-avatar-wrap" id="profile-avatar-slot"></div>
     <div class="profile-banner-info">
       <span class="profile-banner-name" id="profile-banner-name">${nomeAtual}</span>
       <span class="profile-banner-meta">
@@ -742,6 +1167,92 @@ function renderPerfilScreen() {
     </div>
   `;
   body.appendChild(banner);
+
+  // Avatar: círculo só com foto; ações fora (abaixo), fáceis de clicar
+  const avatarSlot = document.getElementById('profile-avatar-slot');
+  const avatarRoot = document.createElement('div');
+  avatarRoot.className = 'profile-avatar-block';
+
+  const avatarHidden = document.createElement('input');
+  avatarHidden.type = 'hidden';
+  avatarHidden.id = 'perfil-foto';
+  avatarHidden.value = localStorage.getItem('conviva_avatar') || '';
+
+  const circle = document.createElement('div');
+  circle.className = 'profile-avatar-circle' + (avatarHidden.value ? ' has-photo' : '');
+  circle.innerHTML = `
+    <span class="profile-avatar-placeholder">${icon('user', 36)}</span>
+    <img class="profile-avatar-img" alt="Foto de perfil" hidden>
+  `;
+
+  const actions = document.createElement('div');
+  actions.className = 'profile-avatar-actions';
+  actions.innerHTML = `
+    <button type="button" class="btn btn-secondary btn-small" id="btn-avatar-change">Alterar foto</button>
+    <button type="button" class="btn btn-secondary btn-small" id="btn-avatar-remove" ${avatarHidden.value ? '' : 'hidden'}>Remover</button>
+  `;
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/png,image/jpeg,image/jpg,image/gif,image/webp';
+  fileInput.hidden = true;
+
+  function setAvatarPreview(url) {
+    avatarHidden.value = url || '';
+    const img = circle.querySelector('.profile-avatar-img');
+    const ph = circle.querySelector('.profile-avatar-placeholder');
+    const btnRemove = actions.querySelector('#btn-avatar-remove');
+    if (url) {
+      img.src = url;
+      img.hidden = false;
+      ph.hidden = true;
+      circle.classList.add('has-photo');
+      if (btnRemove) btnRemove.hidden = false;
+      localStorage.setItem('conviva_avatar', url);
+    } else {
+      img.src = '';
+      img.hidden = true;
+      ph.hidden = false;
+      circle.classList.remove('has-photo');
+      if (btnRemove) btnRemove.hidden = true;
+      localStorage.removeItem('conviva_avatar');
+      fileInput.value = '';
+    }
+  }
+
+  function handleAvatarFile(file) {
+    if (!file) return;
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type) && !/\.(png|jpe?g|gif|webp)$/i.test(file.name)) {
+      showToast('Formato inválido. Use PNG, JPG, JPEG, GIF ou WEBP.');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      showToast('A imagem excede o limite de 20 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAvatarPreview(reader.result);
+      showToast('Foto de perfil atualizada.');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  actions.querySelector('#btn-avatar-change').addEventListener('click', () => fileInput.click());
+  actions.querySelector('#btn-avatar-remove').addEventListener('click', () => {
+    setAvatarPreview('');
+    showToast('Foto de perfil removida.');
+  });
+  fileInput.addEventListener('change', () => handleAvatarFile(fileInput.files[0]));
+
+  if (avatarHidden.value) setAvatarPreview(avatarHidden.value);
+
+  avatarRoot.appendChild(avatarHidden);
+  avatarRoot.appendChild(circle);
+  avatarRoot.appendChild(actions);
+  avatarRoot.appendChild(fileInput);
+  avatarSlot.appendChild(avatarRoot);
 
   // -------- Corpo: dados pessoais + segurança lado a lado --------
   const grid = document.createElement('div');
@@ -1360,31 +1871,77 @@ function renderVincularScreen() {
   const layout = document.createElement('div');
   layout.className = 'crud-layout';
 
-  // -------- formulário --------
   const formContainer = document.createElement('div');
   formContainer.className = 'crud-form-container';
 
   const formCard = document.createElement('div');
   formCard.className = 'form-card glass';
-  formCard.innerHTML = `<h3>Vincular / Desvincular</h3><p class="form-hint">Digite os nomes — a unidade e o morador são encontrados e ligados automaticamente por trás dos panos.</p>`;
+  formCard.innerHTML = `<h3>Vincular / Desvincular</h3><p class="form-hint">Selecione o prédio, depois a unidade desse prédio e finalmente o morador.</p>`;
 
   const form = document.createElement('form');
   form.className = 'crud-form';
   form.id = 'form-vincular';
   form.noValidate = true;
 
+  // Prédio
+  const rowPredio = document.createElement('div');
+  rowPredio.className = 'form-row';
+  const labelPredio = document.createElement('label');
+  labelPredio.textContent = 'Prédio *';
+  labelPredio.htmlFor = 'field-vincular-predio';
+  rowPredio.appendChild(labelPredio);
+  const selectPredio = document.createElement('select');
+  selectPredio.id = 'field-vincular-predio';
+  selectPredio.innerHTML = '<option value="">Selecione o prédio...</option>';
+  (DB.predios || []).forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.nome;
+    selectPredio.appendChild(o);
+  });
+  rowPredio.appendChild(selectPredio);
+  form.appendChild(rowPredio);
+
+  // Unidade (filtered by predio)
   const rowUnidade = document.createElement('div');
   rowUnidade.className = 'form-row';
   const labelUnidade = document.createElement('label');
   labelUnidade.textContent = 'Unidade *';
   labelUnidade.htmlFor = 'field-vincular-unidade';
   rowUnidade.appendChild(labelUnidade);
-  const comboUnidade = buildRefCombobox('vincular', { key: 'unidade', ref: { entity: 'unidades', display: 'numero' } }, '');
-  rowUnidade.appendChild(comboUnidade);
+  const selectUnidade = document.createElement('select');
+  selectUnidade.id = 'field-vincular-unidade';
+  selectUnidade.innerHTML = '<option value="">Selecione primeiro o prédio...</option>';
+  selectUnidade.disabled = true;
+  rowUnidade.appendChild(selectUnidade);
   form.appendChild(rowUnidade);
 
+  selectPredio.addEventListener('change', () => {
+    const predioId = Number(selectPredio.value);
+    selectUnidade.innerHTML = '';
+    if (!predioId) {
+      selectUnidade.innerHTML = '<option value="">Selecione primeiro o prédio...</option>';
+      selectUnidade.disabled = true;
+      return;
+    }
+    const unidades = (DB.unidades || []).filter(u => Number(u.id_predio) === predioId);
+    selectUnidade.disabled = false;
+    selectUnidade.innerHTML = '<option value="">Selecione a unidade...</option>';
+    unidades.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = u.numero + (u.tipo ? ` (${u.tipo})` : '');
+      selectUnidade.appendChild(o);
+    });
+    if (unidades.length === 0) {
+      selectUnidade.innerHTML = '<option value="">Nenhuma unidade neste prédio</option>';
+      selectUnidade.disabled = true;
+    }
+  });
+
+  // Morador
   const rowMorador = document.createElement('div');
-  rowMorador.className = 'form-row';
+  rowMorador.className = 'form-row form-row-full';
   const labelMorador = document.createElement('label');
   labelMorador.textContent = 'Morador *';
   labelMorador.htmlFor = 'field-vincular-morador';
@@ -1409,67 +1966,55 @@ function renderVincularScreen() {
   }));
   layout.appendChild(formContainer);
 
-  // -------- tabela de vínculos --------
-  const tableContainer = document.createElement('div');
-  tableContainer.className = 'crud-table-container';
-  layout.appendChild(tableContainer);
-
+  // Table of vinculos
+  const tableCard = document.createElement('div');
+  tableCard.className = 'table-card glass';
+  tableCard.innerHTML = '<div class="table-card-header"><h3>Vínculos atuais</h3></div><div id="vinculos-table-wrap"></div>';
+  layout.appendChild(tableCard);
   body.appendChild(layout);
 
   function renderVinculosTable() {
-    tableContainer.innerHTML = '';
-    const wrapper = document.createElement('div');
-    wrapper.className = 'table-card glass';
-    wrapper.innerHTML = '<div class="table-card-header"><h3>Vínculos Atuais</h3></div>';
-
+    const wrap = document.getElementById('vinculos-table-wrap');
     if (!VINCULOS.length) {
-      const empty = document.createElement('p');
-      empty.className = 'empty-state';
-      empty.textContent = 'Nenhum vínculo cadastrado ainda.';
-      wrapper.appendChild(empty);
-    } else {
-  const table = document.createElement('table');
-      table.className = 'crud-table';
-      table.innerHTML = `
-        <thead><tr><th>Unidade</th><th>Morador</th></tr></thead>
-        <tbody>
-          ${VINCULOS.map(v => {
-            const unidade = DB.unidades.find(u => u.id === v.id_unidade);
-            const morador = DB.moradores.find(m => m.id === v.id_morador);
-            return `<tr><td>${unidade ? unidade.numero : '#' + v.id_unidade}</td><td>${morador ? morador.nome : '#' + v.id_morador}</td></tr>`;
-          }).join('')}
-        </tbody>
-      `;
-      wrapper.appendChild(table);
+      wrap.innerHTML = '<p class="empty-state">Nenhum vínculo registado.</p>';
+      return;
     }
-    tableContainer.appendChild(wrapper);
+    let html = '<table class="crud-table"><thead><tr><th>Prédio</th><th>Unidade</th><th>Morador</th></tr></thead><tbody>';
+    VINCULOS.forEach(v => {
+      const u = (DB.unidades || []).find(x => x.id === v.id_unidade);
+      const m = (DB.moradores || []).find(x => x.id === v.id_morador);
+      const p = u && (DB.predios || []).find(x => x.id === Number(u.id_predio));
+      html += `<tr><td>${p ? p.nome : '—'}</td><td>${u ? u.numero : '—'}</td><td>${m ? m.nome : '—'}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
   }
-
   renderVinculosTable();
 
   function readVincularIds() {
-    const idUnidade = document.getElementById('field-vincular-unidade-id').value;
-    const idMorador = document.getElementById('field-vincular-morador-id').value;
+    const idUnidade = document.getElementById('field-vincular-unidade').value;
+    const idMorador = document.getElementById('field-vincular-morador-id')
+      ? document.getElementById('field-vincular-morador-id').value
+      : '';
     return { idUnidade, idMorador };
   }
 
   document.getElementById('btn-vincular').addEventListener('click', () => {
     const { idUnidade, idMorador } = readVincularIds();
-    if (!idUnidade || !idMorador) { alert('Digite um nome de unidade e de morador que já existam nas listas.'); return; }
-    // ------------------------------------------------------------------
-    // Endpoint real: POST /unidade/:id_unidade/morador/:id_morador
-    // ------------------------------------------------------------------
-    VINCULOS.push({ id: VINCULOS.length ? Math.max(...VINCULOS.map(v => v.id)) + 1 : 1, id_unidade: Number(idUnidade), id_morador: Number(idMorador) });
+    if (!idUnidade || !idMorador) {
+      showToast('Selecione o prédio, a unidade e o morador.');
+      return;
+    }
+    const exists = VINCULOS.some(v => v.id_unidade === Number(idUnidade) && v.id_morador === Number(idMorador));
+    if (exists) { showToast('Este vínculo já existe.'); return; }
+    VINCULOS.push({ id: Date.now(), id_unidade: Number(idUnidade), id_morador: Number(idMorador) });
     showToast('Morador vinculado à unidade.');
     renderVinculosTable();
   });
 
   document.getElementById('btn-desvincular').addEventListener('click', () => {
     const { idUnidade, idMorador } = readVincularIds();
-    if (!idUnidade || !idMorador) { alert('Digite um nome de unidade e de morador que já existam nas listas.'); return; }
-    // ------------------------------------------------------------------
-    // Endpoint real: DELETE /unidade/:id_unidade/morador/:id_morador
-    // ------------------------------------------------------------------
+    if (!idUnidade || !idMorador) { showToast('Selecione prédio, unidade e morador.'); return; }
     const before = VINCULOS.length;
     const filtered = VINCULOS.filter(v => !(v.id_unidade === Number(idUnidade) && v.id_morador === Number(idMorador)));
     VINCULOS.length = 0;
@@ -1479,9 +2024,6 @@ function renderVincularScreen() {
   });
 }
 
-/* ---------------------------------------------------------------------------
-   Tela "Minha Unidade" (Morador) — somente leitura, dados fixos de exemplo.
-   --------------------------------------------------------------------------- */
 function renderMinhaUnidadeScreen() {
   const body = document.getElementById('generic-screen-body');
   body.innerHTML = '';
