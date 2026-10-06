@@ -395,9 +395,40 @@ function renderAdsCarousel(body, role) {
       slide.addEventListener('click', e => e.preventDefault());
     }
     slide.setAttribute('aria-label', `Publicidade: ${a.titulo || 'Anúncio'}`);
-    slide.innerHTML = a.imagem
-      ? `<img src="${a.imagem}" alt="${a.titulo || 'Publicidade'}" loading="lazy">`
-      : `<div class="ads-slide-fallback"><strong>${a.anunciante || 'Publicidade'}</strong><span>${a.titulo || ''}</span></div>`;
+    const imgDesktop = a.imagem_desktop || a.imagem || a.imagem_mobile || '';
+    const imgMobile = a.imagem_mobile || a.imagem || a.imagem_desktop || '';
+    const imgSrc = imgMobile || imgDesktop; // prefer mobile asset when both; CSS picks via picture
+    const titulo = a.titulo || 'Publicidade';
+    const desc = a.descricao || '';
+    const cta = a.cta || 'Saber mais';
+    const anunciante = a.anunciante || '';
+
+    const esc = (s) => String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/"/g, '&quot;');
+
+    let mediaHtml = '';
+    if (imgDesktop || imgMobile) {
+      mediaHtml = `<div class="ads-slide-media">
+        <picture class="ads-slide-picture">
+          <source media="(max-width: 700px)" srcset="${esc(imgMobile || imgDesktop)}">
+          <source media="(min-width: 701px)" srcset="${esc(imgDesktop || imgMobile)}">
+          <img src="${esc(imgDesktop || imgMobile)}" alt="${esc(titulo)}" loading="lazy" class="ads-slide-img">
+        </picture>
+      </div>`;
+    } else {
+      mediaHtml = `<div class="ads-slide-media ads-slide-media-empty" aria-hidden="true"></div>`;
+    }
+
+    slide.innerHTML = `
+      ${mediaHtml}
+      <div class="ads-slide-body">
+        ${anunciante ? `<span class="ads-slide-sponsor">${esc(anunciante)}</span>` : ''}
+        <strong class="ads-slide-title">${esc(titulo)}</strong>
+        ${desc ? `<p class="ads-slide-desc">${esc(desc)}</p>` : ''}
+        <span class="ads-slide-cta">${esc(cta)}</span>
+      </div>`;
     track.appendChild(slide);
   });
 

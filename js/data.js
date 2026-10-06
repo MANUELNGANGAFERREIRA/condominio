@@ -645,7 +645,8 @@ const ENTITIES = {
       { key: 'anunciante', label: 'Anunciante / Marca', type: 'text', required: true },
       { key: 'categoria', label: 'Categoria', type: 'select', options: ['Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
       { key: 'descricao', label: 'Texto da publicidade', type: 'textarea', required: true },
-      { key: 'imagem', label: 'Imagem / Banner', type: 'image', required: false, span: 2 },
+      { key: 'imagem_desktop', label: 'Imagem para computador (desktop)', type: 'image', required: false, span: 2 },
+      { key: 'imagem_mobile', label: 'Imagem para telemóvel (mobile)', type: 'image', required: false, span: 2 },
       { key: 'cta', label: 'Texto do botão', type: 'text', required: false },
       { key: 'link', label: 'Link de destino', type: 'url', required: false },
       { key: 'publico', label: 'Público', type: 'select', options: ['Todos','Síndicos','Moradores','Porteiros'], required: true },
@@ -657,10 +658,10 @@ const ENTITIES = {
     columns: ['titulo','anunciante','categoria','publico','data_inicio','data_fim','estado','prioridade'],
     endpoints: { list:'GET /anuncios', create:'POST /anuncios', update:'PUT /anuncios/:id', remove:'DELETE /anuncios/:id' },
     mock: [
-      { id:1, titulo:'Internet Fibra para a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Tecnologia', descricao:'Tenha uma ligação rápida e estável para trabalhar, estudar e aproveitar o seu entretenimento em casa.', imagem:'assets/img/ads/ad-fibra.svg', cta:'Conhecer oferta', link:'#', publico:'Todos', data_inicio:'2026-09-20', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
-      { id:2, titulo:'Proteja a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Casa e Condomínio', descricao:'Soluções modernas de segurança e monitorização para deixar a sua família mais tranquila.', imagem:'assets/img/ads/ad-seguranca.svg', cta:'Ver solução', link:'#', publico:'Moradores', data_inicio:'2026-09-22', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' },
-      { id:3, titulo:'Energia solar para o seu lar', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Descubra alternativas de energia solar para reduzir custos e aumentar a autonomia da sua residência.', imagem:'assets/img/ads/ad-solar.svg', cta:'Saber mais', link:'#', publico:'Todos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
-      { id:4, titulo:'Serviços para o seu condomínio', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Encontre soluções de limpeza, manutenção e assistência para facilitar a gestão do dia a dia.', imagem:'assets/img/ads/ad-servicos.svg', cta:'Ver serviços', link:'#', publico:'Síndicos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' }
+      { id:1, titulo:'Internet Fibra para a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Tecnologia', descricao:'Tenha uma ligação rápida e estável para trabalhar, estudar e aproveitar o seu entretenimento em casa.', imagem_desktop:'assets/img/ads/ad-fibra.svg', cta:'Conhecer oferta', link:'#', publico:'Todos', data_inicio:'2026-09-20', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
+      { id:2, titulo:'Proteja a sua casa', anunciante:'Publicidade CONVIVA', categoria:'Casa e Condomínio', descricao:'Soluções modernas de segurança e monitorização para deixar a sua família mais tranquila.', imagem_desktop:'assets/img/ads/ad-seguranca.svg', cta:'Ver solução', link:'#', publico:'Moradores', data_inicio:'2026-09-22', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' },
+      { id:3, titulo:'Energia solar para o seu lar', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Descubra alternativas de energia solar para reduzir custos e aumentar a autonomia da sua residência.', imagem_desktop:'assets/img/ads/ad-solar.svg', cta:'Saber mais', link:'#', publico:'Todos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' },
+      { id:4, titulo:'Serviços para o seu condomínio', anunciante:'Publicidade CONVIVA', categoria:'Serviços', descricao:'Encontre soluções de limpeza, manutenção e assistência para facilitar a gestão do dia a dia.', imagem_desktop:'assets/img/ads/ad-servicos.svg', cta:'Ver serviços', link:'#', publico:'Síndicos', data_inicio:'2026-09-23', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Normal' }
     ]
   },
 
