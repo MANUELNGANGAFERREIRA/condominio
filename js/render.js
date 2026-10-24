@@ -76,6 +76,10 @@ function refLabelForId(ref, id) {
 // campo de formulário correspondente (ex: "Meus Pagamentos" do morador).
 const READONLY_REF_LOOKUP = {
   meusPagamentos: { id_taxa: { entity: 'taxas', display: r => `Kz ${formatNumber(r.valor_taxa)} · venc. ${r.data_limite}` } },
+  minhasReservas: {
+    id_morador: { entity: 'moradores', display: 'nome' },
+    id_area_comum: { entity: 'areasComuns', display: 'nome' },
+  },
 };
 
 function cellValue(config, row, colKey) {
@@ -118,6 +122,24 @@ function buildRefCombobox(idPrefix, field, currentId) {
   const menu = document.createElement('div');
   menu.className = 'ref-combo-menu';
   menu.setAttribute('role', 'listbox');
+  document.body.appendChild(menu);
+
+  function positionMenu() {
+    const rect = text.getBoundingClientRect();
+    const gap = 8;
+    const below = Math.max(0, window.innerHeight - rect.bottom - gap);
+    const above = Math.max(0, rect.top - gap);
+    const openAbove = below < 180 && above > below;
+    const available = openAbove ? above : below;
+    const maxHeight = Math.max(90, Math.min(270, available));
+    const width = Math.min(rect.width, window.innerWidth - 16);
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    menu.style.left = `${left}px`;
+    menu.style.width = `${width}px`;
+    menu.style.maxHeight = `${maxHeight}px`;
+    menu.style.top = openAbove ? `${Math.max(8, rect.top - maxHeight - gap)}px` : `${rect.bottom + gap}px`;
+    menu.style.bottom = 'auto';
+  }
 
   let activeIndex = -1;
   let visibleRows = refRows.slice();
@@ -128,6 +150,8 @@ function buildRefCombobox(idPrefix, field, currentId) {
     menu.classList.remove('is-open');
     text.setAttribute('aria-expanded', 'false');
     activeIndex = -1;
+    window.removeEventListener('scroll', positionMenu, true);
+    window.removeEventListener('resize', positionMenu);
   }
 
   function selectRow(row) {
@@ -171,8 +195,11 @@ function buildRefCombobox(idPrefix, field, currentId) {
 
   function openMenu() {
     renderMenu(text.value);
+    positionMenu();
     menu.classList.add('is-open');
     text.setAttribute('aria-expanded', 'true');
+    window.addEventListener('scroll', positionMenu, true);
+    window.addEventListener('resize', positionMenu);
   }
 
   function sync() {
@@ -186,7 +213,13 @@ function buildRefCombobox(idPrefix, field, currentId) {
   function highlight(index) {
     const options = [...menu.querySelectorAll('.ref-combo-option')];
     options.forEach((option, i) => option.classList.toggle('is-active', i === index));
-    if (options[index]) options[index].scrollIntoView({ block: 'nearest' });
+    if (options[index]) {
+      const option = options[index];
+      const optionTop = option.offsetTop;
+      const optionBottom = optionTop + option.offsetHeight;
+      if (optionTop < menu.scrollTop) menu.scrollTop = optionTop;
+      else if (optionBottom > menu.scrollTop + menu.clientHeight) menu.scrollTop = optionBottom - menu.clientHeight;
+    }
   }
 
   if (currentId !== undefined && currentId !== '' && currentId !== null) {
@@ -209,7 +242,7 @@ function buildRefCombobox(idPrefix, field, currentId) {
   });
   text.addEventListener('blur', () => setTimeout(() => { sync(); closeMenu(); }, 150));
 
-  wrap.append(statusIcon, text, hidden, menu);
+  wrap.append(statusIcon, text, hidden);
   return wrap;
 }
 /* ---------------------------------------------------------------------------
@@ -229,8 +262,10 @@ function buildApiNote(endpoints) {
 function buildForm(container, config) {
   container.innerHTML = '';
 
-  const isEditing = editingState[config.key] != null;
-  const editItem = isEditing ? DB[config.key].find(r => r.id === editingState[config.key]) : null;
+  const isEditing = editingState[config.key] != null || (config.singleRecord && DB[config.key].length > 0);
+  const editItem = editingState[config.key] != null
+    ? DB[config.key].find(r => r.id === editingState[config.key])
+    : (config.singleRecord ? DB[config.key][0] : null);
 
   const wrapper = document.createElement('div');
   wrapper.className = 'form-card glass';
@@ -240,8 +275,51 @@ function buildForm(container, config) {
   wrapper.appendChild(title);
 
   const form = document.createElement('form');
-  form.className = 'crud-form';
+  const hasImageSideFields = config.fields.some(field => field.imageSide === 'right');
+  form.className = 'crud-form' + (hasImageSideFields ? ' crud-form-image-right-layout' : '');
   form.noValidate = true;
+
+  let adPreviewPane = null;
+  let adFieldsPane = null;
+  let adMediaPane = null;
+  let imageFieldsPane = null;
+  let mainFieldsPane = null;
+  if (hasImageSideFields && config.key !== 'anuncios') {
+    mainFieldsPane = document.createElement('div');
+    mainFieldsPane.className = 'form-fields-main';
+    imageFieldsPane = document.createElement('div');
+    imageFieldsPane.className = 'form-fields-image-side';
+    form.append(mainFieldsPane, imageFieldsPane);
+  }
+  if (config.key === 'anuncios') {
+    form.classList.add('ad-builder-form');
+    adFieldsPane = document.createElement('div');
+    adFieldsPane.className = 'ad-fields-pane';
+    adMediaPane = document.createElement('div');
+    adMediaPane.className = 'ad-media-pane';
+    adPreviewPane = document.createElement('aside');
+    adPreviewPane.className = 'ad-preview-pane';
+    adPreviewPane.innerHTML = `
+      <h4>Pré-visualização do anúncio</h4>
+      <div class="ad-preview-visual">
+        <img class="ad-preview-image" alt="Pré-visualização do anúncio" hidden>
+        <span class="ad-preview-placeholder">Adicione uma imagem para pré-visualizar o anúncio</span>
+      </div>
+      <div class="ad-preview-copy">
+        <span class="ad-preview-category">Tipo de promoção</span>
+        <strong class="ad-preview-title">Título do anúncio</strong>
+        <p class="ad-preview-description">A descrição do anúncio aparecerá aqui.</p>
+        <span class="ad-preview-cta">Saiba mais <span aria-hidden="true">→</span></span>
+      </div>`;
+    adMediaPane.appendChild(adPreviewPane);
+    form.append(adFieldsPane, adMediaPane);
+  }
+
+  const appendFieldRow = row => {
+    if (config.key === 'anuncios') (row.classList.contains('ad-image-field') ? adMediaPane : adFieldsPane).appendChild(row);
+    else if (hasImageSideFields) (row.classList.contains('form-row-image-right') ? imageFieldsPane : mainFieldsPane).appendChild(row);
+    else form.appendChild(row);
+  };
 
   // Helpers for special field types
   function buildImageUpload(field, currentValue) {
@@ -289,12 +367,14 @@ function buildForm(container, config) {
       hidden.value = dataUrl;
       preview.querySelector('.upload-preview-img').src = dataUrl;
       zone.classList.add('has-preview');
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
     }
     function clearPreview() {
       hidden.value = '';
       preview.querySelector('.upload-preview-img').src = '';
       zone.classList.remove('has-preview');
       fileInput.value = '';
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
     }
     function handleFile(file) {
       if (!file) return;
@@ -511,9 +591,11 @@ function buildForm(container, config) {
 
     const row = document.createElement('div');
     row.className = 'form-row';
-    if (field.span === 2 || field.type === 'textarea' || field.type === 'image' || field.type === 'document' || field.type === 'poll-options') {
+    if (field.imageSide === 'right') row.classList.add('form-row-image-right');
+    else if (field.span === 2 || field.type === 'image' || field.type === 'document' || field.type === 'poll-options') {
       row.classList.add('form-row-full');
     }
+    if (config.key === 'anuncios') row.classList.add(field.type === 'image' ? 'ad-image-field' : 'ad-info-field');
     if (field.type === 'checkbox') row.classList.add('form-row-checkbox');
 
     const label = document.createElement('label');
@@ -525,25 +607,25 @@ function buildForm(container, config) {
 
     if (field.type === 'ref') {
       row.appendChild(buildRefCombobox(config.key, field, currentVal));
-      form.appendChild(row);
+      appendFieldRow(row);
       return;
     }
 
     if (field.type === 'image') {
       row.appendChild(buildImageUpload(field, currentVal));
-      form.appendChild(row);
+      appendFieldRow(row);
       return;
     }
 
     if (field.type === 'document') {
       row.appendChild(buildDocumentUpload(field, currentVal));
-      form.appendChild(row);
+      appendFieldRow(row);
       return;
     }
 
     if (field.type === 'poll-options') {
       row.appendChild(buildPollOptions(field, currentVal));
-      form.appendChild(row);
+      appendFieldRow(row);
       return;
     }
 
@@ -558,14 +640,14 @@ function buildForm(container, config) {
       checkWrap.appendChild(input);
       checkWrap.appendChild(document.createTextNode(' ' + field.label));
       row.appendChild(checkWrap);
-      form.appendChild(row);
+      appendFieldRow(row);
       return;
     }
 
     let input;
     if (field.type === 'textarea') {
       input = document.createElement('textarea');
-      input.rows = 3;
+      input.rows = 4;
     } else if (field.type === 'select') {
       input = document.createElement('select');
       const emptyOpt = document.createElement('option');
@@ -590,8 +672,31 @@ function buildForm(container, config) {
     if (currentVal !== undefined && currentVal !== null) input.value = currentVal;
 
     row.appendChild(input);
-    form.appendChild(row);
+    appendFieldRow(row);
   });
+
+  if (adPreviewPane) {
+    const previewImage = adPreviewPane.querySelector('.ad-preview-image');
+    const previewPlaceholder = adPreviewPane.querySelector('.ad-preview-placeholder');
+    const previewCategory = adPreviewPane.querySelector('.ad-preview-category');
+    const previewTitle = adPreviewPane.querySelector('.ad-preview-title');
+    const previewDescription = adPreviewPane.querySelector('.ad-preview-description');
+    const previewCta = adPreviewPane.querySelector('.ad-preview-cta');
+    const updatePreview = () => {
+      const value = name => form.querySelector(`[name="${name}"]`)?.value || '';
+      const image = value('imagem_desktop') || value('imagem_mobile');
+      previewImage.src = image;
+      previewImage.hidden = !image;
+      previewPlaceholder.hidden = !!image;
+      previewCategory.textContent = value('categoria') || 'Tipo de promoção';
+      previewTitle.textContent = value('titulo') || 'Título do anúncio';
+      previewDescription.textContent = value('descricao') || 'A descrição do anúncio aparecerá aqui.';
+      previewCta.firstChild.textContent = value('cta') || 'Saiba mais ';
+    };
+    form.addEventListener('input', updatePreview);
+    form.addEventListener('change', updatePreview);
+    updatePreview();
+  }
 
   const actions = document.createElement('div');
   actions.className = 'form-actions';
@@ -609,7 +714,9 @@ function buildForm(container, config) {
     cancelBtn.textContent = 'Cancelar edição';
     cancelBtn.addEventListener('click', () => {
       editingState[config.key] = null;
-      renderEntityScreen(config.key);
+      if (config.key === 'credenciaisBancariasAdmin') renderCredenciaisScreen('admin');
+      else if (config.key === 'credenciaisBancariasSindico') renderCredenciaisScreen('sindico');
+      else renderEntityScreen(config.key);
     });
     actions.appendChild(cancelBtn);
   }
@@ -654,6 +761,9 @@ function buildForm(container, config) {
       }
     }
 
+    if (config.key === 'minhasReservas' && !isEditing) record.estado = 'Pendente';
+    if (config.key === 'reservas' && !isEditing) record.estado = 'Aceite';
+
     if (isEditing) {
       Object.assign(editItem, record);
       editingState[config.key] = null;
@@ -664,7 +774,8 @@ function buildForm(container, config) {
       showToast(`${config.labelSingular} salvo(a) com sucesso.`);
     }
 
-    renderEntityScreen(config.key);
+    if (typeof config.onSaved === 'function') config.onSaved();
+    else renderEntityScreen(config.key);
   });
 
   wrapper.appendChild(form);
@@ -693,6 +804,34 @@ function buildTable(container, config) {
   headerRow.appendChild(countTag);
   wrapper.appendChild(headerRow);
 
+  let selectedFilter = 'Todos';
+  const filterKey = config.key === 'usuarios'
+    ? 'tipo_usuario'
+    : (config.columns.includes('estado') ? 'estado' : null);
+  if (filterKey) {
+    const tabs = document.createElement('div');
+    tabs.className = 'user-type-tabs table-filter-tabs';
+    const filterValues = [...new Set([...(config.filterOptions || []), ...DB[config.key].map(row => row[filterKey]).filter(value => value !== undefined && value !== null && value !== '')])];
+    ['Todos', ...filterValues].forEach(value => {
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'user-type-tab table-filter-tab' + (value === selectedFilter ? ' is-active' : '');
+      tab.textContent = value;
+      tab.setAttribute('aria-pressed', String(value === selectedFilter));
+      tab.addEventListener('click', () => {
+        selectedFilter = value;
+        tabs.querySelectorAll('.user-type-tab').forEach(item => {
+          const active = item.textContent === selectedFilter;
+          item.classList.toggle('is-active', active);
+          item.setAttribute('aria-pressed', String(active));
+        });
+        draw();
+      });
+      tabs.appendChild(tab);
+    });
+    wrapper.appendChild(tabs);
+  }
+
   const toolbar = document.createElement('div');
   toolbar.className = 'table-toolbar';
   const searchInput = document.createElement('input');
@@ -712,9 +851,11 @@ function buildTable(container, config) {
     tableSlot.innerHTML = '';
     const term = searchInput.value.trim().toLowerCase();
     const allRows = DB[config.key];
-    const rows = term
-      ? allRows.filter(row => config.columns.some(c => String(cellValue(config, row, c)).toLowerCase().includes(term)))
-      : allRows;
+    const rows = allRows.filter(row => {
+      const matchesFilter = !filterKey || selectedFilter === 'Todos' || String(row[filterKey]) === selectedFilter;
+      const matchesSearch = !term || config.columns.some(c => String(cellValue(config, row, c)).toLowerCase().includes(term));
+      return matchesFilter && matchesSearch;
+    });
 
     if (!allRows.length) {
       const empty = document.createElement('div');
@@ -757,6 +898,7 @@ function buildTable(container, config) {
       const tr = document.createElement('tr');
       config.columns.forEach(c => {
         const td = document.createElement('td');
+        if (config.key === 'regrasView' && c === 'lista_regras') td.className = 'rules-document-cell';
         if (badgeCols.includes(c)) {
           td.innerHTML = `<span class="badge ${badgeClass(row[c])}">${formatCell(row[c])}</span>`;
         } else {
@@ -834,8 +976,8 @@ function formatCell(value) {
 
 function badgeClass(value) {
   const v = String(value).toLowerCase();
-  if (['ativo', 'pago', 'disponível', 'resolvido'].includes(v)) return 'badge-green';
-  if (['inativo', 'atrasado', 'indisponível'].includes(v)) return 'badge-red';
+  if (['ativo', 'pago', 'disponível', 'resolvido', 'aceite'].includes(v)) return 'badge-green';
+  if (['inativo', 'atrasado', 'indisponível', 'negada'].includes(v)) return 'badge-red';
   return 'badge-yellow';
 }
 
@@ -847,6 +989,7 @@ function renderEntityScreen(entityKey) {
   const config = ENTITIES[entityKey];
   const screenBody = document.getElementById('generic-screen-body');
   if (!screenBody) return;
+  if (entityKey === 'regrasView') DB.regrasView = (DB.regras || []).slice(0, 1).map(item => ({ ...item }));
   screenBody.innerHTML = '';
 
   const heading = document.createElement('div');
@@ -871,6 +1014,7 @@ function renderEntityScreen(entityKey) {
 
   const layout = document.createElement('div');
   layout.className = 'crud-layout';
+  if (config.key === 'regrasView') layout.classList.add('rules-document-layout');
 
   if (!config.readonly) {
     const formContainer = document.createElement('div');
@@ -880,11 +1024,85 @@ function renderEntityScreen(entityKey) {
   }
 
   const tableContainer = document.createElement('div');
-  tableContainer.className = 'crud-table-container';
+  tableContainer.className = entityKey === 'regrasView' ? 'rules-text-container' : 'crud-table-container';
   layout.appendChild(tableContainer);
-  buildTable(tableContainer, config);
+  if (entityKey === 'regrasView') {
+    const textCard = document.createElement('article');
+    textCard.className = 'rules-text-card glass';
+    const rules = (DB.regrasView || [])[0]?.lista_regras;
+    const text = document.createElement('p');
+    text.className = 'rules-text-content';
+    text.textContent = rules || 'O regulamento do condomínio ainda não foi publicado.';
+    textCard.appendChild(text);
+    tableContainer.appendChild(textCard);
+  } else {
+    buildTable(tableContainer, config);
+  }
 
   screenBody.appendChild(layout);
+  if (entityKey === 'reservas') renderReservationRequests(screenBody);
+}
+
+function renderReservationRequests(container) {
+  const card = document.createElement('section');
+  card.className = 'table-card glass';
+  const header = document.createElement('div');
+  header.className = 'table-card-header';
+  const title = document.createElement('h3');
+  title.textContent = 'Pedidos de reserva dos moradores';
+  header.appendChild(title);
+  const pending = (DB.minhasReservas || []).filter(item => !item.estado || item.estado === 'Pendente').length;
+  const count = document.createElement('span');
+  count.className = 'entity-card-id';
+  count.textContent = `${pending} pendente(s)`;
+  header.appendChild(count);
+  card.appendChild(header);
+
+  const requests = DB.minhasReservas || [];
+  if (!requests.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'Ainda não há pedidos de reserva.';
+    card.appendChild(empty);
+    container.appendChild(card);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'crud-table';
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Morador', 'Área comum', 'Data', 'Horário', 'Estado', 'Decisão'].forEach(label => {
+    const th = document.createElement('th'); th.textContent = label; headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow); table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  requests.forEach(request => {
+    const tr = document.createElement('tr');
+    const resident = (DB.moradores || []).find(item => item.id === Number(request.id_morador));
+    const area = (DB.areasComuns || []).find(item => item.id === Number(request.id_area_comum));
+    [resident ? resident.nome : '—', area ? area.nome : '—', request.data_reserva || '—', `${request.hora_inicio || '—'} — ${request.hora_termino || '—'}`, request.estado || 'Pendente'].forEach(value => {
+      const td = document.createElement('td'); td.textContent = value; tr.appendChild(td);
+    });
+    const actionCell = document.createElement('td');
+    actionCell.className = 'reservation-request-actions';
+    if (!request.estado || request.estado === 'Pendente') {
+      [['Aceitar', 'btn btn-primary'], ['Negar', 'btn btn-secondary']].forEach(([label, className]) => {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = className; button.textContent = label;
+        button.addEventListener('click', () => {
+          request.estado = label === 'Aceitar' ? 'Aceite' : 'Negada';
+          showToast(`Pedido de reserva ${label === 'Aceitar' ? 'aceite' : 'negado'}.`);
+          renderEntityScreen('reservas');
+        });
+        actionCell.appendChild(button);
+      });
+    } else {
+      actionCell.textContent = 'Decisão registada';
+    }
+    tr.appendChild(actionCell); tbody.appendChild(tr);
+  });
+  table.appendChild(tbody); card.appendChild(table); container.appendChild(card);
 }
 
 /* ---------------------------------------------------------------------------

@@ -3,6 +3,8 @@
   const names = ['Carlos Manuel','Ana Paula','João Pedro','Maria José','Paulo António','Sandra Miguel','Bruno Costa','Helena Silva'];
   Object.keys(DB).forEach((key)=>{
     const rows = DB[key];
+    if (ENTITIES[key] && ENTITIES[key].singleRecord) return;
+    if (key.startsWith('credenciaisBancarias')) return;
     if (!Array.isArray(rows) || !rows.length) return;
     const target = Math.max(5, rows.length);
     const base = rows.slice();
@@ -24,9 +26,11 @@
   // Módulos de visualização que não têm CRUD próprio recebem registos de demonstração.
   const demo = {
     comunicadosView:[{id:1,titulo:'Manutenção da rede de água',descricao:'Intervenção programada no sábado.',data:'20/09/2026',estado:'Publicado'},{id:2,titulo:'Reunião de condomínio',descricao:'Assembleia mensal dos moradores.',data:'25/09/2026',estado:'Publicado'}],
-    regrasView:[{id:1,titulo:'Acesso à garagem',descricao:'Respeitar os lugares atribuídos.'},{id:2,titulo:'Horário de silêncio',descricao:'Das 22h às 07h.'}],
+    regrasView:[{id:1,lista_regras:'1. Respeitar os lugares atribuídos na garagem.\n2. Manter silêncio entre as 22h e as 07h.\n3. Utilizar a piscina até às 19h.\n4. Manter os animais de estimação sob controlo nas áreas comuns.'}],
     areasComunsView:[{id:1,nome:'Piscina',descricao:'Área de lazer',estado:'Disponível'},{id:2,nome:'Salão de festas',descricao:'Espaço para eventos',estado:'Disponível'}],
     portasView:[{id:1,nome:'Portão principal',localizacao:'Entrada principal',estado:'Aberta'},{id:2,nome:'Garagem',localizacao:'Piso -1',estado:'Fechada'}]
   };
   Object.keys(demo).forEach(k=>{ if(DB[k] && !DB[k].length) DB[k].push(...demo[k]); });
+  // A lista do síndico deve refletir as ocorrências registadas pelos moradores.
+  DB.ocorrencias = DB.minhasOcorrencias;
 })();

@@ -667,10 +667,11 @@ img {
 /* ============================================================================
    ÁREA LOGADA (Admin / Síndico / Morador)
    ============================================================================ */
-.app-shell { display: flex; min-height: 100vh; }
+.app-shell { display: flex; height: 100dvh; min-height: 100vh; overflow: hidden; }
+#screen-app.active { height: 100dvh; overflow: hidden; }
 
 .sidebar {
-  width: 250px; flex-shrink: 0;
+  width: 250px; height: 100%; flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   color: var(--text-0); display: flex; flex-direction: column; padding: 20px 0;
@@ -773,7 +774,7 @@ img {
 }
 .menu-toggle:hover { background: var(--surface-2); }
 
-.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.app-main { flex: 1; min-width: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
 
 .app-topbar {
   display: flex; align-items: center; gap: 14px;
@@ -783,7 +784,9 @@ img {
 .app-topbar-title { font-size: 0.88rem; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-topbar-title strong { color: var(--text-0); }
 
-.app-content { padding: 30px; flex: 1; max-width: 1400px; width: 100%; margin: 0 auto; }
+.app-content { padding: 30px; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; max-width: 1400px; width: 100%; margin: 0 auto; }
+#generic-screen-body:has(> .chat-shell) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.app-content:has(.chat-shell) { display: flex; flex-direction: column; overflow: hidden; }
 
 .screen-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
 .screen-heading h2 { margin: 0; font-size: 1.3rem; }
@@ -998,6 +1001,39 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
    O formulário fica esticado em cima; a tabela ocupa a largura toda embaixo.
    -------------------------------------------------------------------------- */
 .table-toolbar { margin: 14px 0 18px; }
+.user-type-tabs {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  margin: 14px 0 0;
+  padding: 0 8px;
+}
+.user-type-tab {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 11px 4px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.user-type-tab:hover,
+.user-type-tab.is-active { color: var(--text-0); }
+.user-type-tab.is-active { font-weight: 600; }
+.user-type-tab.is-active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+  content: '';
+}
 .table-search-input {
   width: 100%; max-width: 320px; padding: 9px 12px;
   border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
@@ -1019,6 +1055,13 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 .crud-table-actions-col { width: 1%; white-space: nowrap; }
 
 .crud-table-actions { display: flex; gap: 6px; }
+.rules-document-layout { grid-template-columns: minmax(0, 1fr); }
+.rules-document-cell { white-space: pre-wrap; line-height: 1.7; min-width: min(680px, 72vw); }
+.rules-text-container { min-width: 0; }
+.rules-text-card { padding: 24px; }
+.rules-text-content { margin: 0; color: var(--text-1); font-size: .96rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reservation-request-actions { white-space: nowrap; }
+.reservation-request-actions .btn + .btn { margin-left: 10px; }
 .icon-action-btn {
   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
   border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border-strong);
@@ -1069,7 +1112,7 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
    de hambúrguer na topbar — este é o "menu mobile" de verdade, e não uma
    barra horizontal de ícones. */
 @media (max-width: 760px) {
-  .app-shell { position: relative; }
+  .app-shell { position: relative; height: 100dvh; min-height: 100dvh; }
 
   .sidebar {
     position: fixed; top: 0; left: 0; height: 100dvh; width: 82vw; max-width: 300px;
@@ -1088,6 +1131,8 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 
   .app-topbar { padding: 12px 16px; }
   .app-content { padding: 18px 16px; }
+  .app-content:has(.chat-shell) { display: block; overflow-y: auto; }
+  #generic-screen-body:has(> .chat-shell) { display: block; height: auto; }
 
   .auth-card { padding: 26px 20px; }
   .form-card, .table-card { padding: 18px; }
@@ -1267,7 +1312,7 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 .ref-combo { position:relative; min-height:48px; z-index:2; }
 .ref-combo:focus-within { z-index:30; border-color:var(--primary) !important; }
 .ref-combo-input { width:100%; min-width:0; background:transparent; }
-.ref-combo-menu { position:absolute; top:calc(100% + 8px); left:0; right:0; display:none; max-height:270px; overflow:auto; padding:8px; border:1px solid var(--border-strong); border-radius:14px; background:var(--surface); box-shadow:0 18px 38px rgba(15,23,42,.14); }
+.ref-combo-menu { position:fixed; z-index:10000; display:none; max-height:270px; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; padding:8px; border:1px solid var(--border-strong); border-radius:14px; background:var(--surface); box-shadow:0 18px 38px rgba(15,23,42,.14); }
 .ref-combo-menu.is-open { display:block; animation:refComboIn .14s ease-out; }
 .ref-combo-heading { padding:8px 12px 7px; font-size:.67rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3); }
 .ref-combo-option { width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; border:0; border-radius:10px; background:transparent; color:var(--text-1); text-align:left; cursor:pointer; transition:background .15s ease, color .15s ease; }
@@ -2414,13 +2459,19 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 .chat-shell {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
-  min-height: 620px;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
 }
 .chat-members {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   min-width: 0;
   padding: 22px;
+  overflow: hidden;
   border-right: 1px solid var(--border);
   background: var(--surface-2);
 }
@@ -2461,6 +2512,10 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
   display: flex;
   flex-direction: column;
   gap: 5px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .chat-member {
   display: flex;
@@ -2496,6 +2551,8 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 }
 .chat-main {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -2959,16 +3016,22 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 
 
 @media (max-width: 900px) {
-  .chat-shell { grid-template-columns: 1fr; min-height: 0; }
+  .app-content:has(.chat-shell) { display: block; overflow-y: auto; }
+  #generic-screen-body:has(> .chat-shell) { display: block; height: auto; }
+  .chat-shell { grid-template-columns: 1fr; height: auto; min-height: 0; flex: initial; }
   .chat-members {
     border-right: 0;
     border-bottom: 1px solid var(--border);
+    max-height: 370px;
   }
   .chat-member-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0,1fr));
+    flex: initial;
+    max-height: 220px;
+    overflow-y: auto;
   }
-  .chat-main { min-height: 540px; }
+  .chat-main { height: 600px; min-height: 0; }
   .landing-founder-card { grid-template-columns: 1fr; }
   .landing-founder-photo { min-height: 260px; max-height: 320px; }
   .org-branch-grid,
@@ -3144,6 +3207,92 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 .crud-form .form-actions {
   grid-column: 1 / -1;
 }
+.crud-form .form-row-image-right {
+  grid-column: 2;
+  align-self: start;
+}
+.crud-form-image-right-layout {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+  gap: 20px 28px;
+}
+.crud-form-image-right-layout > .form-fields-main {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 14px;
+}
+.crud-form-image-right-layout > .form-fields-image-side {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 18px;
+}
+.crud-form-image-right-layout > .form-fields-image-side > .form-row-image-right { grid-column: 1; }
+.crud-form-image-right-layout > .form-actions { grid-column: 1 / -1; }
+.form-row-image-right .upload-image-wrap { max-width: 100%; }
+.ad-builder-form {
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+  gap: 14px 24px;
+}
+.ad-fields-pane { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 14px; }
+.ad-media-pane { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ad-media-pane > .ad-image-field,
+.ad-media-pane > .ad-preview-pane { width: 100%; min-width: 0; box-sizing: border-box; }
+.ad-preview-pane {
+  align-self: stretch;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.ad-preview-pane h4 {
+  margin: 0 0 12px;
+  color: var(--text-1);
+  font-size: .9rem;
+  font-weight: 600;
+}
+.ad-preview-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-0) 65%, var(--surface-2));
+}
+.ad-preview-image { width: 100%; height: 100%; object-fit: cover; }
+.ad-preview-placeholder { max-width: 220px; padding: 16px; color: var(--text-3); font-size: .8rem; text-align: center; }
+.ad-preview-copy { position: relative; padding: 14px 16px 16px; border-radius: 0 0 10px 10px; background: var(--surface); }
+.ad-preview-category { display: block; margin-bottom: 6px; color: var(--primary); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.ad-preview-title { display: block; color: var(--text-0); font-size: 1rem; }
+.ad-preview-description { margin: 6px 0 14px; color: var(--text-2); font-size: .82rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ad-preview-cta { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); font-size: .8rem; font-weight: 700; }
+.ad-builder-form .ad-image-field .upload-image-wrap,
+.ad-builder-form .ad-image-field .upload-zone { width: 100%; max-width: none; box-sizing: border-box; }
+.ad-builder-form .ad-image-field .upload-zone {
+  min-height: 240px;
+  aspect-ratio: 16 / 9;
+}
+.ad-builder-form .ad-image-field [data-field-key="imagem_mobile"] .upload-zone {
+  min-height: 260px;
+  aspect-ratio: 4 / 3;
+}
+.ad-builder-form .ad-image-field .upload-empty { gap: 10px; padding: 26px 22px; }
+.ad-builder-form .ad-image-field .upload-empty strong { font-size: .96rem; }
+.ad-builder-form .ad-image-field .upload-empty span { max-width: 250px; font-size: .84rem; line-height: 1.55; }
+.ad-builder-form .ad-image-field .upload-empty small { max-width: 250px; font-size: .74rem; line-height: 1.45; }
+.ad-builder-form .ad-image-field .upload-empty .upload-select-btn { min-height: 38px; padding: 8px 14px; }
+.ad-builder-form .form-actions { grid-column: 1 / -1; }
+#login-form-admin,
+#login-form-sindico,
+#login-form-morador,
+#login-form-porteiro,
+#form-cadastro-sindico,
+#form-cadastro-morador {
+  grid-template-columns: minmax(0, 1fr);
+}
 .form-row {
   display: flex;
   flex-direction: column;
@@ -3171,11 +3320,25 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
   transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s var(--ease);
   box-sizing: border-box;
 }
+.form-row select {
+  min-width: 0;
+  max-width: 100%;
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23727d91' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
 .form-row textarea {
-  height: auto;
-  min-height: 88px;
-  resize: vertical;
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
+  resize: none;
   padding-top: 12px;
+  line-height: 1.5;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 .form-row input:hover,
 .form-row select:hover,
@@ -3416,6 +3579,35 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
   border: 1px solid var(--border);
   background: var(--surface);
 }
+.bank-credentials-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 16px;
+}
+.bank-account-picker {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: var(--text-2);
+  font-size: .72rem;
+  font-weight: 600;
+}
+.bank-account-picker select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-0);
+  font: inherit;
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23727d91' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
 .bank-credentials-card h3 {
   margin: 0 0 18px;
   font-size: 1.05rem;
@@ -3499,6 +3691,10 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
   .crud-form {
     grid-template-columns: 1fr;
   }
+  .crud-form .form-row-image-right { grid-column: 1; }
+  .crud-form-image-right-layout > .form-fields-main,
+  .crud-form-image-right-layout > .form-fields-image-side,
+  .crud-form-image-right-layout > .form-actions { grid-column: 1; }
   .poll-option-row {
     grid-template-columns: 1fr;
     gap: 4px;
@@ -3509,6 +3705,13 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
   .upload-image-wrap {
     max-width: 100%;
   }
+}
+
+@media (max-width: 900px) {
+  .ad-builder-form { grid-template-columns: minmax(0, 1fr); }
+  .ad-builder-form > .ad-fields-pane,
+  .ad-builder-form > .ad-media-pane,
+  .ad-builder-form .form-actions { grid-column: 1; }
 }
 
 .payment-confirm-overlay {

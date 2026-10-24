@@ -531,6 +531,8 @@ function renderMensalidadeScreen(){
 }
 
 
+const credentialCreateModes = Object.create(null);
+
 function renderCredenciaisScreen(role) {
   const body = document.getElementById('generic-screen-body');
   body.innerHTML = '';
@@ -545,55 +547,70 @@ function renderCredenciaisScreen(role) {
   body.appendChild(heading);
 
   const records = DB[entityKey] || [];
-  const record = records[0] || null;
-
   const wrap = document.createElement('div');
   wrap.className = 'crud-layout';
+  const editingId = editingState[entityKey];
+  const showForm = credentialCreateModes[entityKey] || editingId != null || !records.length;
 
-  if (record && !editingState[entityKey]) {
-    const card = document.createElement('div');
-    card.className = 'bank-credentials-card glass';
-    card.innerHTML = `
-      <h3>Credenciais bancárias</h3>
-      <div class="bank-cred-field"><span>Titular</span><strong>${record.titular || '—'}</strong></div>
-      <div class="bank-cred-field"><span>Banco</span><strong>${record.banco || '—'}</strong></div>
-      <div class="bank-cred-field"><span>IBAN</span><strong>${record.iban || '—'}</strong></div>
-      <div class="bank-cred-field"><span>Número da conta</span><strong>${record.numero_conta || '—'}</strong></div>
-      <div class="bank-cred-field"><span>Tipo de conta</span><strong>${record.tipo_conta || '—'}</strong></div>
-      <div class="bank-credentials-actions">
-        <button type="button" class="btn btn-primary" id="btn-edit-credenciais">Editar credenciais</button>
-      </div>
-    `;
-    wrap.appendChild(card);
-    body.appendChild(wrap);
-    document.getElementById('btn-edit-credenciais').addEventListener('click', () => {
-      editingState[entityKey] = record.id;
+  if (showForm) {
+    const formContainer = document.createElement('div');
+    formContainer.className = 'crud-form-container';
+    buildForm(formContainer, {
+      ...ENTITIES[entityKey],
+      onSaved: () => {
+        editingState[entityKey] = null;
+        credentialCreateModes[entityKey] = false;
+        renderCredenciaisScreen(role);
+      },
+    });
+    wrap.appendChild(formContainer);
+  } else {
+    const addButton = document.createElement('button');
+    addButton.type = 'button';
+    addButton.className = 'btn btn-primary';
+    addButton.textContent = 'Adicionar credencial bancária';
+    addButton.addEventListener('click', () => {
+      editingState[entityKey] = null;
+      credentialCreateModes[entityKey] = true;
       renderCredenciaisScreen(role);
     });
-    return;
+    wrap.appendChild(addButton);
   }
 
-  // Form mode (create or edit)
-  const formContainer = document.createElement('div');
-  formContainer.className = 'crud-form-container';
-  if (!ENTITIES[entityKey]) {
-    body.innerHTML += '<p>Configuração em falta.</p>';
-    return;
-  }
-  // Ensure editing state for single record
-  if (record) editingState[entityKey] = record.id;
-  buildForm(formContainer, ENTITIES[entityKey]);
-  // Override submit to re-render credentials view
-  const form = formContainer.querySelector('form');
-  if (form) {
-    form.addEventListener('submit', () => {
-      setTimeout(() => {
-        editingState[entityKey] = null;
-        renderCredenciaisScreen(role);
-      }, 50);
-    }, true);
-  }
-  wrap.appendChild(formContainer);
+  const list = document.createElement('div');
+  list.className = 'bank-credentials-list';
+  records.forEach(record => {
+    const card = document.createElement('article');
+    card.className = 'bank-credentials-card glass';
+    const heading = document.createElement('h3');
+    heading.textContent = record.banco || 'Conta bancária';
+    card.appendChild(heading);
+    [['Titular', record.titular], ['Banco', record.banco], ['IBAN', record.iban], ['Número da conta', record.numero_conta], ['Tipo de conta', record.tipo_conta]].forEach(([label, value]) => {
+      const field = document.createElement('div');
+      field.className = 'bank-cred-field';
+      const caption = document.createElement('span'); caption.textContent = label;
+      const content = document.createElement('strong'); content.textContent = value || '—';
+      field.append(caption, content); card.appendChild(field);
+    });
+    const actions = document.createElement('div');
+    actions.className = 'bank-credentials-actions';
+    const edit = document.createElement('button');
+    edit.type = 'button'; edit.className = 'btn btn-secondary'; edit.textContent = 'Editar';
+    edit.addEventListener('click', () => {
+      editingState[entityKey] = record.id;
+      credentialCreateModes[entityKey] = false;
+      renderCredenciaisScreen(role);
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'btn btn-secondary'; remove.textContent = 'Remover';
+    remove.addEventListener('click', () => {
+      if (!confirm('Remover esta credencial bancária?')) return;
+      DB[entityKey] = DB[entityKey].filter(item => item.id !== record.id);
+      renderCredenciaisScreen(role);
+    });
+    actions.append(edit, remove); card.appendChild(actions); list.appendChild(card);
+  });
+  wrap.appendChild(list);
   body.appendChild(wrap);
 }
 
@@ -631,10 +648,12 @@ function renderPagarMensalidadeScreen(){
   const amount=formatNumber(taxa.valor_taxa)+' Kz';
   const reference='CONVIVA-2026-'+String(taxa.id||1).padStart(3,'0');
   const unit=(DB.me||DB.user||{}).unidade||(DB.unidades&&DB.unidades[0]&&DB.unidades[0].codigo)||'—';
-  const credSindico=(DB.credenciaisBancariasSindico&&DB.credenciaisBancariasSindico[0])||{titular:'Síndico do Condomínio',banco:'Banco X',iban:'AO06 0040 0000 9876 5432 1098 7',numero_conta:'9876543210'};
+  const sindicoCredentials = DB.credenciaisBancariasSindico && DB.credenciaisBancariasSindico.length
+    ? DB.credenciaisBancariasSindico
+    : [{id:0,titular:'Síndico do Condomínio',banco:'Banco X',iban:'AO06 0040 0000 9876 5432 1098 7',numero_conta:'9876543210'}];
   const credAdmin=(DB.credenciaisBancariasAdmin&&DB.credenciaisBancariasAdmin[0])||{titular:'Administração CONVIVA',banco:'Banco de Fomento Angola',iban:'AO06 0006 0000 1234 5678 9012 3',numero_conta:'1234567890'};
   // Morador paga ao síndico
-  const destCred=credSindico;
+  let destCred=sindicoCredentials[0];
 
   body.innerHTML=`
     <div class="checkout-page">
@@ -743,9 +762,10 @@ function renderPagarMensalidadeScreen(){
                 <p class="payment-detail-lead">Faça a transferência e carregue o comprovativo para validação.</p>
                 <div class="bank-details-card">
                   <span class="bank-details-title">Dados para transferência</span>
-                  <div><span>Banco</span><strong>${destCred.banco||'—'}</strong></div>
-                  <div><span>IBAN</span><strong>${destCred.iban||'—'}</strong></div>
-                  <div><span>Titular</span><strong>${destCred.titular||'—'}</strong></div>
+                  ${sindicoCredentials.length > 1 ? `<label class="bank-account-picker">Escolha a conta<select id="resident-bank-account">${sindicoCredentials.map((account, index) => `<option value="${account.id}" ${index === 0 ? 'selected' : ''}>${account.banco} · ${account.titular}</option>`).join('')}</select></label>` : ''}
+                  <div><span>Banco</span><strong id="resident-bank-name">${destCred.banco||'—'}</strong></div>
+                  <div><span>IBAN</span><strong id="resident-bank-iban">${destCred.iban||'—'}</strong></div>
+                  <div><span>Titular</span><strong id="resident-bank-holder">${destCred.titular||'—'}</strong></div>
                 </div>
                 <div class="payment-upload">
                   <label for="resident-receipt">
@@ -803,6 +823,14 @@ function renderPagarMensalidadeScreen(){
 
   renderIcons(body);
 
+  const bankAccountPicker = body.querySelector('#resident-bank-account');
+  if (bankAccountPicker) bankAccountPicker.addEventListener('change', () => {
+    destCred = sindicoCredentials.find(account => String(account.id) === bankAccountPicker.value) || sindicoCredentials[0];
+    body.querySelector('#resident-bank-name').textContent = destCred.banco || '—';
+    body.querySelector('#resident-bank-iban').textContent = destCred.iban || '—';
+    body.querySelector('#resident-bank-holder').textContent = destCred.titular || '—';
+  });
+
   const residentReceiptInput = body.querySelector('#resident-receipt');
   if (residentReceiptInput) residentReceiptInput.addEventListener('change', () => {
     const label = residentReceiptInput.closest('.payment-upload')?.querySelector('label strong');
@@ -842,11 +870,44 @@ function renderPagarMensalidadeScreen(){
 }
 
 function renderMeusPagamentosScreen(){
-  const body=document.getElementById('generic-screen-body');body.innerHTML=''; const taxa=(DB.taxas||[])[0]||{valor_taxa:0};
-  const rows=DB.meusPagamentos||[];
-  body.innerHTML=`<div class="screen-heading"><h2>Meus Pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico de pagamentos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por mês, método ou estado..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Mês</th><th>Valor</th><th>Método</th><th>Estado</th><th>Data</th><th>Ações</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
-  const draw=()=>{const q=(document.getElementById('payment-search').value||'').toLowerCase();document.getElementById('payments-body').innerHTML=rows.filter(r=>(r.mes_pago+' '+r.estado+' '+(r.metodo_pagamento||'')).toLowerCase().includes(q)).map(r=>`<tr><td>${r.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${r.metodo_pagamento||'—'}</td><td><span class="badge ${r.estado==='Pago'?'badge-green':r.estado==='Atrasado'?'badge-red':'badge-yellow'}">${r.estado}</span></td><td>${r.data_pagamento||'—'}</td><td><button class="icon-action-btn" data-receipt="${r.id}" title="Baixar comprovativo">${icon('receipt',15)}</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';document.querySelectorAll('[data-receipt]').forEach(b=>b.onclick=()=>downloadReceipt(Number(b.dataset.receipt)));};
-  draw();document.getElementById('payment-search').oninput=draw;document.getElementById('btn-new-payment').onclick=()=>renderPagarMensalidadeScreen();
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+  const taxa = (DB.taxas || [])[0] || { valor_taxa: 0 };
+  const rows = DB.meusPagamentos || [];
+  let selectedState = 'Todos';
+  body.innerHTML = `<div class="screen-heading"><h2>Meus Pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico de pagamentos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="user-type-tabs table-filter-tabs" id="payment-state-tabs"></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por mês, método ou estado..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Mês</th><th>Valor</th><th>Método</th><th>Estado</th><th>Data</th><th>Ações</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
+  const tabs = document.getElementById('payment-state-tabs');
+  const states = ['Todos', ...new Set([...(ENTITIES.meusPagamentos.filterOptions || []), ...rows.map(row => row.estado).filter(Boolean)])];
+  states.forEach(state => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'user-type-tab table-filter-tab' + (state === selectedState ? ' is-active' : '');
+    tab.textContent = state;
+    tab.setAttribute('aria-pressed', String(state === selectedState));
+    tab.addEventListener('click', () => {
+      selectedState = state;
+      tabs.querySelectorAll('.user-type-tab').forEach(item => {
+        const active = item.textContent === selectedState;
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-pressed', String(active));
+      });
+      draw();
+    });
+    tabs.appendChild(tab);
+  });
+  const draw = () => {
+    const query = (document.getElementById('payment-search').value || '').toLowerCase();
+    const filtered = rows.filter(row => {
+      const matchesState = selectedState === 'Todos' || row.estado === selectedState;
+      const matchesSearch = `${row.mes_pago} ${row.estado} ${row.metodo_pagamento || ''}`.toLowerCase().includes(query);
+      return matchesState && matchesSearch;
+    });
+    document.getElementById('payments-body').innerHTML = filtered.map(row => `<tr><td>${row.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${row.metodo_pagamento || '—'}</td><td><span class="badge ${row.estado === 'Pago' ? 'badge-green' : row.estado === 'Atrasado' ? 'badge-red' : 'badge-yellow'}">${row.estado}</span></td><td>${row.data_pagamento || '—'}</td><td><button class="icon-action-btn" data-receipt="${row.id}" title="Baixar comprovativo">${icon('receipt', 15)}</button></td></tr>`).join('') || '<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';
+    document.querySelectorAll('[data-receipt]').forEach(button => button.onclick = () => downloadReceipt(Number(button.dataset.receipt)));
+  };
+  draw();
+  document.getElementById('payment-search').oninput = draw;
+  document.getElementById('btn-new-payment').onclick = () => renderPagarMensalidadeScreen();
 }
 function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r)return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Comprovativo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Comprovativo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Mês</span><strong>${r.mes_pago}</strong></div><div class=\"row\"><span>Valor</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>CONVIVA-${r.id}</strong></div></div></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`comprovativo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Comprovativo preparado para download.');}
 

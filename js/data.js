@@ -114,7 +114,7 @@ const ENTITIES = {
       { key: 'nome', label: 'Nome', type: 'text', required: true },
       { key: 'email', label: 'Email', type: 'email', required: true },
       { key: 'telefone', label: 'Telefone', type: 'tel', required: true },
-      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, span: 2 },
+      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, imageSide: 'right' },
       { key: 'senha', label: 'Senha', type: 'password', required: true, onlyCreate: true },
       campoVisibilidade(),
     ],
@@ -135,7 +135,7 @@ const ENTITIES = {
       { key: 'nome', label: 'Nome', type: 'text', required: true },
       { key: 'endereco', label: 'Endereço', type: 'text', required: true },
       { key: 'email', label: 'Email (login do síndico)', type: 'email', required: true },
-      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, span: 2 },
+      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, imageSide: 'right' },
       { key: 'id_tipo_condominio', label: 'Tipo de Condomínio', type: 'ref', ref: { entity: 'tiposCondominio', display: 'tipo_condominio' }, required: true },
       { key: 'id_centralidade', label: 'Centralidade', type: 'ref', ref: { entity: 'centralidades', display: 'nome' }, required: true },
       { key: 'tipo', label: 'Tipo', type: 'select', options: ['Condomínio', 'Bloco'], required: true },
@@ -157,7 +157,7 @@ const ENTITIES = {
     role: 'admin',
     readonly: true,
     fields: [],
-    columns: ['id_usuario', 'id_principal', 'email', 'tipo_usuario', 'estado'],
+    columns: ['id_usuario', 'id_principal', 'email', 'estado'],
     endpoints: { list: 'GET /usuarios' },
     mock: [
       { id: 1, id_usuario: 101, id_principal: 1, email: 'sindico@jardinskilamba.co.ao', tipo_usuario: 'Síndico', estado: 'Ativo' },
@@ -179,7 +179,7 @@ const ENTITIES = {
       { key: 'nome', label: 'Nome', type: 'text', required: true },
       { key: 'email', label: 'Email', type: 'email', required: true },
       { key: 'telefone', label: 'Telefone', type: 'tel', required: true },
-      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, span: 2 },
+      { key: 'foto', label: 'Foto de perfil', type: 'image', required: false, imageSide: 'right' },
       { key: 'senha_virtual', label: 'Senha Virtual', type: 'password', required: true, onlyCreate: true },
     ],
     columns: ['nome', 'email', 'telefone'],
@@ -198,14 +198,13 @@ const ENTITIES = {
     role: 'sindico',
     fields: [
       { key: 'nome', label: 'Nome do prédio', type: 'text', required: true, placeholder: 'Ex.: Bloco A, Torre 1' },
-      { key: 'descricao', label: 'Descrição', type: 'textarea', required: false, span: 2, placeholder: 'Opcional — localização ou notas' },
     ],
-    columns: ['nome', 'descricao'],
+    columns: ['nome'],
     endpoints: { list: 'GET /predio', create: 'POST /predio', update: 'PUT /predio/:id', remove: 'DELETE /predio/:id' },
     mock: [
-      { id: 1, nome: 'Bloco A', descricao: 'Edifício principal — apartamentos 1xx' },
-      { id: 2, nome: 'Bloco B', descricao: 'Edifício lateral — apartamentos 2xx' },
-      { id: 3, nome: 'Bloco C', descricao: 'Lojas e espaços comerciais' },
+      { id: 1, nome: 'Bloco A' },
+      { id: 2, nome: 'Bloco B' },
+      { id: 3, nome: 'Bloco C' },
     ],
   },
 
@@ -305,7 +304,7 @@ const ENTITIES = {
       { key: 'estado', label: 'Estado', type: 'select', options: ['Disponível', 'Indisponível'], required: true },
       campoVisibilidade(),
     ],
-    columns: ['nome', 'capacidade', 'estado', 'visibilidade'],
+    columns: ['nome', 'capacidade', 'estado'],
     endpoints: { list: 'GET /area-comum', create: 'POST /area-comum', update: 'PUT /area-comum/:id', remove: 'DELETE /area-comum/:id' },
     mock: [
       { id: 1, nome: 'Salão de Festas', capacidade: 80, horario_abertura: '08:00', horario_encerramento: '22:00', estado: 'Disponível', visibilidade: 'Ativo' },
@@ -323,12 +322,13 @@ const ENTITIES = {
       { key: 'hora_inicio', label: 'Hora de Início', type: 'text', placeholder: '10:00', required: true },
       { key: 'hora_termino', label: 'Hora de Término', type: 'text', placeholder: '14:00', required: true },
       { key: 'id_area_comum', label: 'Área Comum', type: 'ref', ref: { entity: 'areasComuns', display: 'nome' }, required: true },
+      { key: 'id_morador', label: 'Morador', type: 'ref', ref: { entity: 'moradores', display: 'nome' }, required: true },
       campoVisibilidade(),
     ],
-    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum', 'visibilidade'],
+    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum', 'id_morador', 'estado'],
     endpoints: { list: 'GET /reserva', create: 'POST /reserva', update: 'PUT /reserva/:id', remove: 'DELETE /reserva/:id' },
     mock: [
-      { id: 1, data_reserva: '2026-08-20', hora_inicio: '18:00', hora_termino: '22:00', id_area_comum: 1, visibilidade: 'Ativo' },
+      { id: 1, data_reserva: '2026-08-20', hora_inicio: '18:00', hora_termino: '22:00', id_area_comum: 1, id_morador: 1, estado: 'Aceite', visibilidade: 'Ativo' },
     ],
   },
 
@@ -375,10 +375,11 @@ const ENTITIES = {
   regras: {
     key: 'regras',
     label: 'Regras',
-    labelSingular: 'Regra',
+    labelSingular: 'Regulamento',
+    singleRecord: true,
     role: 'sindico',
     fields: [
-      { key: 'lista_regras', label: 'Lista de Regras', type: 'textarea', required: true },
+      { key: 'lista_regras', label: 'Texto do regulamento', type: 'textarea', required: true, span: 2, placeholder: 'Escreva aqui todas as regras do condomínio, em conjunto.' },
     ],
     columns: ['lista_regras'],
     endpoints: { list: 'GET /regra', create: 'POST /regra', update: 'PUT /regra/:id', remove: 'DELETE /regra/:id' },
@@ -427,6 +428,7 @@ const ENTITIES = {
     label: 'Pagamentos',
     labelSingular: 'Pagamento',
     role: 'sindico',
+    filterOptions: ['Pago', 'Pendente', 'Atrasado'],
     fields: [
       { key: 'mes_pago', label: 'Mês Pago', type: 'date', required: true },
       { key: 'estado', label: 'Estado', type: 'select', options: ['Pago', 'Pendente', 'Atrasado'], required: true },
@@ -447,19 +449,11 @@ const ENTITIES = {
     label: 'Ocorrências',
     labelSingular: 'Ocorrência',
     role: 'sindico',
-    fields: [
-      { key: 'titulo', label: 'Título', type: 'text', required: true },
-      { key: 'descricao', label: 'Descrição', type: 'textarea', required: true },
-      { key: 'estado', label: 'Estado', type: 'select', options: ['Pendente', 'Em resolução', 'Resolvido'], required: true },
-      campoVisibilidade(),
-    ],
-    columns: ['titulo', 'estado', 'visibilidade'],
-    endpoints: { list: 'GET /ocorrencia', create: 'POST /ocorrencia', update: 'PUT /ocorrencia/:id', remove: 'DELETE /ocorrencia/:id' },
-    mock: [
-      { id: 1, titulo: 'Lâmpada queimada no corredor', descricao: 'Corredor do bloco B, 2º andar.', estado: 'Pendente', visibilidade: 'Ativo' },
-      { id: 2, titulo: 'Portão da garagem a fazer ruído', descricao: 'Rangido ao abrir/fechar.', estado: 'Em resolução', visibilidade: 'Ativo' },
-      { id: 3, titulo: 'Torneira a pingar na área comum', descricao: 'Casa de banho junto à piscina.', estado: 'Resolvido', visibilidade: 'Ativo' },
-    ],
+    readonly: true,
+    fields: [],
+    columns: ['titulo', 'descricao'],
+    endpoints: { list: 'GET /ocorrencia' },
+    mock: [],
   },
 
   veiculos: {
@@ -472,7 +466,7 @@ const ENTITIES = {
       { key: 'nome_motorista', label: 'Nome do Motorista', type: 'text', required: true },
       campoVisibilidade(),
     ],
-    columns: ['placa', 'nome_motorista', 'visibilidade'],
+    columns: ['placa', 'nome_motorista'],
     endpoints: { list: 'GET /veiculo', create: 'POST /veiculo', update: 'PUT /veiculo/:id', remove: 'DELETE /veiculo/:id' },
     mock: [
       { id: 1, placa: 'LD-45-67-AO', nome_motorista: 'João Neto', visibilidade: 'Ativo' },
@@ -492,7 +486,7 @@ const ENTITIES = {
       { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false, hidden: true, hiddenDefault: '' },
       campoVisibilidade(),
     ],
-    columns: ['nome', 'data_entrada', 'data_saida', 'visibilidade'],
+    columns: ['nome', 'data_entrada', 'data_saida'],
     endpoints: { list: 'GET /visitante', create: 'POST /visitante', update: 'PUT /visitante/:id', remove: 'DELETE /visitante/:id' },
     mock: [
       { id: 1, nome: 'Pedro Almeida', data_entrada: '2026-08-13T18:00', data_saida: '', visibilidade: 'Ativo' },
@@ -552,12 +546,13 @@ const ENTITIES = {
       { key: 'hora_inicio', label: 'Hora de Início', type: 'text', placeholder: '10:00', required: true },
       { key: 'hora_termino', label: 'Hora de Término', type: 'text', placeholder: '14:00', required: true },
       { key: 'id_area_comum', label: 'Área Comum', type: 'ref', ref: { entity: 'areasComuns', display: 'nome' }, required: true },
+      { key: 'id_morador', label: 'Morador solicitante', type: 'ref', ref: { entity: 'moradores', display: 'nome' }, required: true },
       campoVisibilidadeOculta(),
     ],
-    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum'],
+    columns: ['data_reserva', 'hora_inicio', 'hora_termino', 'id_area_comum', 'estado'],
     endpoints: { list: 'GET /morador/reserva', create: 'POST /morador/reserva', update: 'PUT /morador/reserva/:id', remove: 'DELETE /morador/reserva/:id' },
     mock: [
-      { id: 1, data_reserva: '2026-08-22', hora_inicio: '15:00', hora_termino: '18:00', id_area_comum: 2, visibilidade: 'Ativo' },
+      { id: 1, data_reserva: '2026-08-22', hora_inicio: '15:00', hora_termino: '18:00', id_area_comum: 2, id_morador: 2, estado: 'Pendente', visibilidade: 'Ativo' },
     ],
   },
 
@@ -569,10 +564,9 @@ const ENTITIES = {
     fields: [
       { key: 'titulo', label: 'Título', type: 'text', required: true },
       { key: 'descricao', label: 'Descrição', type: 'textarea', required: true },
-      { key: 'estado', label: 'Estado', type: 'select', options: ['Pendente', 'Em resolução', 'Resolvido'], required: true },
       campoVisibilidadeOculta(),
     ],
-    columns: ['titulo', 'estado'],
+    columns: ['titulo', 'descricao'],
     endpoints: { list: 'GET /morador/ocorrencia', create: 'POST /morador/ocorrencia', update: 'PUT /morador/ocorrencia/:id', remove: 'DELETE /morador/ocorrencia/:id' },
     mock: [
       { id: 1, titulo: 'Vazamento na cozinha', descricao: 'Vazamento pequeno sob a pia.', estado: 'Em resolução', visibilidade: 'Ativo' },
@@ -584,6 +578,7 @@ const ENTITIES = {
     label: 'Meus Pagamentos',
     labelSingular: 'Pagamento',
     role: 'morador',
+    filterOptions: ['Pago', 'Pendente', 'Atrasado'],
     readonly: true,
     fields: [],
     columns: ['mes_pago', 'estado', 'data_pagamento', 'metodo_pagamento', 'id_taxa'],
@@ -609,7 +604,7 @@ const ENTITIES = {
   regrasView: {
     key: 'regrasView',
     label: 'Regras',
-    labelSingular: 'Regra',
+    labelSingular: 'Regulamento',
     role: 'morador',
     readonly: true,
     fields: [],
@@ -641,19 +636,19 @@ const ENTITIES = {
   anuncios: {
     key: 'anuncios', label: 'Publicidade / ADS', labelSingular: 'Publicidade', role: 'admin',
     fields: [
-      { key: 'titulo', label: 'Título da publicidade', type: 'text', required: true },
-      { key: 'anunciante', label: 'Anunciante / Marca', type: 'text', required: true },
-      { key: 'categoria', label: 'Categoria', type: 'select', options: ['Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
-      { key: 'descricao', label: 'Texto da publicidade', type: 'textarea', required: true },
-      { key: 'imagem_desktop', label: 'Imagem para computador (desktop)', type: 'image', required: false, span: 2 },
-      { key: 'imagem_mobile', label: 'Imagem para telemóvel (mobile)', type: 'image', required: false, span: 2 },
+      { key: 'anunciante', label: 'Prestador / Anunciante', type: 'text', required: true },
+      { key: 'prioridade', label: 'Prioridade', type: 'select', options: ['Normal','Alta'], required: true },
+      { key: 'categoria', label: 'Tipo de promoção', type: 'select', options: ['Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
+      { key: 'data_inicio', label: 'Data inicial', type: 'date', required: true },
+      { key: 'data_fim', label: 'Data final', type: 'date', required: true },
+      { key: 'titulo', label: 'Título', type: 'text', required: true },
+      { key: 'descricao', label: 'Descrição', type: 'textarea', required: true },
+      { key: 'imagem_desktop', label: 'Imagem para computador (desktop)', type: 'image', required: false, imageSide: 'right' },
+      { key: 'imagem_mobile', label: 'Imagem para telemóvel (mobile)', type: 'image', required: false, imageSide: 'right' },
       { key: 'cta', label: 'Texto do botão', type: 'text', required: false },
       { key: 'link', label: 'Link de destino', type: 'url', required: false },
       { key: 'publico', label: 'Público', type: 'select', options: ['Todos','Síndicos','Moradores','Porteiros'], required: true },
-      { key: 'data_inicio', label: 'Data inicial', type: 'date', required: true },
-      { key: 'data_fim', label: 'Data final', type: 'date', required: true },
       { key: 'estado', label: 'Estado', type: 'select', options: ['Ativo','Inativo','Agendado'], required: true },
-      { key: 'prioridade', label: 'Destaque', type: 'select', options: ['Normal','Alta'], required: true }
     ],
     columns: ['titulo','anunciante','categoria','publico','data_inicio','data_fim','estado','prioridade'],
     endpoints: { list:'GET /anuncios', create:'POST /anuncios', update:'PUT /anuncios/:id', remove:'DELETE /anuncios/:id' },
@@ -688,8 +683,8 @@ const ENTITIES = {
 
   funcionariosCasa: {
     key:'funcionariosCasa',label:'Funcionários da Minha Casa',labelSingular:'Funcionário',role:'morador',
-    fields:[{key:'nome',label:'Nome',type:'text',required:true},{key:'funcao',label:'Função',type:'select',options:['Empregada doméstica','Jardineiro','Motorista','Cuidador','Outro'],required:true},{key:'documento',label:'Documento',type:'text',required:true},{key:'telefone',label:'Telefone',type:'tel',required:true},{key:'data_entrada',label:'Data de entrada',type:'date',required:true},{key:'estado',label:'Estado',type:'select',options:['Ativo','Inativo'],required:true}],
-    columns:['nome','funcao','documento','telefone','data_entrada','estado'],endpoints:{list:'GET /morador/funcionarios-casa',create:'POST /morador/funcionarios-casa',update:'PUT /morador/funcionarios-casa/:id',remove:'DELETE /morador/funcionarios-casa/:id'},
+    fields:[{key:'nome',label:'Nome',type:'text',required:true},{key:'funcao',label:'Função',type:'select',options:['Empregada doméstica','Jardineiro','Motorista','Cuidador','Outro'],required:true},{key:'documento',label:'Documento',type:'text',required:true},{key:'telefone',label:'Telefone',type:'tel',required:true},{key:'data_entrada',label:'Data de entrada',type:'date',required:true}],
+    columns:['nome','funcao','documento','telefone','data_entrada'],endpoints:{list:'GET /morador/funcionarios-casa',create:'POST /morador/funcionarios-casa',update:'PUT /morador/funcionarios-casa/:id',remove:'DELETE /morador/funcionarios-casa/:id'},
     mock:[{id:1,nome:'Maria José',funcao:'Empregada doméstica',documento:'009876543LA042',telefone:'923 400 120',data_entrada:'2026-02-01',estado:'Ativo'},{id:2,nome:'Carlos Pedro',funcao:'Jardineiro',documento:'004321987LA042',telefone:'925 555 100',data_entrada:'2026-04-12',estado:'Ativo'}]
   },
 
@@ -747,7 +742,6 @@ const ENTITIES = {
     label: 'Credenciais Bancárias',
     labelSingular: 'Credencial Bancária',
     role: 'admin',
-    singleRecord: true,
     fields: [
       { key: 'titular', label: 'Nome do titular', type: 'text', required: true },
       { key: 'banco', label: 'Banco', type: 'text', required: true },
@@ -759,6 +753,7 @@ const ENTITIES = {
     endpoints: { list: 'GET /credenciais-bancarias/admin', create: 'POST /credenciais-bancarias/admin', update: 'PUT /credenciais-bancarias/admin/:id' },
     mock: [
       { id: 1, titular: 'Administração CONVIVA', banco: 'Banco de Fomento Angola', iban: 'AO06 0006 0000 1234 5678 9012 3', numero_conta: '1234567890', tipo_conta: 'Corrente' },
+      { id: 2, titular: 'Administração CONVIVA', banco: 'Banco Angolano de Investimentos', iban: 'AO06 0040 0000 2234 5678 9012 3', numero_conta: '2234567890', tipo_conta: 'Corrente' },
     ],
   },
 
@@ -767,7 +762,6 @@ const ENTITIES = {
     label: 'Credenciais Bancárias',
     labelSingular: 'Credencial Bancária',
     role: 'sindico',
-    singleRecord: true,
     fields: [
       { key: 'titular', label: 'Nome do titular', type: 'text', required: true },
       { key: 'banco', label: 'Banco', type: 'text', required: true },
@@ -779,6 +773,7 @@ const ENTITIES = {
     endpoints: { list: 'GET /credenciais-bancarias/sindico', create: 'POST /credenciais-bancarias/sindico', update: 'PUT /credenciais-bancarias/sindico/:id' },
     mock: [
       { id: 1, titular: 'Manuel Ferreira', banco: 'Banco X', iban: 'AO06 0040 0000 9876 5432 1098 7', numero_conta: '9876543210', tipo_conta: 'Corrente' },
+      { id: 2, titular: 'Manuel Ferreira', banco: 'Banco de Poupança e Crédito', iban: 'AO06 0005 0000 8876 5432 1098 7', numero_conta: '8876543210', tipo_conta: 'Poupança' },
     ],
   },
 
@@ -788,6 +783,7 @@ const ENTITIES = {
 // Corrige referências que precisam copiar mock data de outras entidades
 // (comunicados/regras/áreas comuns vistas pelo morador são somente leitura
 // de dados que, no sistema real, viriam do condomínio do morador)
+ENTITIES.ocorrencias.mock = ENTITIES.minhasOcorrencias.mock.map(item => ({ ...item }));
 ENTITIES.comunicadosView.mock = ENTITIES.comunicados.mock.map(item => ({ ...item }));
 ENTITIES.regrasView.mock = ENTITIES.regras.mock.map(item => ({ ...item }));
 ENTITIES.areasComunsView.mock = ENTITIES.areasComuns.mock.map(item => ({ ...item }));
@@ -850,16 +846,11 @@ const MENUS = {
         { type: 'entity', label: 'Administradores', icon: 'shield', entity: 'administradores' },
         { type: 'entity', label: 'Condomínios', icon: 'building', entity: 'condominios' },
         { type: 'entity', label: 'Usuários', icon: 'grid', entity: 'usuarios' },
-        { type: 'entity', label: 'Síndicos', icon: 'shield', entity: 'sindicos' },
         { type: 'entity', label: 'Moradores', icon: 'users', entity: 'moradores' },
-        { type: 'entity', label: 'Funcionários', icon: 'wrench', entity: 'funcionarios' },
-        { type: 'entity', label: 'Porteiros', icon: 'shield', entity: 'porteiros' },
       ],
     },
     { group: 'Financeiro', icon: 'wallet', items: [
         { type: 'entity', label: 'Pagamentos', icon: 'coins', entity: 'pagamentos' },
-        { type: 'entity', label: 'Taxas', icon: 'receipt', entity: 'taxas' },
-        { type: 'entity', label: 'Despesas', icon: 'wallet', entity: 'despesas' },
         { type: 'custom', label: 'Credenciais Bancárias', icon: 'creditCard', screen: 'credenciaisAdmin' },
       ] },
   ],
