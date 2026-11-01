@@ -84,11 +84,21 @@ function initCadastro() {
 
   initCadastroSindicoWizard();
 
+  const condoSelect = document.getElementById('cm-condominio');
+  if (condoSelect) {
+    (DB.condominios || []).filter(condo => condo.visibilidade !== 'Inativo').forEach(condo => {
+      const option = document.createElement('option');
+      option.value = condo.id;
+      option.textContent = condo.nome;
+      condoSelect.appendChild(option);
+    });
+  }
+
   document.getElementById('form-cadastro-morador').addEventListener('submit', e => {
     e.preventDefault();
     // ------------------------------------------------------------------
     // Endpoint real: POST /morador-publico
-    // (o morador nasce sem unidade vinculada; o síndico vincula depois)
+    // (o morador indica o condomínio; o síndico vincula a unidade depois)
     // ------------------------------------------------------------------
     alert('Cadastro simulado com sucesso! Assim que o síndico vincular a sua unidade, ela vai aparecer na sua área.');
     e.target.reset();

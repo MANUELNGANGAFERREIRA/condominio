@@ -76,6 +76,7 @@ function refLabelForId(ref, id) {
 // campo de formulário correspondente (ex: "Meus Pagamentos" do morador).
 const READONLY_REF_LOOKUP = {
   meusPagamentos: { id_taxa: { entity: 'taxas', display: r => `Kz ${formatNumber(r.valor_taxa)} · venc. ${r.data_limite}` } },
+  ocorrencias: { morador: { entity: 'moradores', display: 'nome' } },
   minhasReservas: {
     id_morador: { entity: 'moradores', display: 'nome' },
     id_area_comum: { entity: 'areasComuns', display: 'nome' },
@@ -83,6 +84,9 @@ const READONLY_REF_LOOKUP = {
 };
 
 function cellValue(config, row, colKey) {
+  if (config.key === 'ocorrencias' && colKey === 'morador') {
+    return refLabelForId({ entity: 'moradores', display: 'nome' }, row.id_morador) || '—';
+  }
   const field = config.fields.find(f => f.key === colKey);
   if (field && field.type === 'ref') return refLabelForId(field.ref, row[colKey]) || '—';
   const fallback = READONLY_REF_LOOKUP[config.key];
@@ -277,6 +281,7 @@ function buildForm(container, config) {
   const form = document.createElement('form');
   const hasImageSideFields = config.fields.some(field => field.imageSide === 'right');
   form.className = 'crud-form' + (hasImageSideFields ? ' crud-form-image-right-layout' : '');
+  if (config.formLayout === 'single-column') form.classList.add('crud-form-single-column');
   form.noValidate = true;
 
   let adPreviewPane = null;
@@ -763,6 +768,7 @@ function buildForm(container, config) {
 
     if (config.key === 'minhasReservas' && !isEditing) record.estado = 'Pendente';
     if (config.key === 'reservas' && !isEditing) record.estado = 'Aceite';
+    if (config.key === 'minhasOcorrencias' && !isEditing) record.id_morador = MORADOR_LOGADO_ID;
 
     if (isEditing) {
       Object.assign(editItem, record);
@@ -899,6 +905,17 @@ function buildTable(container, config) {
       config.columns.forEach(c => {
         const td = document.createElement('td');
         if (config.key === 'regrasView' && c === 'lista_regras') td.className = 'rules-document-cell';
+        if (config.key === 'ocorrencias' && c === 'descricao') {
+          td.className = 'occurrence-description-cell';
+          const openDetails = document.createElement('button');
+          openDetails.type = 'button';
+          openDetails.className = 'occurrence-description-button';
+          openDetails.textContent = row[c] || 'Abrir ocorrência';
+          openDetails.addEventListener('click', () => renderOccurrenceDetail(row));
+          td.appendChild(openDetails);
+          tr.appendChild(td);
+          return;
+        }
         if (badgeCols.includes(c)) {
           td.innerHTML = `<span class="badge ${badgeClass(row[c])}">${formatCell(row[c])}</span>`;
         } else {
@@ -958,6 +975,34 @@ function buildTable(container, config) {
   container.appendChild(wrapper);
 }
 
+function renderOccurrenceDetail(occurrence) {
+  const body = document.getElementById('generic-screen-body');
+  if (!body) return;
+  const resident = refLabelForId({ entity: 'moradores', display: 'nome' }, occurrence.id_morador) || 'Morador não identificado';
+  body.innerHTML = '';
+  const heading = document.createElement('div');
+  heading.className = 'screen-heading';
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'btn btn-secondary';
+  back.textContent = '← Voltar às ocorrências';
+  back.addEventListener('click', () => renderEntityScreen('ocorrencias'));
+  heading.appendChild(back);
+  body.appendChild(heading);
+  const card = document.createElement('article');
+  card.className = 'communication-detail card';
+  const eyebrow = document.createElement('span');
+  eyebrow.className = 'home-eyebrow';
+  eyebrow.textContent = `Ocorrência enviada por ${resident}`;
+  const title = document.createElement('h2');
+  title.textContent = occurrence.titulo || 'Ocorrência';
+  const description = document.createElement('div');
+  description.className = 'communication-body';
+  description.textContent = occurrence.descricao || 'Sem descrição.';
+  card.append(eyebrow, title, description);
+  body.appendChild(card);
+}
+
 
 function columnLabel(config, colKey) {
   const field = config.fields.find(f => f.key === colKey);
@@ -965,6 +1010,7 @@ function columnLabel(config, colKey) {
   // Colunas "somente leitura" sem campo de formulário correspondente (ex: usuarios)
   const fallback = {
     id_usuario: 'ID Usuário', id_principal: 'ID Principal', tipo_usuario: 'Tipo de Usuário', estado: 'Estado',
+    morador: 'Morador',
   };
   return fallback[colKey] || colKey;
 }

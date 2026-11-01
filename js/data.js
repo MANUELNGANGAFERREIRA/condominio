@@ -75,14 +75,15 @@ const ENTITIES = {
     labelSingular: 'Tipo de Pagamento',
     role: 'admin',
     fields: [
-      { key: 'tipo_pagamento', label: 'Tipo de Pagamento', type: 'select', options: ['Multicaixa Express', 'Referência Multicaixa', 'Transferência Bancária'], required: true },
+      { key: 'tipo_pagamento', label: 'Tipo de Pagamento', type: 'text', required: true, placeholder: 'Ex.: Multicaixa Express' },
+      campoVisibilidade(),
     ],
-    columns: ['tipo_pagamento'],
+    columns: ['tipo_pagamento', 'visibilidade'],
     endpoints: { list: 'GET /tipos-pagamento', create: 'POST /tipos-pagamento', update: 'PUT /tipos-pagamento/:id', remove: 'DELETE /tipos-pagamento/:id' },
     mock: [
-      { id: 1, tipo_pagamento: 'Multicaixa Express' },
-      { id: 2, tipo_pagamento: 'Referência Multicaixa' },
-      { id: 3, tipo_pagamento: 'Transferência Bancária' },
+      { id: 1, tipo_pagamento: 'Multicaixa Express', visibilidade: 'Ativo' },
+      { id: 2, tipo_pagamento: 'Referência Multicaixa', visibilidade: 'Ativo' },
+      { id: 3, tipo_pagamento: 'Transferência Bancária', visibilidade: 'Ativo' },
     ],
   },
 
@@ -91,6 +92,7 @@ const ENTITIES = {
     label: 'Planos',
     labelSingular: 'Plano',
     role: 'admin',
+    formLayout: 'single-column',
     fields: [
       { key: 'nome', label: 'Nome', type: 'text', required: true },
       { key: 'descricao', label: 'Descrição', type: 'textarea', required: false },
@@ -451,7 +453,7 @@ const ENTITIES = {
     role: 'sindico',
     readonly: true,
     fields: [],
-    columns: ['titulo', 'descricao'],
+    columns: ['titulo', 'morador', 'descricao'],
     endpoints: { list: 'GET /ocorrencia' },
     mock: [],
   },
@@ -464,12 +466,13 @@ const ENTITIES = {
     fields: [
       { key: 'placa', label: 'Placa', type: 'text', required: true },
       { key: 'nome_motorista', label: 'Nome do Motorista', type: 'text', required: true },
+      { key: 'id_unidade', label: 'Número da Casa / Unidade', type: 'ref', ref: { entity: 'unidades', display: 'numero' }, required: true },
       campoVisibilidade(),
     ],
-    columns: ['placa', 'nome_motorista'],
+    columns: ['placa', 'nome_motorista', 'id_unidade'],
     endpoints: { list: 'GET /veiculo', create: 'POST /veiculo', update: 'PUT /veiculo/:id', remove: 'DELETE /veiculo/:id' },
     mock: [
-      { id: 1, placa: 'LD-45-67-AO', nome_motorista: 'João Neto', visibilidade: 'Ativo' },
+      { id: 1, placa: 'LD-45-67-AO', nome_motorista: 'João Neto', id_unidade: 1, visibilidade: 'Ativo' },
     ],
   },
 
@@ -480,16 +483,17 @@ const ENTITIES = {
     role: 'sindico',
     fields: [
       { key: 'nome', label: 'Nome', type: 'text', required: true },
+      { key: 'id_unidade', label: 'Número da Casa / Unidade', type: 'ref', ref: { entity: 'unidades', display: 'numero' }, required: true },
       // A entrada/saída da visita é registada pelo porteiro na portaria, não
       // aqui — ver a tela "Visitas" do perfil Porteiro em app.js.
       { key: 'data_entrada', label: 'Data de Entrada', type: 'datetime-local', required: true, hidden: true, hiddenDefault: '' },
       { key: 'data_saida', label: 'Data de Saída', type: 'datetime-local', required: false, hidden: true, hiddenDefault: '' },
       campoVisibilidade(),
     ],
-    columns: ['nome', 'data_entrada', 'data_saida'],
+    columns: ['nome', 'id_unidade', 'data_entrada', 'data_saida'],
     endpoints: { list: 'GET /visitante', create: 'POST /visitante', update: 'PUT /visitante/:id', remove: 'DELETE /visitante/:id' },
     mock: [
-      { id: 1, nome: 'Pedro Almeida', data_entrada: '2026-08-13T18:00', data_saida: '', visibilidade: 'Ativo' },
+      { id: 1, nome: 'Pedro Almeida', id_unidade: 1, data_entrada: '2026-08-13T18:00', data_saida: '', visibilidade: 'Ativo' },
     ],
   },
 
@@ -569,7 +573,7 @@ const ENTITIES = {
     columns: ['titulo', 'descricao'],
     endpoints: { list: 'GET /morador/ocorrencia', create: 'POST /morador/ocorrencia', update: 'PUT /morador/ocorrencia/:id', remove: 'DELETE /morador/ocorrencia/:id' },
     mock: [
-      { id: 1, titulo: 'Vazamento na cozinha', descricao: 'Vazamento pequeno sob a pia.', estado: 'Em resolução', visibilidade: 'Ativo' },
+      { id: 1, titulo: 'Vazamento na cozinha', descricao: 'Vazamento pequeno sob a pia.', id_morador: 1, estado: 'Em resolução', visibilidade: 'Ativo' },
     ],
   },
 
