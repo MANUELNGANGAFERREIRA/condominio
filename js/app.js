@@ -513,6 +513,9 @@ function renderCustomScreen(screen) {
   if(screen==='relatoriosMorador') return renderRelatoriosScreen(false);
   if(screen==='manutencoesMorador') return renderManutencoesMoradorScreen();
   if(screen==='pesquisaPortaria') return renderPesquisaPortariaScreen();
+  if(screen==='planosDisponiveis') return renderPlanosDisponiveisScreen();
+  if(screen==='minhaSubscricao') return renderMinhaSubscricaoScreen();
+  if(screen==='pagarPlano') return renderPagarPlanoScreen();
 }
 
 function renderChatScreen(){
@@ -535,11 +538,332 @@ function renderChatScreen(){
 }
 
 function renderMensalidadeScreen(){
-  const body=document.getElementById('generic-screen-body'); body.innerHTML=''; const taxa=(DB.taxas||[])[0]||{valor_taxa:0,valor_multa:0,data_limite:'—'};
-  body.innerHTML=`<div class="screen-heading"><h2>Minha Mensalidade</h2><span class="readonly-tag">Valor definido pelo condomínio</span></div><div class="payment-overview-grid"><div class="payment-main-card card"><span>Mensalidade atual</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><small>Vencimento: ${taxa.data_limite}</small><button class="btn btn-primary" id="btn-pay-now">Pagar mensalidade</button></div><div class="payment-info-card card"><div><span>Multa por atraso</span><strong>${formatNumber(taxa.valor_multa)} Kz</strong></div><div><span>Estado</span><strong class="badge badge-yellow">Pendente</strong></div><div><span>Métodos</span><strong>Express · Referência · Transferência</strong></div></div></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico recente</h3></div><div class="payment-history">${(DB.meusPagamentos||[]).map(p=>`<div><span>${p.mes_pago}</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong><span class="badge ${p.estado==='Pago'?'badge-green':p.estado==='Atrasado'?'badge-red':'badge-yellow'}">${p.estado}</span></div>`).join('')}</div></div>`;
-  body.querySelector('#btn-pay-now').onclick=()=>renderPagarMensalidadeScreen();
+  const body=document.getElementById('generic-screen-body'); body.innerHTML='';
+  const taxa=(DB.taxas||[])[0]||{valor_taxa:12000,valor_multa:2000,data_limite:'2026-11-10'};
+  // Cobranças simuladas do morador (protótipo)
+  const cobrancasMorador = [
+    { id: 1, periodo: 'Setembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 2000, valor_divida: 14000, data_limite: '2026-09-10', estado: 'Atrasada' },
+    { id: 2, periodo: 'Outubro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-10-10', estado: 'Pendente' },
+    { id: 3, periodo: 'Novembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-11-10', estado: 'Pendente' },
+    { id: 4, periodo: 'Agosto 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 0, data_limite: '2026-08-10', estado: 'Paga' },
+  ];
+  const pendentes = cobrancasMorador.filter(c => c.estado !== 'Paga');
+  const totalDivida = pendentes.reduce((s,c) => s + c.valor_divida, 0);
+  const badgeClass = (e) => e==='Paga'?'badge-green':e==='Atrasada'?'badge-red':e==='Em verificação'?'badge-blue':'badge-yellow';
+
+  body.innerHTML=`
+    <div class="screen-heading">
+      <h2>Minhas mensalidades</h2>
+      <span class="readonly-tag">Dados do condomínio</span>
+    </div>
+    <div class="payment-overview-grid">
+      <div class="payment-main-card card">
+        <span>Total em dívida</span>
+        <strong>${formatNumber(totalDivida)} Kz</strong>
+        <small>${pendentes.length} cobrança(s) em aberto</small>
+        <button class="btn btn-primary" id="btn-pay-now" ${totalDivida===0?'disabled':''}>Pagar selecionadas</button>
+      </div>
+      <div class="payment-info-card card">
+        <div><span>Multa por atraso</span><strong>${formatNumber(taxa.valor_multa)} Kz</strong></div>
+        <div><span>Próximo vencimento</span><strong>${taxa.data_limite}</strong></div>
+        <div><span>Métodos</span><strong>Express · Referência · Transferência</strong></div>
+      </div>
+    </div>
+    <div class="table-card glass">
+      <div class="table-card-header">
+        <h3>Cobranças</h3>
+        <span class="entity-card-id">${cobrancasMorador.length} registo(s)</span>
+      </div>
+      <div class="responsive-table">
+        <table class="crud-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="check-all-cobrancas" title="Selecionar todas as pendentes"></th>
+              <th>Período</th>
+              <th>Descrição</th>
+              <th>Valor original</th>
+              <th>Multa</th>
+              <th>Em dívida</th>
+              <th>Data limite</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cobrancasMorador.map(c => `
+              <tr data-id="${c.id}">
+                <td>${c.estado!=='Paga'?`<input type="checkbox" class="cobranca-check" value="${c.id}" data-valor="${c.valor_divida}">`:'—'}</td>
+                <td>${c.periodo}</td>
+                <td>${c.descricao}</td>
+                <td>${formatNumber(c.valor_original)} Kz</td>
+                <td>${c.multa?formatNumber(c.multa)+' Kz':'—'}</td>
+                <td><strong>${formatNumber(c.valor_divida)} Kz</strong></td>
+                <td>${c.data_limite}</td>
+                <td><span class="badge ${badgeClass(c.estado)}">${c.estado}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  const checkAll = body.querySelector('#check-all-cobrancas');
+  const checks = () => [...body.querySelectorAll('.cobranca-check')];
+  if (checkAll) {
+    checkAll.onchange = () => checks().forEach(c => { c.checked = checkAll.checked; });
+  }
+  body.querySelector('#btn-pay-now').onclick = () => {
+    const selected = checks().filter(c => c.checked).map(c => ({ id: c.value, valor: Number(c.dataset.valor) }));
+    if (!selected.length) {
+      showToast('Selecione pelo menos uma cobrança pendente.');
+      return;
+    }
+    window._cobrancasSelecionadas = selected;
+    renderPagarMensalidadeScreen();
+  };
 }
 
+/* ============================================================================
+   Planos e Subscrição (área do síndico) — protótipo com dados simulados
+   ============================================================================ */
+function renderPlanosDisponiveisScreen() {
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+  const planos = (DB.planos || []).filter(p => p.visibilidade === 'Ativo');
+  body.innerHTML = `
+    <div class="screen-heading">
+      <h2>Planos disponíveis</h2>
+      <span class="readonly-tag">Escolha o plano para o seu condomínio</span>
+    </div>
+    <div class="plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;margin-top:1rem;">
+      ${planos.map(p => {
+        const feats = (p.funcionalidades || '').split('\n').filter(Boolean);
+        const limite = p.limite_unidades && p.limite_unidades > 0 ? `Até ${p.limite_unidades} unidades` : 'Unidades ilimitadas';
+        return `
+          <article class="card plan-card" data-plano-id="${p.id}" style="display:flex;flex-direction:column;gap:.75rem;padding:1.25rem;">
+            <div>
+              <h3 style="margin:0 0 .25rem;">${p.nome}</h3>
+              <p style="margin:0;opacity:.8;font-size:.9rem;">${p.descricao || ''}</p>
+            </div>
+            <div>
+              <div><strong style="font-size:1.4rem;">${formatNumber(p.preco_mensal)} Kz</strong><small> / mês</small></div>
+              <div style="opacity:.75;font-size:.9rem;">ou ${formatNumber(p.preco_anual)} Kz / ano</div>
+            </div>
+            <div style="font-size:.85rem;opacity:.8;">${limite}</div>
+            <ul style="margin:0;padding-left:1.1rem;font-size:.9rem;flex:1;">
+              ${feats.map(f => `<li>${f}</li>`).join('') || '<li>Funcionalidades padrão</li>'}
+            </ul>
+            <button class="btn btn-primary btn-escolher-plano" data-id="${p.id}">Escolher este plano</button>
+          </article>
+        `;
+      }).join('')}
+    </div>
+  `;
+  body.querySelectorAll('.btn-escolher-plano').forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      const plano = planos.find(p => p.id === id);
+      if (!plano) return;
+      const periodicidade = confirm(`Confirmar subscrição do "${plano.nome}"?\n\nOK = Mensal (${formatNumber(plano.preco_mensal)} Kz)\nCancelar = Anual (${formatNumber(plano.preco_anual)} Kz)`) ? 'Mensal' : 'Anual';
+      const valor = periodicidade === 'Mensal' ? plano.preco_mensal : plano.preco_anual;
+      // Simula criação de subscrição + cobrança (protótipo)
+      const novaSub = {
+        id: (DB.subscricoes || []).length + 1,
+        id_condominio: 1,
+        id_plano: plano.id,
+        periodicidade,
+        data_inicio: new Date().toISOString().slice(0, 10),
+        proxima_cobranca: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        estado: 'Pendente',
+      };
+      if (!DB.subscricoes) DB.subscricoes = [];
+      DB.subscricoes.push(novaSub);
+      if (!DB.cobrancasPlataforma) DB.cobrancasPlataforma = [];
+      DB.cobrancasPlataforma.push({
+        id: DB.cobrancasPlataforma.length + 1,
+        id_condominio: 1,
+        periodo: periodicidade === 'Mensal' ? 'Próximo mês' : 'Próximo ano',
+        valor,
+        data_emissao: novaSub.data_inicio,
+        data_limite: novaSub.proxima_cobranca,
+        estado: 'Pendente',
+        metodo_pagamento: '',
+        data_pagamento: '',
+        comprovativo: '',
+      });
+      showToast(`Subscrição ${periodicidade.toLowerCase()} criada. Estado: Pendente. Efetue o pagamento.`);
+      renderMinhaSubscricaoScreen();
+    };
+  });
+}
+
+function renderMinhaSubscricaoScreen() {
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+  const sub = (DB.subscricoes || []).find(s => s.id_condominio === 1) || null;
+  const plano = sub ? (DB.planos || []).find(p => p.id === sub.id_plano) : null;
+  const cobrancas = (DB.cobrancasPlataforma || []).filter(c => c.id_condominio === 1);
+  const badgeClass = (e) => e === 'Ativa' || e === 'Paga' ? 'badge-green' : e === 'Atrasada' || e === 'Recusada' ? 'badge-red' : e === 'Em verificação' ? 'badge-blue' : 'badge-yellow';
+
+  if (!sub) {
+    body.innerHTML = `
+      <div class="screen-heading"><h2>A minha subscrição</h2></div>
+      <div class="card" style="padding:1.5rem;">
+        <p>Ainda não tem uma subscrição ativa.</p>
+        <button class="btn btn-primary" id="btn-ver-planos">Ver planos disponíveis</button>
+      </div>
+    `;
+    body.querySelector('#btn-ver-planos').onclick = () => renderPlanosDisponiveisScreen();
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="screen-heading">
+      <h2>A minha subscrição</h2>
+      <span class="badge ${badgeClass(sub.estado)}">${sub.estado}</span>
+    </div>
+    <div class="payment-overview-grid">
+      <div class="payment-main-card card">
+        <span>Plano atual</span>
+        <strong>${plano ? plano.nome : '—'}</strong>
+        <small>${sub.periodicidade} · Início: ${sub.data_inicio}</small>
+        <small>Próxima cobrança: ${sub.proxima_cobranca || '—'}</small>
+      </div>
+      <div class="payment-info-card card">
+        <div><span>Estado</span><strong class="badge ${badgeClass(sub.estado)}">${sub.estado}</strong></div>
+        <div><span>Periodicidade</span><strong>${sub.periodicidade}</strong></div>
+        <div><span>Valor</span><strong>${plano ? formatNumber(sub.periodicidade === 'Mensal' ? plano.preco_mensal : plano.preco_anual) + ' Kz' : '—'}</strong></div>
+      </div>
+    </div>
+    <div class="table-card glass" style="margin-top:1rem;">
+      <div class="table-card-header">
+        <h3>Cobranças da plataforma</h3>
+        <span class="entity-card-id">${cobrancas.length} registo(s)</span>
+      </div>
+      <div class="responsive-table">
+        <table class="crud-table">
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Valor</th>
+              <th>Emissão</th>
+              <th>Limite</th>
+              <th>Estado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cobrancas.length ? cobrancas.map(c => `
+              <tr>
+                <td>${c.periodo}</td>
+                <td>${formatNumber(c.valor)} Kz</td>
+                <td>${c.data_emissao}</td>
+                <td>${c.data_limite}</td>
+                <td><span class="badge ${badgeClass(c.estado)}">${c.estado}</span></td>
+                <td>${c.estado === 'Pendente' || c.estado === 'Atrasada' ? `<button class="btn btn-sm btn-primary btn-pagar-cobranca" data-id="${c.id}">Pagar</button>` : c.estado === 'Em verificação' ? '<span class="muted">Em validação</span>' : '—'}</td>
+              </tr>
+            `).join('') : '<tr><td colspan="6">Sem cobranças</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+      <button class="btn btn-secondary" id="btn-ver-planos-2">Ver outros planos</button>
+      ${sub.estado === 'Ativa' ? '<button class="btn btn-secondary" id="btn-cancelar-sub" style="color:var(--danger,#c0392b);">Solicitar cancelamento</button>' : ''}
+    </div>
+  `;
+
+  body.querySelectorAll('.btn-pagar-cobranca').forEach(btn => {
+    btn.onclick = () => {
+      window._cobrancaPlataformaId = Number(btn.dataset.id);
+      renderPagarPlanoScreen();
+    };
+  });
+  const btnPlanos = body.querySelector('#btn-ver-planos-2');
+  if (btnPlanos) btnPlanos.onclick = () => renderPlanosDisponiveisScreen();
+  const btnCancel = body.querySelector('#btn-cancelar-sub');
+  if (btnCancel) {
+    btnCancel.onclick = () => {
+      if (confirm('Deseja solicitar o cancelamento da subscrição? No protótipo apenas altera o estado.')) {
+        sub.estado = 'Cancelada';
+        showToast('Pedido de cancelamento registado (simulado).');
+        renderMinhaSubscricaoScreen();
+      }
+    };
+  }
+}
+
+function renderPagarPlanoScreen() {
+  const body = document.getElementById('generic-screen-body');
+  body.innerHTML = '';
+  const id = window._cobrancaPlataformaId;
+  const cobranca = (DB.cobrancasPlataforma || []).find(c => c.id === id);
+  if (!cobranca) {
+    body.innerHTML = '<div class="screen-heading"><h2>Pagamento do plano</h2></div><p>Cobrança não encontrada.</p>';
+    return;
+  }
+  const cred = (DB.credenciaisBancariasAdmin && DB.credenciaisBancariasAdmin[0]) || {
+    titular: 'Administração CONVIVA',
+    banco: 'Banco de Fomento Angola',
+    iban: 'AO06 0006 0000 1234 5678 9012 3',
+    numero_conta: '1234567890',
+  };
+
+  body.innerHTML = `
+    <div class="screen-heading">
+      <h2>Pagamento do plano</h2>
+      <button class="btn btn-secondary" id="btn-voltar-sub">Voltar</button>
+    </div>
+    <div class="card" style="padding:1.25rem;margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <span class="muted">Período</span>
+          <strong style="display:block;">${cobranca.periodo}</strong>
+        </div>
+        <div>
+          <span class="muted">Valor a pagar</span>
+          <strong style="display:block;font-size:1.3rem;">${formatNumber(cobranca.valor)} Kz</strong>
+        </div>
+        <div>
+          <span class="muted">Data limite</span>
+          <strong style="display:block;">${cobranca.data_limite}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:1.25rem;">
+      <h3 style="margin-top:0;">Transferência bancária</h3>
+      <p class="muted">Utilize os dados abaixo e envie o comprovativo. O estado só muda para <strong>Paga</strong> após validação (no protótipo fica em «Em verificação»).</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin:1rem 0;">
+        <div><span class="muted">Titular</span><strong style="display:block;">${cred.titular || '—'}</strong></div>
+        <div><span class="muted">Banco</span><strong style="display:block;">${cred.banco || '—'}</strong></div>
+        <div><span class="muted">IBAN</span><strong style="display:block;">${cred.iban || '—'}</strong></div>
+        <div><span class="muted">Conta</span><strong style="display:block;">${cred.numero_conta || '—'}</strong></div>
+      </div>
+      <label style="display:block;margin:.75rem 0 .35rem;">Comprovativo (opcional no protótipo)</label>
+      <input type="file" id="comprovativo-plano" accept="image/*,.pdf" style="margin-bottom:1rem;">
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btn-submeter-pagamento-plano">Registar pagamento</button>
+        <button class="btn btn-secondary" id="btn-cancelar-pag-plano">Cancelar</button>
+      </div>
+    </div>
+  `;
+
+  body.querySelector('#btn-voltar-sub').onclick = () => renderMinhaSubscricaoScreen();
+  body.querySelector('#btn-cancelar-pag-plano').onclick = () => renderMinhaSubscricaoScreen();
+  body.querySelector('#btn-submeter-pagamento-plano').onclick = () => {
+    // Protótipo: não marca como Paga — fica Em verificação (como a especificação exige)
+    cobranca.estado = 'Em verificação';
+    cobranca.metodo_pagamento = 'Transferência Bancária';
+    cobranca.data_pagamento = new Date().toISOString().slice(0, 10);
+    const sub = (DB.subscricoes || []).find(s => s.id_condominio === cobranca.id_condominio);
+    if (sub && sub.estado === 'Pendente') {
+      // Mantém pendente até "API" confirmar
+      sub.estado = 'Pendente';
+    }
+    showToast('Pagamento registado. Estado: Em verificação. Aguardando validação.');
+    renderMinhaSubscricaoScreen();
+  };
+}
 
 const credentialCreateModes = Object.create(null);
 
@@ -865,9 +1189,17 @@ function renderPagarMensalidadeScreen(){
     
     function finalizePayment(){
       const id=(DB.meusPagamentos||[]).length+1;
-      const state=method==='transfer'?'Pendente':'Pago';
-      DB.meusPagamentos.push({id,mes_pago:'2026-09-01',estado:state,data_pagamento:state==='Pago'?new Date().toISOString().slice(0,10):'',id_taxa:taxa.id||1,metodo_pagamento:method==='express'?'Multicaixa Express':method==='reference'?'Referência Multicaixa':'Transferência bancária'});
-      showToast(state==='Pago'?'Pagamento registado com sucesso.':'Comprovativo enviado para validação.');
+      // Protótipo: estado só fica "Pago" após confirmação da API. Aqui fica "Em verificação".
+      const state = 'Em verificação';
+      DB.meusPagamentos.push({
+        id,
+        mes_pago: '2026-09-01',
+        estado: state,
+        data_pagamento: new Date().toISOString().slice(0,10),
+        id_taxa: taxa.id || 1,
+        metodo_pagamento: method==='express' ? 'Multicaixa Express' : method==='reference' ? 'Referência Multicaixa' : 'Transferência bancária'
+      });
+      showToast('Pagamento registado. Estado: Em verificação. Aguardando confirmação.');
     }
     
     if(method==='transfer'){
@@ -912,7 +1244,10 @@ function renderMeusPagamentosScreen(){
       const matchesSearch = `${row.mes_pago} ${row.estado} ${row.metodo_pagamento || ''}`.toLowerCase().includes(query);
       return matchesState && matchesSearch;
     });
-    document.getElementById('payments-body').innerHTML = filtered.map(row => `<tr><td>${row.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${row.metodo_pagamento || '—'}</td><td><span class="badge ${row.estado === 'Pago' ? 'badge-green' : row.estado === 'Atrasado' ? 'badge-red' : 'badge-yellow'}">${row.estado}</span></td><td>${row.data_pagamento || '—'}</td><td><button class="icon-action-btn" data-receipt="${row.id}" title="Baixar comprovativo">${icon('receipt', 15)}</button></td></tr>`).join('') || '<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';
+    document.getElementById('payments-body').innerHTML = filtered.map(row => {
+      const bc = row.estado === 'Pago' ? 'badge-green' : row.estado === 'Atrasado' || row.estado === 'Atrasada' ? 'badge-red' : row.estado === 'Em verificação' ? 'badge-blue' : 'badge-yellow';
+      return `<tr><td>${row.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${row.metodo_pagamento || '—'}</td><td><span class="badge ${bc}">${row.estado}</span></td><td>${row.data_pagamento || '—'}</td><td><button class="icon-action-btn" data-receipt="${row.id}" title="Baixar comprovativo">${icon('receipt', 15)}</button></td></tr>`;
+    }).join('') || '<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';
     document.querySelectorAll('[data-receipt]').forEach(button => button.onclick = () => downloadReceipt(Number(button.dataset.receipt)));
   };
   draw();
