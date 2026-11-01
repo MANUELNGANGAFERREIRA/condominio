@@ -234,14 +234,39 @@ function initCadastroSindicoWizard() {
 
   updatePaymentMethod();
 
-  const pgReceipt = document.getElementById('pg-comprovativo');
-  if (pgReceipt) {
-    pgReceipt.addEventListener('change', () => {
-      const label = pgReceipt.closest('.payment-upload')?.querySelector('label strong');
-      const file = pgReceipt.files && pgReceipt.files[0];
-      if (label && file) label.textContent = file.name;
-    });
-  }
+  bindPaymentFilePicker(document.getElementById('pg-comprovativo'));
+}
+
+function bindPaymentFilePicker(input) {
+  if (!input) return;
+  const card = input.closest('.payment-upload');
+  if (!card) return;
+  const help = card.querySelector('.payment-upload-help');
+  const filename = card.querySelector('.payment-upload-filename');
+  const action = card.querySelector('.payment-upload-action');
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (file) {
+      if (filename) {
+        filename.textContent = file.name;
+        filename.hidden = false;
+      } else if (help) {
+        help.textContent = file.name;
+      }
+      if (action) action.textContent = 'Substituir';
+      card.classList.add('has-file');
+    } else {
+      if (filename) {
+        filename.textContent = '';
+        filename.hidden = true;
+      } else if (help) {
+        help.textContent = help.dataset.defaultText || help.textContent;
+      }
+      if (action) action.textContent = 'Escolher ficheiro';
+      card.classList.remove('has-file');
+    }
+  });
+  if (help && !help.dataset.defaultText) help.dataset.defaultText = help.textContent;
 }
 
 /* ---------------------------------------------------------------------------
@@ -249,6 +274,27 @@ function initCadastroSindicoWizard() {
    --------------------------------------------------------------------------- */
 const ROLE_LABELS = { admin: 'Administrador da Plataforma', sindico: 'Síndico', morador: 'Morador', porteiro: 'Porteiro' };
 const ROLE_BADGE_LABELS = { admin: 'ADM', sindico: 'Síndico', morador: 'Morador', porteiro: 'Porteiro' };
+
+function profileAvatarStorageKey(role = APP_STATE.role) {
+  return `conviva_avatar_${role || 'default'}`;
+}
+
+function setTopbarAvatar(source) {
+  const avatar = document.querySelector('.topbar-avatar');
+  if (!avatar) return;
+  if (source) {
+    avatar.removeAttribute('data-icon');
+    const image = document.createElement('img');
+    image.className = 'topbar-avatar-img';
+    image.alt = '';
+    image.src = source;
+    avatar.replaceChildren(image);
+  } else {
+    avatar.setAttribute('data-icon', 'user');
+    avatar.setAttribute('data-icon-size', '17');
+    avatar.innerHTML = icon('user', 17);
+  }
+}
 
 function goToApp(role) {
   // Validação defensiva: evita que um papel inválido deixe a aplicação numa
@@ -261,6 +307,7 @@ function goToApp(role) {
 
   APP_STATE.role = role;
   editingState = {}; // limpa qualquer edição pendente de uma sessão anterior
+  setTopbarAvatar(localStorage.getItem(profileAvatarStorageKey()));
 
   const roleBadgeEl = document.getElementById('app-role-label');
   const profileNameEl = document.getElementById('topbar-profile-name');
@@ -839,8 +886,18 @@ function renderPagarPlanoScreen() {
         <div><span class="muted">IBAN</span><strong style="display:block;">${cred.iban || '—'}</strong></div>
         <div><span class="muted">Conta</span><strong style="display:block;">${cred.numero_conta || '—'}</strong></div>
       </div>
-      <label style="display:block;margin:.75rem 0 .35rem;">Comprovativo (opcional no protótipo)</label>
-      <input type="file" id="comprovativo-plano" accept="image/*,.pdf" style="margin-bottom:1rem;">
+      <div class="payment-upload payment-upload-plan">
+        <label for="comprovativo-plano">
+          <span class="payment-upload-icon">${icon('receipt', 18)}</span>
+          <span>
+            <strong>Comprovativo da transferência</strong>
+            <small class="payment-upload-help">PDF, JPG ou PNG · opcional no protótipo</small>
+            <small class="payment-upload-filename" hidden></small>
+          </span>
+          <span class="payment-upload-action">Escolher ficheiro</span>
+        </label>
+        <input type="file" id="comprovativo-plano" accept="image/*,.pdf">
+      </div>
       <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
         <button class="btn btn-primary" id="btn-submeter-pagamento-plano">Registar pagamento</button>
         <button class="btn btn-secondary" id="btn-cancelar-pag-plano">Cancelar</button>
@@ -850,6 +907,7 @@ function renderPagarPlanoScreen() {
 
   body.querySelector('#btn-voltar-sub').onclick = () => renderMinhaSubscricaoScreen();
   body.querySelector('#btn-cancelar-pag-plano').onclick = () => renderMinhaSubscricaoScreen();
+  bindPaymentFilePicker(body.querySelector('#comprovativo-plano'));
   body.querySelector('#btn-submeter-pagamento-plano').onclick = () => {
     // Protótipo: não marca como Paga — fica Em verificação (como a especificação exige)
     cobranca.estado = 'Em verificação';
@@ -1106,7 +1164,8 @@ function renderPagarMensalidadeScreen(){
                     <span class="payment-upload-icon" data-icon="receipt" data-icon-size="18"></span>
                     <span>
                       <strong>Carregar comprovativo</strong>
-                      <small>PDF, JPG ou PNG · até 10 MB</small>
+                      <small class="payment-upload-help">PDF, JPG ou PNG · até 10 MB</small>
+                      <small class="payment-upload-filename" hidden></small>
                     </span>
                     <span class="payment-upload-action">Escolher ficheiro</span>
                   </label>
@@ -1166,11 +1225,7 @@ function renderPagarMensalidadeScreen(){
   });
 
   const residentReceiptInput = body.querySelector('#resident-receipt');
-  if (residentReceiptInput) residentReceiptInput.addEventListener('change', () => {
-    const label = residentReceiptInput.closest('.payment-upload')?.querySelector('label strong');
-    const file = residentReceiptInput.files && residentReceiptInput.files[0];
-    if (label && file) label.textContent = file.name;
-  });
+  bindPaymentFilePicker(residentReceiptInput);
 
   let method='express';
   const refresh=()=>{
@@ -1613,7 +1668,7 @@ function renderPerfilScreen() {
   const avatarHidden = document.createElement('input');
   avatarHidden.type = 'hidden';
   avatarHidden.id = 'perfil-foto';
-  avatarHidden.value = localStorage.getItem('conviva_avatar') || '';
+  avatarHidden.value = localStorage.getItem(profileAvatarStorageKey()) || '';
 
   const circle = document.createElement('div');
   circle.className = 'profile-avatar-circle' + (avatarHidden.value ? ' has-photo' : '');
@@ -1645,16 +1700,52 @@ function renderPerfilScreen() {
       ph.hidden = true;
       circle.classList.add('has-photo');
       if (btnRemove) btnRemove.hidden = false;
-      localStorage.setItem('conviva_avatar', url);
+      try {
+        localStorage.setItem(profileAvatarStorageKey(), url);
+      } catch (error) {
+        showToast('Não foi possível guardar a foto neste navegador.');
+      }
+      setTopbarAvatar(url);
     } else {
       img.src = '';
       img.hidden = true;
       ph.hidden = false;
       circle.classList.remove('has-photo');
       if (btnRemove) btnRemove.hidden = true;
-      localStorage.removeItem('conviva_avatar');
+      localStorage.removeItem(profileAvatarStorageKey());
+      setTopbarAvatar('');
       fileInput.value = '';
     }
+  }
+
+  let avatarReadVersion = 0;
+  function prepareAvatarImage(file, onReady, onError) {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      try {
+        const maxDimension = 512;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas indisponível');
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        onReady(canvas.toDataURL('image/jpeg', 0.86));
+      } catch (error) {
+        onError();
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      onError();
+    };
+    image.src = objectUrl;
   }
 
   function handleAvatarFile(file) {
@@ -1668,16 +1759,20 @@ function renderPerfilScreen() {
       showToast('A imagem excede o limite de 20 MB.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(reader.result);
+    const version = ++avatarReadVersion;
+    prepareAvatarImage(file, dataUrl => {
+      if (version !== avatarReadVersion) return;
+      setAvatarPreview(dataUrl);
       showToast('Foto de perfil atualizada.');
-    };
-    reader.readAsDataURL(file);
+    }, () => {
+      if (version === avatarReadVersion) showToast('Não foi possível carregar essa imagem.');
+    });
+    fileInput.value = '';
   }
 
   actions.querySelector('#btn-avatar-change').addEventListener('click', () => fileInput.click());
   actions.querySelector('#btn-avatar-remove').addEventListener('click', () => {
+    avatarReadVersion++;
     setAvatarPreview('');
     showToast('Foto de perfil removida.');
   });
