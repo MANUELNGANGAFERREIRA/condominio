@@ -691,16 +691,15 @@ const ENTITIES = {
   anuncios: {
     key: 'anuncios', label: 'Publicidade / ADS', labelSingular: 'Publicidade', role: 'admin',
     fields: [
-      { key: 'anunciante', label: 'Prestador / Anunciante', type: 'text', required: true },
+      { key: 'anunciante', label: 'Selecionar Prestador', type: 'text', required: true, placeholder: 'Nome do prestador / anunciante' },
       { key: 'prioridade', label: 'Prioridade', type: 'select', options: ['Normal','Alta'], required: true },
-      { key: 'categoria', label: 'Tipo de promoção', type: 'select', options: ['Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
+      { key: 'categoria', label: 'Tipo de promoção', type: 'select', options: ['Promoção de Vídeo','Serviços','Casa e Condomínio','Tecnologia','Comércio','Educação','Finanças','Outros'], required: true },
       { key: 'data_inicio', label: 'Data inicial', type: 'date', required: true },
       { key: 'data_fim', label: 'Data final', type: 'date', required: true },
-      { key: 'titulo', label: 'Título', type: 'text', required: true },
-      { key: 'descricao', label: 'Descrição', type: 'textarea', required: true },
-      { key: 'imagem_desktop', label: 'Imagem para computador (desktop)', type: 'image', required: false, imageSide: 'right' },
-      { key: 'imagem_mobile', label: 'Imagem para telemóvel (mobile)', type: 'image', required: false, imageSide: 'right' },
-      { key: 'cta', label: 'Texto do botão', type: 'text', required: false },
+      { key: 'titulo', label: 'Título (Padrão)', type: 'text', required: true },
+      { key: 'descricao', label: 'Descrição (Padrão)', type: 'textarea', required: true },
+      { key: 'imagem_desktop', label: 'Imagem para computador (PC)', type: 'image', required: true, imageSide: 'right' },
+      { key: 'imagem_mobile', label: 'Imagem para telemóvel', type: 'image', required: true, imageSide: 'right' },
       { key: 'link', label: 'Link de destino', type: 'url', required: false },
       { key: 'publico', label: 'Público', type: 'select', options: ['Todos','Síndicos','Moradores','Porteiros'], required: true },
       { key: 'estado', label: 'Estado', type: 'select', options: ['Ativo','Inativo','Agendado'], required: true },
@@ -708,7 +707,7 @@ const ENTITIES = {
     columns: ['titulo','anunciante','categoria','publico','data_inicio','data_fim','estado','prioridade'],
     endpoints: { list:'GET /anuncios', create:'POST /anuncios', update:'PUT /anuncios/:id', remove:'DELETE /anuncios/:id' },
     mock: [
-      { id:1, titulo:'Higienização de colchões', anunciante:'Grupo Fander', categoria:'Casa e Condomínio', descricao:'Se livre dos ácaros no seu colchão. Agende uma higienização profissional.', imagem_desktop:'assets/img/ads/colchao.jpg', imagem_mobile:'assets/img/ads/colchao.jpg', cta:'Agendar higienização', link:'#', publico:'Todos', data_inicio:'2026-01-01', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' }
+      { id:1, titulo:'Higienização de colchões', anunciante:'Grupo Fander', categoria:'Casa e Condomínio', descricao:'Se livre dos ácaros no seu colchão. Agende uma higienização profissional.', imagem_desktop:'assets/img/ads/colchao.jpg', imagem_mobile:'assets/img/ads/colchao.jpg', link:'#', publico:'Todos', data_inicio:'2026-01-01', data_fim:'2026-12-31', estado:'Ativo', prioridade:'Alta' }
     ]
   },
 

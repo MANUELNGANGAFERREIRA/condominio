@@ -306,15 +306,14 @@ function buildForm(container, config) {
     adPreviewPane.className = 'ad-preview-pane';
     adPreviewPane.innerHTML = `
       <h4>Pré-visualização do anúncio</h4>
-      <div class="ad-preview-visual">
+      <p class="ad-preview-hint">O anúncio publicado mostra apenas a imagem (a peça já contém as informações do prestador).</p>
+      <div class="ad-preview-visual ad-preview-visual-only">
         <img class="ad-preview-image" alt="Pré-visualização do anúncio" hidden>
-        <span class="ad-preview-placeholder">Adicione uma imagem para pré-visualizar o anúncio</span>
+        <span class="ad-preview-placeholder">Adicione a imagem Desktop ou Mobile para pré-visualizar</span>
       </div>
-      <div class="ad-preview-copy">
+      <div class="ad-preview-meta">
         <span class="ad-preview-category">Tipo de promoção</span>
-        <strong class="ad-preview-title">Título do anúncio</strong>
-        <p class="ad-preview-description">A descrição do anúncio aparecerá aqui.</p>
-        <span class="ad-preview-cta">Saiba mais <span aria-hidden="true">→</span></span>
+        <strong class="ad-preview-title">Título (referência interna)</strong>
       </div>`;
     adMediaPane.appendChild(adPreviewPane);
     form.append(adFieldsPane, adMediaPane);
@@ -344,13 +343,26 @@ function buildForm(container, config) {
 
     const empty = document.createElement('div');
     empty.className = 'upload-empty';
-    empty.innerHTML = `
-      <div class="upload-empty-icon">${typeof icon === 'function' ? icon('image', 28) : '📷'}</div>
-      <strong>Upload de imagem</strong>
-      <span>Arraste uma imagem para aqui<br>ou selecione no computador</span>
-      <small>PNG, JPG, JPEG, GIF ou WEBP · Máx. 20 MB</small>
-      <button type="button" class="btn btn-secondary btn-small upload-select-btn">Selecionar imagem</button>
-    `;
+    // Textos mais curtos nos cards de ADS para o conteúdo caber sem ultrapassar as bordas
+    const isAdDesktop = field.key === 'imagem_desktop';
+    const isAdMobile = field.key === 'imagem_mobile';
+    if (isAdDesktop || isAdMobile) {
+      empty.innerHTML = `
+        <div class="upload-empty-icon">${typeof icon === 'function' ? icon('image', 22) : '📷'}</div>
+        <strong>${isAdDesktop ? 'Imagem PC' : 'Imagem telemóvel'}</strong>
+        <span>Arraste ou selecione a imagem</span>
+        <small>PNG, JPG · Máx. 20 MB</small>
+        <button type="button" class="btn btn-secondary btn-small upload-select-btn">Selecionar</button>
+      `;
+    } else {
+      empty.innerHTML = `
+        <div class="upload-empty-icon">${typeof icon === 'function' ? icon('image', 28) : '📷'}</div>
+        <strong>Upload de imagem</strong>
+        <span>Arraste uma imagem para aqui<br>ou selecione no computador</span>
+        <small>PNG, JPG, JPEG, GIF ou WEBP · Máx. 20 MB</small>
+        <button type="button" class="btn btn-secondary btn-small upload-select-btn">Selecionar imagem</button>
+      `;
+    }
 
     const preview = document.createElement('div');
     preview.className = 'upload-preview';
@@ -685,18 +697,15 @@ function buildForm(container, config) {
     const previewPlaceholder = adPreviewPane.querySelector('.ad-preview-placeholder');
     const previewCategory = adPreviewPane.querySelector('.ad-preview-category');
     const previewTitle = adPreviewPane.querySelector('.ad-preview-title');
-    const previewDescription = adPreviewPane.querySelector('.ad-preview-description');
-    const previewCta = adPreviewPane.querySelector('.ad-preview-cta');
     const updatePreview = () => {
       const value = name => form.querySelector(`[name="${name}"]`)?.value || '';
+      // Preferência visual: desktop (largo) no preview; mobile como fallback
       const image = value('imagem_desktop') || value('imagem_mobile');
       previewImage.src = image;
       previewImage.hidden = !image;
       previewPlaceholder.hidden = !!image;
       previewCategory.textContent = value('categoria') || 'Tipo de promoção';
-      previewTitle.textContent = value('titulo') || 'Título do anúncio';
-      previewDescription.textContent = value('descricao') || 'A descrição do anúncio aparecerá aqui.';
-      previewCta.firstChild.textContent = value('cta') || 'Saiba mais ';
+      previewTitle.textContent = value('titulo') || 'Título (referência interna)';
     };
     form.addEventListener('input', updatePreview);
     form.addEventListener('change', updatePreview);

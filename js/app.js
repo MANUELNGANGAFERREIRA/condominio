@@ -434,13 +434,18 @@ function renderAdsCarousel(body, role) {
 
   const track = wrap.querySelector('.ads-track');
   const viewport = wrap.querySelector('.ads-viewport');
-  let current = 1;
+  const cloneCount = 2;
+  let current = cloneCount;
   let timer = null;
   let isAnimating = false;
   const duration = 4800;
+  const visibleSlides = () => window.matchMedia('(min-width: 901px)').matches && ads.length > 1 ? 2 : 1;
 
-  // Clones nas extremidades para criar um loop visual contínuo.
-  const slides = [ads[ads.length - 1], ...ads, ads[0]];
+  // Dois clones em cada extremidade permitem avançar um cartão por vez
+  // mantendo dois anúncios visíveis no computador, sem quebrar o loop.
+  const leadingClones = Array.from({ length: cloneCount }, (_, i) => ads[(ads.length - cloneCount + i % ads.length) % ads.length]);
+  const trailingClones = Array.from({ length: cloneCount }, (_, i) => ads[i % ads.length]);
+  const slides = [...leadingClones, ...ads, ...trailingClones];
   slides.forEach((a, i) => {
     const slide = document.createElement('a');
     slide.className = 'ads-slide-simple';
@@ -451,23 +456,20 @@ function renderAdsCarousel(body, role) {
     } else {
       slide.addEventListener('click', e => e.preventDefault());
     }
-    slide.setAttribute('aria-label', `Publicidade: ${a.titulo || 'Anúncio'}`);
+    slide.setAttribute('aria-label', `Publicidade: ${a.titulo || a.anunciante || 'Anúncio'}`);
+    // A peça criativa (imagem) já contém título, descrição e dados do anunciante.
+    // Por isso o carrossel mostra apenas a imagem (desktop largo / mobile otimizado).
     const imgDesktop = a.imagem_desktop || a.imagem || a.imagem_mobile || '';
     const imgMobile = a.imagem_mobile || a.imagem || a.imagem_desktop || '';
-    const imgSrc = imgMobile || imgDesktop; // prefer mobile asset when both; CSS picks via picture
-    const titulo = a.titulo || 'Publicidade';
-    const desc = a.descricao || '';
-    const cta = a.cta || 'Saber mais';
-    const anunciante = a.anunciante || '';
+    const titulo = a.titulo || a.anunciante || 'Publicidade';
 
     const esc = (s) => String(s || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/"/g, '&quot;');
 
-    let mediaHtml = '';
     if (imgDesktop || imgMobile) {
-      mediaHtml = `<div class="ads-slide-media">
+      slide.innerHTML = `<div class="ads-slide-media">
         <picture class="ads-slide-picture">
           <source media="(max-width: 700px)" srcset="${esc(imgMobile || imgDesktop)}">
           <source media="(min-width: 701px)" srcset="${esc(imgDesktop || imgMobile)}">
@@ -475,23 +477,17 @@ function renderAdsCarousel(body, role) {
         </picture>
       </div>`;
     } else {
-      mediaHtml = `<div class="ads-slide-media ads-slide-media-empty" aria-hidden="true"></div>`;
+      // Fallback mínimo quando ainda não há imagem carregada
+      slide.innerHTML = `<div class="ads-slide-media ads-slide-media-empty" aria-hidden="true"></div>`;
     }
-
-    slide.innerHTML = `
-      ${mediaHtml}
-      <div class="ads-slide-body">
-        ${anunciante ? `<span class="ads-slide-sponsor">${esc(anunciante)}</span>` : ''}
-        <strong class="ads-slide-title">${esc(titulo)}</strong>
-        ${desc ? `<p class="ads-slide-desc">${esc(desc)}</p>` : ''}
-        <span class="ads-slide-cta">${esc(cta)}</span>
-      </div>`;
     track.appendChild(slide);
   });
 
   function position(animate = true) {
+    wrap.classList.toggle('ads-carousel-two-up', visibleSlides() === 2);
     track.style.transition = animate ? 'transform .65s cubic-bezier(.22,.61,.36,1)' : 'none';
-    track.style.transform = `translate3d(-${current * 100}%,0,0)`;
+    const step = 100 / visibleSlides();
+    track.style.transform = `translate3d(-${current * step}%,0,0)`;
   }
 
   function next() {
@@ -502,8 +498,8 @@ function renderAdsCarousel(body, role) {
   }
 
   track.addEventListener('transitionend', () => {
-    if (current === ads.length + 1) {
-      current = 1;
+    if (current === ads.length + cloneCount) {
+      current = cloneCount;
       position(false);
     } else if (current === 0) {
       current = ads.length;
@@ -511,6 +507,12 @@ function renderAdsCarousel(body, role) {
     }
     isAnimating = false;
   });
+
+  window.addEventListener('resize', () => {
+    current = cloneCount;
+    isAnimating = false;
+    position(false);
+  }, { passive: true });
 
   function start() {
     clearInterval(timer);
