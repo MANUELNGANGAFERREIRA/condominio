@@ -4,6 +4,7 @@
   Object.keys(DB).forEach((key)=>{
     const rows = DB[key];
     if (ENTITIES[key] && ENTITIES[key].singleRecord) return;
+    if (key === 'cobrancasMorador' || key === 'historicoPlataforma') return;
     if (key.startsWith('credenciaisBancarias')) return;
     if (!Array.isArray(rows) || !rows.length) return;
     const target = Math.max(5, rows.length);

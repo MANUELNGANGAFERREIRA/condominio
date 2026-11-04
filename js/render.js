@@ -686,6 +686,8 @@ function buildForm(container, config) {
     input.id = `field-${config.key}-${field.key}`;
     input.name = field.key;
     if (field.required) input.required = true;
+    if (field.min !== undefined) input.min = field.min;
+    if (field.max !== undefined) input.max = field.max;
     if (currentVal !== undefined && currentVal !== null) input.value = currentVal;
 
     row.appendChild(input);
@@ -739,6 +741,7 @@ function buildForm(container, config) {
 
   form.addEventListener('submit', e => {
     e.preventDefault();
+    if (!form.reportValidity()) return;
     const formData = new FormData(form);
     const record = {};
     config.fields.forEach(field => {
@@ -775,6 +778,11 @@ function buildForm(container, config) {
       }
     }
 
+    if (config.key === 'planos' && (Number(record.preco_mensal) <= 0 || Number(record.preco_anual) <= 0 || Number(record.limite_unidades) < 0)) {
+      showToast('Informe preços positivos e um limite de unidades igual ou superior a zero.');
+      return;
+    }
+
     if (config.key === 'minhasReservas' && !isEditing) record.estado = 'Pendente';
     if (config.key === 'reservas' && !isEditing) record.estado = 'Aceite';
     if (config.key === 'minhasOcorrencias' && !isEditing) record.id_morador = MORADOR_LOGADO_ID;
@@ -787,6 +795,10 @@ function buildForm(container, config) {
       const newRecord = { id: nextId(config.key), ...record };
       DB[config.key].push(newRecord);
       showToast(`${config.labelSingular} salvo(a) com sucesso.`);
+    }
+
+    if (config.key === 'planos' && typeof recordPlatformHistory === 'function') {
+      recordPlatformHistory(isEditing ? 'Plano editado' : 'Plano criado', record.nome || 'Plano');
     }
 
     if (typeof config.onSaved === 'function') config.onSaved();
@@ -820,9 +832,9 @@ function buildTable(container, config) {
   wrapper.appendChild(headerRow);
 
   let selectedFilter = 'Todos';
-  const filterKey = config.key === 'usuarios'
+  const filterKey = config.filterKey || (config.key === 'usuarios'
     ? 'tipo_usuario'
-    : (config.columns.includes('estado') ? 'estado' : null);
+    : (config.columns.includes('estado') ? 'estado' : null));
   if (filterKey) {
     const tabs = document.createElement('div');
     tabs.className = 'user-type-tabs table-filter-tabs';
@@ -939,6 +951,17 @@ function buildTable(container, config) {
         const actionsWrap = document.createElement('div');
         actionsWrap.className = 'crud-table-actions';
 
+      if (config.showDetails) {
+        const detailBtn = document.createElement('button');
+        detailBtn.type = 'button';
+        detailBtn.className = 'icon-action-btn';
+        detailBtn.title = 'Consultar detalhes';
+        detailBtn.setAttribute('aria-label', 'Consultar detalhes');
+        detailBtn.innerHTML = icon('eye', 15);
+        detailBtn.addEventListener('click', () => renderEntityDetail(config.key, row));
+        actionsWrap.appendChild(detailBtn);
+      }
+
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'icon-action-btn';
@@ -952,10 +975,19 @@ function buildTable(container, config) {
 
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
-        delBtn.className = 'icon-action-btn icon-action-btn-danger';
-        delBtn.title = 'Excluir';
-        delBtn.innerHTML = icon('trash', 15);
+        const isCurrentlyActive = row.visibilidade === 'Ativo';
+        delBtn.className = 'icon-action-btn' + (isCurrentlyActive ? ' icon-action-btn-danger' : '');
+        delBtn.title = config.softDeactivate ? (isCurrentlyActive ? 'Desativar plano' : 'Ativar plano') : 'Excluir';
+        delBtn.setAttribute('aria-label', delBtn.title);
+        delBtn.innerHTML = icon(config.softDeactivate ? (isCurrentlyActive ? 'x' : 'check') : 'trash', 15);
         delBtn.addEventListener('click', () => {
+          if (config.softDeactivate) {
+            row.visibilidade = isCurrentlyActive ? 'Inativo' : 'Ativo';
+            if (typeof recordPlatformHistory === 'function') recordPlatformHistory(row.visibilidade === 'Ativo' ? 'Plano ativado' : 'Plano desativado', row.nome || 'Plano');
+            showToast(`Plano ${row.visibilidade === 'Ativo' ? 'ativado' : 'desativado'}.`);
+            renderEntityScreen(config.key);
+            return;
+          }
           // ------------------------------------------------------------------
           // Endpoint real: DELETE /<recurso>/:id (ver config.endpoints.remove)
           // ------------------------------------------------------------------
@@ -982,6 +1014,42 @@ function buildTable(container, config) {
 
   wrapper.appendChild(buildApiNote({ list: config.endpoints.list }));
   container.appendChild(wrapper);
+}
+
+function renderEntityDetail(entityKey, row) {
+  const config = ENTITIES[entityKey];
+  const body = document.getElementById('generic-screen-body');
+  if (!config || !row || !body) return;
+  body.innerHTML = '';
+  const heading = document.createElement('div');
+  heading.className = 'screen-heading';
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'btn btn-secondary';
+  back.innerHTML = `${icon('arrowLeft', 15)} Voltar aos ${config.label.toLowerCase()}`;
+  back.addEventListener('click', () => renderEntityScreen(entityKey));
+  const title = document.createElement('h2');
+  title.textContent = `Detalhes do ${config.labelSingular.toLowerCase()}`;
+  heading.append(back, title);
+  body.appendChild(heading);
+  const card = document.createElement('article');
+  card.className = 'card entity-detail-card';
+  const list = document.createElement('dl');
+  list.className = 'detail-list';
+  config.fields.filter(field => !['image','password','file'].includes(field.type)).forEach(field => {
+    const item = document.createElement('div');
+    const term = document.createElement('dt');
+    term.textContent = field.label;
+    const value = document.createElement('dd');
+    if (field.type === 'textarea') value.className = 'entity-detail-pre';
+    if (field.type === 'ref') value.textContent = refLabelForId(field.ref, row[field.key]) || '—';
+    else if (field.key === 'visibilidade') value.textContent = row[field.key] || '—';
+    else value.textContent = formatCell(row[field.key]);
+    item.append(term, value);
+    list.appendChild(item);
+  });
+  card.appendChild(list);
+  body.appendChild(card);
 }
 
 function renderOccurrenceDetail(occurrence) {

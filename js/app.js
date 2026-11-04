@@ -267,6 +267,29 @@ function bindPaymentFilePicker(input) {
     }
   });
   if (help && !help.dataset.defaultText) help.dataset.defaultText = help.textContent;
+  input.addEventListener('change', () => {
+    const file=input.files&&input.files[0];
+    if(!file)return;
+    const validType=file.type==='application/pdf'||file.type.startsWith('image/');
+    if(!validType||file.size>10*1024*1024){
+      input.value='';
+      if(filename){filename.textContent='';filename.hidden=true;}
+      if(action)action.textContent='Escolher ficheiro';
+      card.classList.remove('has-file');
+      showToast(!validType?'Formato inválido. Use PDF, JPG ou PNG.':'O comprovativo excede o limite de 10 MB.');
+    }
+  });
+}
+
+function readPaymentFile(input) {
+  return new Promise((resolve,reject)=>{
+    const file=input?.files?.[0];
+    if(!file){resolve(null);return;}
+    const reader=new FileReader();
+    reader.onload=()=>resolve({nome:file.name,tipo:file.type,dados:reader.result});
+    reader.onerror=()=>reject(reader.error||new Error('Falha ao ler o comprovativo'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ---------------------------------------------------------------------------
@@ -274,9 +297,21 @@ function bindPaymentFilePicker(input) {
    --------------------------------------------------------------------------- */
 const ROLE_LABELS = { admin: 'Administrador da Plataforma', sindico: 'Síndico', morador: 'Morador', porteiro: 'Porteiro' };
 const ROLE_BADGE_LABELS = { admin: 'ADM', sindico: 'Síndico', morador: 'Morador', porteiro: 'Porteiro' };
+const CONDOMINIO_DEMO_LOGADO_ID = 1;
 
 function profileAvatarStorageKey(role = APP_STATE.role) {
   return `conviva_avatar_${role || 'default'}`;
+}
+
+function recordPlatformHistory(operacao, detalhe) {
+  if (!DB.historicoPlataforma) DB.historicoPlataforma = [];
+  DB.historicoPlataforma.unshift({
+    id: Date.now(),
+    data: new Date().toLocaleString('pt-AO', { timeZone: 'Africa/Luanda' }),
+    utilizador: ROLE_LABELS[APP_STATE.role] || 'Sistema',
+    operacao,
+    detalhe,
+  });
 }
 
 function setTopbarAvatar(source) {
@@ -553,9 +588,12 @@ function renderComunicadoDetail(c){
 }
 
 function renderCustomScreen(screen) {
+  if(screen==='subscricoesAdmin') return renderAdminSubscriptionsScreen();
+  if(screen==='cobrancasAdmin') return renderAdminPlatformChargesScreen();
+  if(screen==='historicoPlataforma') return renderAdminPlatformHistoryScreen();
   if(screen==='chat') return renderChatScreen();
   if(screen==='mensalidade') return renderMensalidadeScreen();
-  if(screen==='pagar') return renderPagarMensalidadeScreen();
+  if(screen==='pagar') return renderMensalidadeScreen();
   if(screen==='credenciaisAdmin') return renderCredenciaisScreen('admin');
   if(screen==='credenciaisSindico') return renderCredenciaisScreen('sindico');
   if(screen==='relatorios') return renderRelatoriosScreen(true);
@@ -565,6 +603,136 @@ function renderCustomScreen(screen) {
   if(screen==='planosDisponiveis') return renderPlanosDisponiveisScreen();
   if(screen==='minhaSubscricao') return renderMinhaSubscricaoScreen();
   if(screen==='pagarPlano') return renderPagarPlanoScreen();
+}
+
+function renderAdminSubscriptionsScreen() {
+  const body = document.getElementById('generic-screen-body');
+  const rows = DB.subscricoes || [];
+  const condos = DB.condominios || [];
+  const plans = DB.planos || [];
+  const states = [...new Set(rows.map(row => row.estado).filter(Boolean))];
+  body.innerHTML = `<div class="screen-heading"><div><h2>Subscrições</h2><p>Acompanhe planos contratados, periodicidade e próximas cobranças.</p></div></div>
+    <div class="table-card glass"><div class="table-card-header"><h3>Subscrições dos condomínios</h3><span class="entity-card-id">${rows.length} registo(s)</span></div>
+      <div class="table-toolbar subscription-filters">
+        <label>Condomínio<select id="admin-sub-condo"><option value="Todos">Todos os condomínios</option>${condos.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}</select></label>
+        <label>Plano<select id="admin-sub-plan"><option value="Todos">Todos os planos</option>${plans.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('')}</select></label>
+        <label>Estado<select id="admin-sub-state"><option value="Todos">Todos os estados</option>${states.map(s=>`<option>${s}</option>`).join('')}</select></label>
+      </div>
+      <div class="responsive-table"><table class="crud-table"><thead><tr><th>Condomínio</th><th>Plano</th><th>Periodicidade</th><th>Início</th><th>Próxima cobrança</th><th>Estado</th><th>Detalhes</th></tr></thead><tbody id="admin-sub-rows"></tbody></table></div>
+    </div>`;
+  const draw = () => {
+    const condo = body.querySelector('#admin-sub-condo').value;
+    const plan = body.querySelector('#admin-sub-plan').value;
+    const state = body.querySelector('#admin-sub-state').value;
+    const filtered = rows.filter(row => (condo==='Todos'||String(row.id_condominio)===condo) && (plan==='Todos'||String(row.id_plano)===plan) && (state==='Todos'||row.estado===state));
+    body.querySelector('#admin-sub-rows').innerHTML = filtered.map(row => {
+      const condoName = condos.find(c=>c.id===Number(row.id_condominio))?.nome || '—';
+      const planName = plans.find(p=>p.id===Number(row.id_plano))?.nome || '—';
+      return `<tr><td>${condoName}</td><td>${planName}</td><td>${row.periodicidade||'—'}</td><td>${row.data_inicio||'—'}</td><td>${row.proxima_cobranca||'—'}</td><td><span class="badge ${paymentStatusClass(row.estado)}">${row.estado||'—'}</span></td><td><button class="btn btn-secondary btn-sm" data-sub-detail="${row.id}">Consultar</button></td></tr>`;
+    }).join('') || '<tr><td colspan="7">Nenhuma subscrição encontrada.</td></tr>';
+    body.querySelectorAll('[data-sub-detail]').forEach(button => button.onclick = () => renderAdminSubscriptionDetail(rows.find(row=>row.id===Number(button.dataset.subDetail))));
+  };
+  ['#admin-sub-condo','#admin-sub-plan','#admin-sub-state'].forEach(selector=>body.querySelector(selector).addEventListener('change',draw));
+  draw();
+}
+
+function paymentStatusClass(state) {
+  if (['Ativa','Paga'].includes(state)) return 'badge-green';
+  if (['Atrasada','Recusada','Suspensa','Cancelada'].includes(state)) return 'badge-red';
+  if (state==='Em verificação') return 'badge-blue';
+  return 'badge-yellow';
+}
+
+function renderAdminSubscriptionDetail(subscription) {
+  if (!subscription) return;
+  const body = document.getElementById('generic-screen-body');
+  const condo = (DB.condominios||[]).find(row=>row.id===Number(subscription.id_condominio));
+  const plan = (DB.planos||[]).find(row=>row.id===Number(subscription.id_plano));
+  const charges = (DB.cobrancasPlataforma||[]).filter(row=>row.id_subscricao===subscription.id || row.id_condominio===subscription.id_condominio);
+  body.innerHTML = `<div class="screen-heading"><button class="btn btn-secondary" id="btn-back-admin-subs">${icon('arrowLeft',15)} Voltar</button><h2>Detalhes da subscrição</h2></div>
+    <article class="card subscription-detail-card"><dl class="detail-list">
+      <div><dt>Condomínio</dt><dd>${condo?.nome||'—'}</dd></div><div><dt>Plano</dt><dd>${plan?.nome||'—'}</dd></div>
+      <div><dt>Periodicidade</dt><dd>${subscription.periodicidade||'—'}</dd></div><div><dt>Data de início</dt><dd>${subscription.data_inicio||'—'}</dd></div>
+      <div><dt>Próxima cobrança</dt><dd>${subscription.proxima_cobranca||'—'}</dd></div><div><dt>Estado</dt><dd><span class="badge ${paymentStatusClass(subscription.estado)}">${subscription.estado||'—'}</span></dd></div>
+    </dl></article>
+    <div class="table-card glass"><div class="table-card-header"><h3>Histórico de cobranças</h3></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Período</th><th>Valor</th><th>Emissão</th><th>Limite</th><th>Estado</th></tr></thead><tbody>
+      ${charges.map(c=>`<tr><td>${c.periodo||'—'}</td><td>${formatNumber(c.valor)} Kz</td><td>${c.data_emissao||'—'}</td><td>${c.data_limite||'—'}</td><td><span class="badge ${paymentStatusClass(c.estado)}">${c.estado}</span></td></tr>`).join('')||'<tr><td colspan="5">Sem cobranças registadas.</td></tr>'}
+    </tbody></table></div></div>`;
+  body.querySelector('#btn-back-admin-subs').onclick = renderAdminSubscriptionsScreen;
+}
+
+function renderAdminPlatformChargesScreen() {
+  const body = document.getElementById('generic-screen-body');
+  const rows = DB.cobrancasPlataforma || [];
+  const condos = DB.condominios || [];
+  const states = [...new Set(['Pendente','Em verificação','Paga','Atrasada','Recusada',...rows.map(row=>row.estado)].filter(Boolean))];
+  body.innerHTML = `<div class="screen-heading"><div><h2>Cobranças da Plataforma</h2><p>Consulte cobranças e valide pagamentos manuais.</p></div></div>
+    <div class="table-card glass"><div class="table-card-header"><h3>Cobranças de planos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div>
+      <div class="user-type-tabs table-filter-tabs" id="admin-charge-tabs"></div>
+      <div class="table-toolbar"><input type="search" id="admin-charge-search" class="table-search-input" placeholder="Pesquisar condomínio, período ou referência..."></div>
+      <div class="responsive-table"><table class="crud-table"><thead><tr><th>Condomínio</th><th>Período</th><th>Valor</th><th>Emissão</th><th>Data limite</th><th>Estado</th><th>Método / pagamento</th><th>Comprovativo / ações</th></tr></thead><tbody id="admin-charge-rows"></tbody></table></div>
+    </div>`;
+  let selectedState = 'Todos';
+  const tabs = body.querySelector('#admin-charge-tabs');
+  ['Todos',...states].forEach(state=>{
+    const button=document.createElement('button');button.type='button';button.className='user-type-tab table-filter-tab'+(state==='Todos'?' is-active':'');button.textContent=state;button.setAttribute('aria-pressed',String(state==='Todos'));
+    button.onclick=()=>{selectedState=state;tabs.querySelectorAll('button').forEach(tab=>{const active=tab===button;tab.classList.toggle('is-active',active);tab.setAttribute('aria-pressed',String(active));});draw();};tabs.appendChild(button);
+  });
+  const draw=()=>{
+    const query=body.querySelector('#admin-charge-search').value.trim().toLowerCase();
+    const filtered=rows.filter(row=>{
+      const condo=condos.find(c=>c.id===Number(row.id_condominio))?.nome||'';
+      return (selectedState==='Todos'||row.estado===selectedState)&&`${condo} ${row.periodo||''} ${row.metodo_pagamento||''}`.toLowerCase().includes(query);
+    });
+    body.querySelector('#admin-charge-rows').innerHTML=filtered.map(row=>{
+      const condo=condos.find(c=>c.id===Number(row.id_condominio))?.nome||'—';
+      const proof=row.comprovativo;
+      const proofName=typeof proof==='string'?proof:(proof?.nome||'');
+      const proofAction=proofName?`<button class="btn btn-secondary btn-sm" data-proof="${row.id}">Ver comprovativo</button>`:'<span class="muted">Sem comprovativo</span>';
+      const canReview=row.estado==='Em verificação'&&row.metodo_pagamento==='Transferência Bancária'&&!!proofName;
+      const confirmAction=canReview?`<button class="btn btn-primary btn-sm" data-confirm-charge="${row.id}">Confirmar</button><button class="btn btn-secondary btn-sm" data-reject-charge="${row.id}">Recusar</button>`:'';
+      return `<tr><td>${condo}</td><td>${row.periodo||'—'}</td><td>${formatNumber(row.valor)} Kz</td><td>${row.data_emissao||'—'}</td><td>${row.data_limite||'—'}</td><td><span class="badge ${paymentStatusClass(row.estado)}">${row.estado}</span></td><td>${row.metodo_pagamento||'—'}${row.data_pagamento?`<small class="table-cell-subtext">${row.data_pagamento}</small>`:''}</td><td class="platform-charge-actions">${proofAction}<div>${confirmAction}</div></td></tr>`;
+    }).join('')||'<tr><td colspan="8">Nenhuma cobrança encontrada.</td></tr>';
+    body.querySelectorAll('[data-confirm-charge]').forEach(button=>button.onclick=()=>updatePlatformCharge(Number(button.dataset.confirmCharge),'Paga'));
+    body.querySelectorAll('[data-reject-charge]').forEach(button=>button.onclick=()=>updatePlatformCharge(Number(button.dataset.rejectCharge),'Recusada'));
+    body.querySelectorAll('[data-proof]').forEach(button=>button.onclick=()=>viewPlatformProof(rows.find(row=>row.id===Number(button.dataset.proof))));
+  };
+  body.querySelector('#admin-charge-search').addEventListener('input',draw);
+  draw();
+}
+
+function updatePlatformCharge(id, state) {
+  const charge=(DB.cobrancasPlataforma||[]).find(row=>row.id===id);
+  if(!charge)return;
+  charge.estado=state;
+  if (typeof recordPlatformHistory === 'function') recordPlatformHistory(state==='Paga'?'Pagamento da plataforma confirmado':'Pagamento da plataforma recusado', `${charge.periodo||'Cobrança'} · ${formatNumber(charge.valor)} Kz`);
+  if(state==='Paga'){
+    const subscription=(DB.subscricoes||[]).find(row=>charge.id_subscricao?row.id===charge.id_subscricao:row.id_condominio===charge.id_condominio);
+    const relatedCharges=(DB.cobrancasPlataforma||[]).filter(row=>subscription?(row.id_subscricao?row.id_subscricao===subscription.id:row.id_condominio===subscription.id_condominio):row.id===charge.id);
+    if(subscription&&relatedCharges.every(row=>row.estado==='Paga'))subscription.estado='Ativa';
+  }
+  showToast(state==='Paga'?'Pagamento confirmado.':'Pagamento recusado.');
+  renderAdminPlatformChargesScreen();
+}
+
+function viewPlatformProof(charge) {
+  const proof=charge?.comprovativo;
+  if(!proof)return;
+  if(typeof proof==='object'&&proof.dados){
+    const link=document.createElement('a');link.href=proof.dados;link.download=proof.nome||'comprovativo';document.body.appendChild(link);link.click();link.remove();return;
+  }
+  showToast(`Comprovativo registado: ${proof}`);
+}
+
+function renderAdminPlatformHistoryScreen() {
+  const body=document.getElementById('generic-screen-body');
+  const history=DB.historicoPlataforma||[];
+  body.innerHTML=`<div class="screen-heading"><div><h2>Histórico da Plataforma</h2><p>Registo demonstrativo de alterações e pagamentos processados nesta sessão.</p></div></div>
+    <div class="table-card glass"><div class="table-card-header"><h3>Atividade financeira e administrativa</h3><span class="entity-card-id">${history.length} registo(s)</span></div>
+      <div class="responsive-table"><table class="crud-table"><thead><tr><th>Data</th><th>Utilizador</th><th>Operação</th><th>Detalhe</th></tr></thead><tbody>
+        ${history.map(item=>`<tr><td>${item.data}</td><td>${item.utilizador}</td><td>${item.operacao}</td><td>${item.detalhe}</td></tr>`).join('')||'<tr><td colspan="4">Ainda não há alterações registadas nesta sessão.</td></tr>'}
+      </tbody></table></div>
+    </div>`;
 }
 
 function renderChatScreen(){
@@ -589,16 +757,12 @@ function renderChatScreen(){
 function renderMensalidadeScreen(){
   const body=document.getElementById('generic-screen-body'); body.innerHTML='';
   const taxa=(DB.taxas||[])[0]||{valor_taxa:12000,valor_multa:2000,data_limite:'2026-11-10'};
-  // Cobranças simuladas do morador (protótipo)
-  const cobrancasMorador = [
-    { id: 1, periodo: 'Setembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 2000, valor_divida: 14000, data_limite: '2026-09-10', estado: 'Atrasada' },
-    { id: 2, periodo: 'Outubro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-10-10', estado: 'Pendente' },
-    { id: 3, periodo: 'Novembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-11-10', estado: 'Pendente' },
-    { id: 4, periodo: 'Agosto 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 0, data_limite: '2026-08-10', estado: 'Paga' },
-  ];
+  const cobrancasMorador = (DB.cobrancasMorador || []).filter(c => c.id_morador === MORADOR_LOGADO_ID);
   const pendentes = cobrancasMorador.filter(c => c.estado !== 'Paga');
+  const selecionaveis = cobrancasMorador.filter(c => !['Paga','Em verificação'].includes(c.estado));
   const totalDivida = pendentes.reduce((s,c) => s + c.valor_divida, 0);
   const badgeClass = (e) => e==='Paga'?'badge-green':e==='Atrasada'?'badge-red':e==='Em verificação'?'badge-blue':'badge-yellow';
+  const periods = [...new Set(cobrancasMorador.map(c => c.periodo))];
 
   body.innerHTML=`
     <div class="screen-heading">
@@ -610,7 +774,7 @@ function renderMensalidadeScreen(){
         <span>Total em dívida</span>
         <strong>${formatNumber(totalDivida)} Kz</strong>
         <small>${pendentes.length} cobrança(s) em aberto</small>
-        <button class="btn btn-primary" id="btn-pay-now" ${totalDivida===0?'disabled':''}>Pagar selecionadas</button>
+        <button class="btn btn-primary" id="btn-pay-now" ${selecionaveis.length===0?'disabled':''}>Pagar selecionadas</button>
       </div>
       <div class="payment-info-card card">
         <div><span>Multa por atraso</span><strong>${formatNumber(taxa.valor_multa)} Kz</strong></div>
@@ -623,11 +787,15 @@ function renderMensalidadeScreen(){
         <h3>Cobranças</h3>
         <span class="entity-card-id">${cobrancasMorador.length} registo(s)</span>
       </div>
+      <div class="table-toolbar payment-charge-filters">
+        <label>Período<select id="charge-period-filter"><option value="Todos">Todos os períodos</option>${periods.map(p=>`<option value="${p}">${p}</option>`).join('')}</select></label>
+        <label>Estado<select id="charge-state-filter"><option value="Todos">Todos os estados</option>${['Pendente','Em verificação','Atrasada','Paga','Recusada'].map(s=>`<option value="${s}">${s}</option>`).join('')}</select></label>
+      </div>
       <div class="responsive-table">
         <table class="crud-table">
           <thead>
             <tr>
-              <th><input type="checkbox" id="check-all-cobrancas" title="Selecionar todas as pendentes"></th>
+              <th>Selecionar</th>
               <th>Período</th>
               <th>Descrição</th>
               <th>Valor original</th>
@@ -637,32 +805,31 @@ function renderMensalidadeScreen(){
               <th>Estado</th>
             </tr>
           </thead>
-          <tbody>
-            ${cobrancasMorador.map(c => `
-              <tr data-id="${c.id}">
-                <td>${c.estado!=='Paga'?`<input type="checkbox" class="cobranca-check" value="${c.id}" data-valor="${c.valor_divida}">`:'—'}</td>
-                <td>${c.periodo}</td>
-                <td>${c.descricao}</td>
-                <td>${formatNumber(c.valor_original)} Kz</td>
-                <td>${c.multa?formatNumber(c.multa)+' Kz':'—'}</td>
-                <td><strong>${formatNumber(c.valor_divida)} Kz</strong></td>
-                <td>${c.data_limite}</td>
-                <td><span class="badge ${badgeClass(c.estado)}">${c.estado}</span></td>
-              </tr>
-            `).join('')}
-          </tbody>
+          <tbody id="resident-charges-body"></tbody>
         </table>
       </div>
     </div>
   `;
 
-  const checkAll = body.querySelector('#check-all-cobrancas');
   const checks = () => [...body.querySelectorAll('.cobranca-check')];
-  if (checkAll) {
-    checkAll.onchange = () => checks().forEach(c => { c.checked = checkAll.checked; });
-  }
+  const drawCharges = () => {
+    const period = body.querySelector('#charge-period-filter').value;
+    const state = body.querySelector('#charge-state-filter').value;
+    const rows = cobrancasMorador.filter(c => (period === 'Todos' || c.periodo === period) && (state === 'Todos' || c.estado === state));
+    body.querySelector('#resident-charges-body').innerHTML = rows.map(c => `
+      <tr data-id="${c.id}">
+        <td>${!['Paga','Em verificação'].includes(c.estado)?`<input type="checkbox" class="cobranca-check" value="${c.id}">`:'—'}</td>
+        <td>${c.periodo}</td><td>${c.descricao}</td>
+        <td>${formatNumber(c.valor_original)} Kz</td><td>${c.multa?formatNumber(c.multa)+' Kz':'—'}</td>
+        <td><strong>${formatNumber(c.valor_divida)} Kz</strong></td><td>${c.data_limite}</td>
+        <td><span class="badge ${badgeClass(c.estado)}">${c.estado}</span></td>
+      </tr>`).join('') || '<tr><td colspan="8">Nenhuma cobrança para estes filtros.</td></tr>';
+  };
+  body.querySelector('#charge-period-filter').onchange = drawCharges;
+  body.querySelector('#charge-state-filter').onchange = drawCharges;
+  drawCharges();
   body.querySelector('#btn-pay-now').onclick = () => {
-    const selected = checks().filter(c => c.checked).map(c => ({ id: c.value, valor: Number(c.dataset.valor) }));
+    const selected = checks().filter(c => c.checked).map(c => c.value);
     if (!selected.length) {
       showToast('Selecione pelo menos uma cobrança pendente.');
       return;
@@ -675,6 +842,39 @@ function renderMensalidadeScreen(){
 /* ============================================================================
    Planos e Subscrição (área do síndico) — protótipo com dados simulados
    ============================================================================ */
+function showPlanSubscriptionConfirm(plan, onConfirm) {
+  const body=document.getElementById('generic-screen-body');
+  let period='Mensal';
+  const overlay=document.createElement('div');
+  overlay.className='payment-confirm-overlay subscription-choice-overlay';
+  overlay.innerHTML=`<section class="payment-confirm-card subscription-choice-card" role="dialog" aria-modal="true" aria-labelledby="subscription-choice-title">
+    <span class="home-eyebrow">Nova subscrição</span><h3 id="subscription-choice-title">Confirmar plano</h3>
+    <p class="payment-confirm-lead">Escolha a periodicidade e reveja o resumo antes de continuar.</p>
+    <div class="subscription-period-options" role="radiogroup" aria-label="Periodicidade">
+      <label class="subscription-period-option is-selected"><input type="radio" name="subscription-period" value="Mensal" checked><span><strong>Mensal</strong><small>${formatNumber(plan.preco_mensal)} Kz por mês</small></span></label>
+      <label class="subscription-period-option"><input type="radio" name="subscription-period" value="Anual"><span><strong>Anual</strong><small>${formatNumber(plan.preco_anual)} Kz por ano</small></span></label>
+    </div>
+    <div class="payment-confirm-details subscription-choice-summary"><div class="bank-cred-field"><span>Plano</span><strong class="subscription-summary-name"></strong></div><div class="bank-cred-field"><span>Periodicidade</span><strong class="subscription-summary-period"></strong></div><div class="bank-cred-field"><span>Valor</span><strong class="subscription-summary-value"></strong></div><div class="bank-cred-field"><span>Estado inicial</span><strong>Pendente</strong></div></div>
+    <div class="payment-confirm-actions"><button type="button" class="btn btn-primary" data-confirm-plan>Confirmar escolha</button><button type="button" class="btn btn-secondary" data-cancel-plan>Cancelar</button></div>
+  </section>`;
+  const refresh=()=>{
+    overlay.querySelectorAll('.subscription-period-option').forEach(label=>{
+      const input=label.querySelector('input');
+      label.classList.toggle('is-selected',input.value===period);
+    });
+    overlay.querySelector('.subscription-summary-name').textContent=plan.nome;
+    overlay.querySelector('.subscription-summary-period').textContent=period;
+    overlay.querySelector('.subscription-summary-value').textContent=`${formatNumber(period==='Mensal'?plan.preco_mensal:plan.preco_anual)} Kz`;
+  };
+  const close=()=>overlay.remove();
+  overlay.querySelectorAll('input[name="subscription-period"]').forEach(input=>input.addEventListener('change',()=>{period=input.value;refresh();}));
+  overlay.querySelector('[data-confirm-plan]').addEventListener('click',()=>{close();onConfirm(period,Number(period==='Mensal'?plan.preco_mensal:plan.preco_anual));});
+  overlay.querySelector('[data-cancel-plan]').addEventListener('click',close);
+  overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
+  document.body.appendChild(overlay);
+  refresh();
+}
+
 function renderPlanosDisponiveisScreen() {
   const body = document.getElementById('generic-screen-body');
   body.innerHTML = '';
@@ -713,16 +913,18 @@ function renderPlanosDisponiveisScreen() {
       const id = Number(btn.dataset.id);
       const plano = planos.find(p => p.id === id);
       if (!plano) return;
-      const periodicidade = confirm(`Confirmar subscrição do "${plano.nome}"?\n\nOK = Mensal (${formatNumber(plano.preco_mensal)} Kz)\nCancelar = Anual (${formatNumber(plano.preco_anual)} Kz)`) ? 'Mensal' : 'Anual';
-      const valor = periodicidade === 'Mensal' ? plano.preco_mensal : plano.preco_anual;
+      showPlanSubscriptionConfirm(plano,(periodicidade,valor)=>{
       // Simula criação de subscrição + cobrança (protótipo)
+      const dataInicio = new Date();
+      const dataProxima = new Date(dataInicio);
+      dataProxima.setDate(dataProxima.getDate() + (periodicidade === 'Mensal' ? 30 : 365));
       const novaSub = {
         id: (DB.subscricoes || []).length + 1,
-        id_condominio: 1,
+        id_condominio: CONDOMINIO_DEMO_LOGADO_ID,
         id_plano: plano.id,
         periodicidade,
-        data_inicio: new Date().toISOString().slice(0, 10),
-        proxima_cobranca: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        data_inicio: dataInicio.toISOString().slice(0, 10),
+        proxima_cobranca: dataProxima.toISOString().slice(0, 10),
         estado: 'Pendente',
       };
       if (!DB.subscricoes) DB.subscricoes = [];
@@ -730,7 +932,8 @@ function renderPlanosDisponiveisScreen() {
       if (!DB.cobrancasPlataforma) DB.cobrancasPlataforma = [];
       DB.cobrancasPlataforma.push({
         id: DB.cobrancasPlataforma.length + 1,
-        id_condominio: 1,
+        id_condominio: CONDOMINIO_DEMO_LOGADO_ID,
+        id_subscricao: novaSub.id,
         periodo: periodicidade === 'Mensal' ? 'Próximo mês' : 'Próximo ano',
         valor,
         data_emissao: novaSub.data_inicio,
@@ -740,8 +943,10 @@ function renderPlanosDisponiveisScreen() {
         data_pagamento: '',
         comprovativo: '',
       });
+      recordPlatformHistory('Subscrição solicitada', `${plano.nome} · ${periodicidade} · ${formatNumber(valor)} Kz`);
       showToast(`Subscrição ${periodicidade.toLowerCase()} criada. Estado: Pendente. Efetue o pagamento.`);
       renderMinhaSubscricaoScreen();
+      });
     };
   });
 }
@@ -749,9 +954,11 @@ function renderPlanosDisponiveisScreen() {
 function renderMinhaSubscricaoScreen() {
   const body = document.getElementById('generic-screen-body');
   body.innerHTML = '';
-  const sub = (DB.subscricoes || []).find(s => s.id_condominio === 1) || null;
+  const condoId = CONDOMINIO_DEMO_LOGADO_ID; // Em produção vem da sessão autenticada.
+  const sub = (DB.subscricoes || []).find(s => s.id_condominio === condoId) || null;
   const plano = sub ? (DB.planos || []).find(p => p.id === sub.id_plano) : null;
-  const cobrancas = (DB.cobrancasPlataforma || []).filter(c => c.id_condominio === 1);
+  const cobrancas = (DB.cobrancasPlataforma || []).filter(c => c.id_condominio === condoId);
+  const nextCharge = cobrancas.find(c => ['Pendente','Em verificação','Atrasada'].includes(c.estado));
   const badgeClass = (e) => e === 'Ativa' || e === 'Paga' ? 'badge-green' : e === 'Atrasada' || e === 'Recusada' ? 'badge-red' : e === 'Em verificação' ? 'badge-blue' : 'badge-yellow';
 
   if (!sub) {
@@ -777,6 +984,7 @@ function renderMinhaSubscricaoScreen() {
         <strong>${plano ? plano.nome : '—'}</strong>
         <small>${sub.periodicidade} · Início: ${sub.data_inicio}</small>
         <small>Próxima cobrança: ${sub.proxima_cobranca || '—'}</small>
+        <small>Data limite de pagamento: ${nextCharge?.data_limite || sub.proxima_cobranca || '—'}</small>
       </div>
       <div class="payment-info-card card">
         <div><span>Estado</span><strong class="badge ${badgeClass(sub.estado)}">${sub.estado}</strong></div>
@@ -798,6 +1006,8 @@ function renderMinhaSubscricaoScreen() {
               <th>Emissão</th>
               <th>Limite</th>
               <th>Estado</th>
+              <th>Método</th>
+              <th>Data do pagamento</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -809,9 +1019,11 @@ function renderMinhaSubscricaoScreen() {
                 <td>${c.data_emissao}</td>
                 <td>${c.data_limite}</td>
                 <td><span class="badge ${badgeClass(c.estado)}">${c.estado}</span></td>
+                <td>${c.metodo_pagamento||'—'}</td>
+                <td>${c.data_pagamento||'—'}</td>
                 <td>${c.estado === 'Pendente' || c.estado === 'Atrasada' ? `<button class="btn btn-sm btn-primary btn-pagar-cobranca" data-id="${c.id}">Pagar</button>` : c.estado === 'Em verificação' ? '<span class="muted">Em validação</span>' : '—'}</td>
               </tr>
-            `).join('') : '<tr><td colspan="6">Sem cobranças</td></tr>'}
+            `).join('') : '<tr><td colspan="8">Sem cobranças</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -833,11 +1045,7 @@ function renderMinhaSubscricaoScreen() {
   const btnCancel = body.querySelector('#btn-cancelar-sub');
   if (btnCancel) {
     btnCancel.onclick = () => {
-      if (confirm('Deseja solicitar o cancelamento da subscrição? No protótipo apenas altera o estado.')) {
-        sub.estado = 'Cancelada';
-        showToast('Pedido de cancelamento registado (simulado).');
-        renderMinhaSubscricaoScreen();
-      }
+      if (confirm('Deseja solicitar o cancelamento da subscrição?')) showToast('Pedido de cancelamento enviado para análise.');
     };
   }
 }
@@ -881,7 +1089,7 @@ function renderPagarPlanoScreen() {
     </div>
     <div class="card" style="padding:1.25rem;">
       <h3 style="margin-top:0;">Transferência bancária</h3>
-      <p class="muted">Utilize os dados abaixo e envie o comprovativo. O estado só muda para <strong>Paga</strong> após validação (no protótipo fica em «Em verificação»).</p>
+      <p class="muted">Utilize os dados abaixo e envie o comprovativo. O estado fica em <strong>Em verificação</strong> até o administrador o validar.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin:1rem 0;">
         <div><span class="muted">Titular</span><strong style="display:block;">${cred.titular || '—'}</strong></div>
         <div><span class="muted">Banco</span><strong style="display:block;">${cred.banco || '—'}</strong></div>
@@ -893,7 +1101,7 @@ function renderPagarPlanoScreen() {
           <span class="payment-upload-icon">${icon('receipt', 18)}</span>
           <span>
             <strong>Comprovativo da transferência</strong>
-            <small class="payment-upload-help">PDF, JPG ou PNG · opcional no protótipo</small>
+            <small class="payment-upload-help">PDF, JPG ou PNG · obrigatório · até 10 MB</small>
             <small class="payment-upload-filename" hidden></small>
           </span>
           <span class="payment-upload-action">Escolher ficheiro</span>
@@ -910,11 +1118,20 @@ function renderPagarPlanoScreen() {
   body.querySelector('#btn-voltar-sub').onclick = () => renderMinhaSubscricaoScreen();
   body.querySelector('#btn-cancelar-pag-plano').onclick = () => renderMinhaSubscricaoScreen();
   bindPaymentFilePicker(body.querySelector('#comprovativo-plano'));
-  body.querySelector('#btn-submeter-pagamento-plano').onclick = () => {
-    // Protótipo: não marca como Paga — fica Em verificação (como a especificação exige)
+  body.querySelector('#btn-submeter-pagamento-plano').onclick = async (event) => {
+    const submitButton=event.currentTarget;
+    const proofInput=body.querySelector('#comprovativo-plano');
+    if(!proofInput.files?.length){proofInput.setCustomValidity('Carregue o comprovativo da transferência.');proofInput.reportValidity();proofInput.setCustomValidity('');return;}
+    submitButton.disabled=true;
+    let proof;
+    try{proof=await readPaymentFile(proofInput);}catch(error){showToast('Não foi possível ler o comprovativo.');submitButton.disabled=false;return;}
+    if(!proof){submitButton.disabled=false;return;}
+    // Protótipo: não marca como Paga — fica Em verificação até validação.
     cobranca.estado = 'Em verificação';
     cobranca.metodo_pagamento = 'Transferência Bancária';
     cobranca.data_pagamento = new Date().toISOString().slice(0, 10);
+    cobranca.comprovativo = proof;
+    recordPlatformHistory('Comprovativo de plano enviado', `${cobranca.periodo} · ${formatNumber(cobranca.valor)} Kz`);
     const sub = (DB.subscricoes || []).find(s => s.id_condominio === cobranca.id_condominio);
     if (sub && sub.estado === 'Pendente') {
       // Mantém pendente até "API" confirmar
@@ -1038,14 +1255,24 @@ function showPaymentRecipientConfirm(credentials, onConfirm, onBack) {
 function renderPagarMensalidadeScreen(){
   const body=document.getElementById('generic-screen-body');
   body.innerHTML='';
-  const taxa=(DB.taxas||[])[0]||{id:1,valor_taxa:0,data_limite:'—'};
-  const amount=formatNumber(taxa.valor_taxa)+' Kz';
-  const reference='CONVIVA-2026-'+String(taxa.id||1).padStart(3,'0');
-  const unit=(DB.me||DB.user||{}).unidade||(DB.unidades&&DB.unidades[0]&&DB.unidades[0].codigo)||'—';
+  const allCharges = (DB.cobrancasMorador || []).filter(c => c.id_morador === MORADOR_LOGADO_ID && !['Paga','Em verificação'].includes(c.estado));
+  const requestedIds = window._cobrancasSelecionadas || [];
+  let selectedCharges = allCharges.filter(c => requestedIds.map(String).includes(String(c.id)));
+  if (!selectedCharges.length) {
+    showToast('Selecione uma ou mais cobranças antes de continuar.');
+    renderMensalidadeScreen();
+    return;
+  }
+  window._cobrancasSelecionadas = selectedCharges.map(c => String(c.id));
+  const total = selectedCharges.reduce((sum, c) => sum + Number(c.valor_divida || 0), 0);
+  const amount=formatNumber(total)+' Kz';
+  const reference='CONVIVA-'+selectedCharges.map(c=>String(c.id).padStart(3,'0')).join('-');
+  const dueDate = selectedCharges.map(c=>c.data_limite).filter(Boolean).sort()[0] || '—';
+  const selectedPeriod = selectedCharges.length === 1 ? selectedCharges[0].periodo : `${selectedCharges.length} cobranças selecionadas`;
+  const unit=(DB.me||DB.user||{}).unidade||MINHA_UNIDADE_EXEMPLO.numero||'—';
   const sindicoCredentials = DB.credenciaisBancariasSindico && DB.credenciaisBancariasSindico.length
     ? DB.credenciaisBancariasSindico
     : [{id:0,titular:'Síndico do Condomínio',banco:'Banco X',iban:'AO06 0040 0000 9876 5432 1098 7',numero_conta:'9876543210'}];
-  const credAdmin=(DB.credenciaisBancariasAdmin&&DB.credenciaisBancariasAdmin[0])||{titular:'Administração CONVIVA',banco:'Banco de Fomento Angola',iban:'AO06 0006 0000 1234 5678 9012 3',numero_conta:'1234567890'};
   // Morador paga ao síndico
   let destCred=sindicoCredentials[0];
 
@@ -1055,7 +1282,7 @@ function renderPagarMensalidadeScreen(){
         <button type="button" class="btn btn-secondary btn-sm" id="btn-payment-back">← Voltar</button>
         <div>
           <h1>Pagar Mensalidade</h1>
-          <p>Escolha o método e conclua o pagamento com segurança.</p>
+          <p>Revise as cobranças selecionadas e escolha o método de pagamento.</p>
         </div>
       </header>
 
@@ -1185,10 +1412,10 @@ function renderPagarMensalidadeScreen(){
 
         <aside class="checkout-summary" aria-label="Resumo do pagamento">
           <span class="checkout-summary-eyebrow">Resumo</span>
-          <h2>Mensalidade do condomínio</h2>
+          <h2>${selectedPeriod}</h2>
           <div class="checkout-summary-plan">
             <span>Descrição</span>
-            <strong>Mensalidade</strong>
+            <strong>${selectedCharges.map(c=>c.descricao).filter((v,i,a)=>a.indexOf(v)===i).join(', ') || 'Cobrança'}</strong>
           </div>
           <div class="checkout-summary-rows">
             <div class="checkout-summary-row">
@@ -1197,7 +1424,7 @@ function renderPagarMensalidadeScreen(){
             </div>
             <div class="checkout-summary-row">
               <span>Vencimento</span>
-              <strong>${taxa.data_limite}</strong>
+              <strong>${dueDate}</strong>
             </div>
             <div class="checkout-summary-row">
               <span>Subtotal</span>
@@ -1241,30 +1468,45 @@ function renderPagarMensalidadeScreen(){
   if(backBottom) backBottom.onclick=goBack;
   body.querySelector('#resident-payment-form').addEventListener('submit',e=>{
     e.preventDefault();
+    if(!selectedCharges.length){showToast('Não há cobranças em aberto para pagar.');return;}
     const receipt=body.querySelector('#resident-receipt');
     if(method==='transfer' && receipt && !receipt.files.length){receipt.setCustomValidity('Carregue o comprovativo da transferência.');receipt.reportValidity();receipt.setCustomValidity('');return;}
     
-    function finalizePayment(){
+    async function finalizePayment(){
+      const submitButton=body.querySelector('.checkout-actions [type="submit"]');
+      if(submitButton?.disabled)return;
+      if(submitButton)submitButton.disabled=true;
+      let proof=null;
+      if(method==='transfer'){
+        try{proof=await readPaymentFile(receipt);}catch(error){showToast('Não foi possível ler o comprovativo.');if(submitButton)submitButton.disabled=false;return;}
+        if(!proof){if(submitButton)submitButton.disabled=false;return;}
+      }
       const id=(DB.meusPagamentos||[]).length+1;
       // Protótipo: estado só fica "Pago" após confirmação da API. Aqui fica "Em verificação".
       const state = 'Em verificação';
       DB.meusPagamentos.push({
         id,
-        mes_pago: '2026-09-01',
+        mes_pago: selectedPeriod,
+        periodo: selectedPeriod,
+        descricao: selectedCharges.map(c=>c.descricao).filter((v,i,a)=>a.indexOf(v)===i).join(', '),
+        valor_pago: total,
+        id_cobrancas: selectedCharges.map(c=>c.id),
         estado: state,
         data_pagamento: new Date().toISOString().slice(0,10),
-        id_taxa: taxa.id || 1,
-        metodo_pagamento: method==='express' ? 'Multicaixa Express' : method==='reference' ? 'Referência Multicaixa' : 'Transferência bancária'
+        metodo_pagamento: method==='express' ? 'Multicaixa Express' : method==='reference' ? 'Referência Multicaixa' : 'Transferência bancária',
+        referencia: reference,
+        comprovativo: proof,
       });
+      selectedCharges.forEach(charge => { charge.estado = state; charge.valor_pago = charge.valor_divida; charge.referencia = reference; charge.comprovativo = proof; });
+      window._cobrancasSelecionadas = [];
       showToast('Pagamento registado. Estado: Em verificação. Aguardando confirmação.');
     }
     
     if(method==='transfer'){
-      showPaymentRecipientConfirm(destCred, () => { finalizePayment(); renderMensalidadeScreen && renderMensalidadeScreen(); }, () => renderPagarMensalidadeScreen());
+      showPaymentRecipientConfirm(destCred, async () => { await finalizePayment(); renderMensalidadeScreen(); }, () => renderPagarMensalidadeScreen());
       return;
     }
-    finalizePayment();
-    renderMeusPagamentosScreen();
+    finalizePayment().then(()=>renderMeusPagamentosScreen());
   });
 }
 
@@ -1274,9 +1516,9 @@ function renderMeusPagamentosScreen(){
   const taxa = (DB.taxas || [])[0] || { valor_taxa: 0 };
   const rows = DB.meusPagamentos || [];
   let selectedState = 'Todos';
-  body.innerHTML = `<div class="screen-heading"><h2>Meus Pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Histórico de pagamentos</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="user-type-tabs table-filter-tabs" id="payment-state-tabs"></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por mês, método ou estado..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Mês</th><th>Valor</th><th>Método</th><th>Estado</th><th>Data</th><th>Ações</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
+  body.innerHTML = `<div class="screen-heading"><h2>Histórico de pagamentos</h2><button class="btn btn-primary" id="btn-new-payment">Pagar mensalidade</button></div><div class="table-card glass"><div class="table-card-header"><h3>Pagamentos registados</h3><span class="entity-card-id">${rows.length} registo(s)</span></div><div class="user-type-tabs table-filter-tabs" id="payment-state-tabs"></div><div class="table-toolbar"><input id="payment-search" class="table-search-input" placeholder="Pesquisar por período, método ou referência..."></div><div class="responsive-table"><table class="crud-table"><thead><tr><th>Data</th><th>Período liquidado</th><th>Valor pago</th><th>Método</th><th>Estado</th><th>Referência</th><th>Recibo / Comprovativo</th></tr></thead><tbody id="payments-body"></tbody></table></div></div>`;
   const tabs = document.getElementById('payment-state-tabs');
-  const states = ['Todos', ...new Set([...(ENTITIES.meusPagamentos.filterOptions || []), ...rows.map(row => row.estado).filter(Boolean)])];
+  const states = ['Todos', ...new Set([...(ENTITIES.meusPagamentos.filterOptions || []), 'Em verificação', ...rows.map(row => row.estado).filter(Boolean)])];
   states.forEach(state => {
     const tab = document.createElement('button');
     tab.type = 'button';
@@ -1298,20 +1540,24 @@ function renderMeusPagamentosScreen(){
     const query = (document.getElementById('payment-search').value || '').toLowerCase();
     const filtered = rows.filter(row => {
       const matchesState = selectedState === 'Todos' || row.estado === selectedState;
-      const matchesSearch = `${row.mes_pago} ${row.estado} ${row.metodo_pagamento || ''}`.toLowerCase().includes(query);
+      const matchesSearch = `${row.periodo || row.mes_pago} ${row.estado} ${row.metodo_pagamento || ''} ${row.referencia || ''}`.toLowerCase().includes(query);
       return matchesState && matchesSearch;
     });
     document.getElementById('payments-body').innerHTML = filtered.map(row => {
       const bc = row.estado === 'Pago' ? 'badge-green' : row.estado === 'Atrasado' || row.estado === 'Atrasada' ? 'badge-red' : row.estado === 'Em verificação' ? 'badge-blue' : 'badge-yellow';
-      return `<tr><td>${row.mes_pago}</td><td>${formatNumber(taxa.valor_taxa)} Kz</td><td>${row.metodo_pagamento || '—'}</td><td><span class="badge ${bc}">${row.estado}</span></td><td>${row.data_pagamento || '—'}</td><td><button class="icon-action-btn" data-receipt="${row.id}" title="Baixar comprovativo">${icon('receipt', 15)}</button></td></tr>`;
-    }).join('') || '<tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>';
+      const value = Number(row.valor_pago ?? taxa.valor_taxa ?? 0);
+      const receiptAction = `${row.estado === 'Pago' ? `<button class="icon-action-btn" data-receipt="${row.id}" title="Baixar recibo">${icon('receipt', 15)}</button>` : ''}${row.comprovativo && typeof row.comprovativo === 'object' ? `<button class="btn btn-secondary btn-sm" data-payment-proof="${row.id}">Comprovativo</button>` : ''}${!row.comprovativo && row.estado !== 'Pago' ? '—' : ''}`;
+      return `<tr><td>${row.data_pagamento || '—'}</td><td>${row.periodo || row.mes_pago || '—'}</td><td>${formatNumber(value)} Kz</td><td>${row.metodo_pagamento || '—'}</td><td><span class="badge ${bc}">${row.estado}</span></td><td>${row.referencia || '—'}</td><td>${receiptAction}</td></tr>`;
+    }).join('') || '<tr><td colspan="7">Nenhum pagamento encontrado.</td></tr>';
     document.querySelectorAll('[data-receipt]').forEach(button => button.onclick = () => downloadReceipt(Number(button.dataset.receipt)));
+    document.querySelectorAll('[data-payment-proof]').forEach(button => button.onclick = () => downloadResidentProof(Number(button.dataset.paymentProof)));
   };
   draw();
   document.getElementById('payment-search').oninput = draw;
-  document.getElementById('btn-new-payment').onclick = () => renderPagarMensalidadeScreen();
+  document.getElementById('btn-new-payment').onclick = () => renderMensalidadeScreen();
 }
-function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r)return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Comprovativo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Comprovativo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Mês</span><strong>${r.mes_pago}</strong></div><div class=\"row\"><span>Valor</span><strong>${formatNumber(taxa.valor_taxa)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>CONVIVA-${r.id}</strong></div></div></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`comprovativo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Comprovativo preparado para download.');}
+function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r||r.estado!=='Pago')return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const value=Number(r.valor_pago??taxa.valor_taxa??0);const period=r.periodo||r.mes_pago||'—';const reference=r.referencia||`CONVIVA-${r.id}`;const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Recibo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Recibo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Período</span><strong>${period}</strong></div><div class=\"row\"><span>Valor pago</span><strong>${formatNumber(value)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Método</span><strong>${r.metodo_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>${reference}</strong></div></div><p>Recibo demonstrativo gerado pelo protótipo Conviva.</p></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`recibo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Recibo preparado para download.');}
+function downloadResidentProof(id){const payment=(DB.meusPagamentos||[]).find(row=>row.id===id);const proof=payment?.comprovativo;if(!proof?.dados)return;const link=document.createElement('a');link.href=proof.dados;link.download=proof.nome||`comprovativo-${id}`;document.body.appendChild(link);link.click();link.remove();}
 
 function renderManutencoesMoradorScreen(){
   const body=document.getElementById('generic-screen-body');body.innerHTML=`<div class="screen-heading"><h2>Manutenções do Condomínio</h2><span class="readonly-tag">Consulta</span></div><div class="maintenance-grid">${(DB.manutencoes||[]).map(m=>`<article class="maintenance-card card"><div class="maintenance-icon">${icon('wrench',22)}</div><div><span class="badge ${m.estado==='Concluída'?'badge-green':m.estado==='Cancelada'?'badge-red':'badge-yellow'}">${m.estado}</span><h3>${m.titulo}</h3><p>${m.descricao}</p><div class="maintenance-meta"><span>${icon('mapPin',14)} ${m.local}</span><span>${icon('calendar',14)} ${m.data_prevista||'Sem data'}</span><span>${formatNumber(m.custo||0)} Kz</span></div></div></article>`).join('')}</div>`;

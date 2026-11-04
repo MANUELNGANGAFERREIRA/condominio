@@ -92,17 +92,21 @@ const ENTITIES = {
     label: 'Planos',
     labelSingular: 'Plano',
     role: 'admin',
+    showDetails: true,
+    softDeactivate: true,
+    filterKey: 'visibilidade',
+    filterOptions: ['Ativo', 'Inativo'],
     formLayout: 'single-column',
     fields: [
       { key: 'nome', label: 'Nome', type: 'text', required: true },
       { key: 'descricao', label: 'Descrição', type: 'textarea', required: false },
-      { key: 'preco_mensal', label: 'Preço mensal (Kz)', type: 'number', required: true },
-      { key: 'preco_anual', label: 'Preço anual (Kz)', type: 'number', required: true },
-      { key: 'limite_unidades', label: 'Limite de unidades', type: 'number', required: false, placeholder: '0 = ilimitado' },
+      { key: 'preco_mensal', label: 'Preço mensal (Kz)', type: 'number', min: 1, required: true },
+      { key: 'preco_anual', label: 'Preço anual (Kz)', type: 'number', min: 1, required: true },
+      { key: 'limite_unidades', label: 'Limite de unidades', type: 'number', min: 0, required: false, placeholder: '0 = ilimitado' },
       { key: 'funcionalidades', label: 'Funcionalidades (uma por linha)', type: 'textarea', required: false },
-      campoVisibilidade(),
+      { key: 'visibilidade', label: 'Estado', type: 'select', options: ['Ativo', 'Inativo'], required: true },
     ],
-    columns: ['nome', 'preco_mensal', 'preco_anual', 'limite_unidades', 'visibilidade'],
+    columns: ['nome', 'descricao', 'preco_mensal', 'preco_anual', 'visibilidade'],
     endpoints: { list: 'GET /planos', create: 'POST /planos', update: 'PUT /planos/:id', remove: 'DELETE /planos/:id' },
     mock: [
       { id: 1, nome: 'Plano Básico', descricao: 'Ideal para condomínios pequenos', preco_mensal: 15000, preco_anual: 150000, limite_unidades: 50, funcionalidades: 'Gestão de moradores\nMensalidades e taxas\nComunicados\nReservas de áreas comuns', visibilidade: 'Ativo' },
@@ -138,6 +142,7 @@ const ENTITIES = {
     label: 'Cobranças da Plataforma',
     labelSingular: 'Cobrança da Plataforma',
     role: 'admin',
+    readonly: true,
     fields: [
       { key: 'id_condominio', label: 'Condomínio', type: 'ref', ref: { entity: 'condominios', display: 'nome' }, required: true },
       { key: 'periodo', label: 'Período', type: 'text', required: true, placeholder: 'Ex.: Novembro 2026' },
@@ -152,9 +157,9 @@ const ENTITIES = {
     columns: ['id_condominio', 'periodo', 'valor', 'data_emissao', 'data_limite', 'estado'],
     endpoints: { list: 'GET /cobrancas-plataforma', create: 'POST /cobrancas-plataforma', update: 'PUT /cobrancas-plataforma/:id' },
     mock: [
-      { id: 1, id_condominio: 1, periodo: 'Outubro 2026', valor: 45000, data_emissao: '2026-10-01', data_limite: '2026-10-15', estado: 'Paga', metodo_pagamento: 'Transferência Bancária', data_pagamento: '2026-10-10', comprovativo: '' },
-      { id: 2, id_condominio: 1, periodo: 'Novembro 2026', valor: 45000, data_emissao: '2026-11-01', data_limite: '2026-11-15', estado: 'Pendente', metodo_pagamento: '', data_pagamento: '', comprovativo: '' },
-      { id: 3, id_condominio: 2, periodo: '2026 (anual)', valor: 150000, data_emissao: '2026-03-01', data_limite: '2026-03-15', estado: 'Em verificação', metodo_pagamento: 'Transferência Bancária', data_pagamento: '2026-03-12', comprovativo: '' },
+      { id: 1, id_condominio: 1, id_subscricao: 1, periodo: 'Outubro 2026', valor: 45000, data_emissao: '2026-10-01', data_limite: '2026-10-15', estado: 'Paga', metodo_pagamento: 'Transferência Bancária', data_pagamento: '2026-10-10', comprovativo: '' },
+      { id: 2, id_condominio: 1, id_subscricao: 1, periodo: 'Novembro 2026', valor: 45000, data_emissao: '2026-11-01', data_limite: '2026-11-15', estado: 'Pendente', metodo_pagamento: '', data_pagamento: '', comprovativo: '' },
+      { id: 3, id_condominio: 2, id_subscricao: 2, periodo: '2026 (anual)', valor: 150000, data_emissao: '2026-03-01', data_limite: '2026-03-15', estado: 'Em verificação', metodo_pagamento: 'Transferência Bancária', data_pagamento: '2026-03-12', comprovativo: 'comprovativo-transferencia-demo.pdf' },
     ],
   },
 
@@ -481,6 +486,7 @@ const ENTITIES = {
     label: 'Pagamentos',
     labelSingular: 'Pagamento',
     role: 'sindico',
+    readonly: true,
     filterOptions: ['Pago', 'Pendente', 'Atrasado'],
     fields: [
       { key: 'mes_pago', label: 'Mês Pago', type: 'date', required: true },
@@ -852,6 +858,16 @@ Object.keys(ENTITIES).forEach(key => {
   DB[key] = ENTITIES[key].mock.map(item => ({ ...item }));
 });
 
+// Cobranças de demonstração do morador, com a estrutura usada pelas telas de
+// mensalidades e pagamento. Em produção estes registos vêm da API autenticada.
+DB.cobrancasMorador = [
+  { id: 1, id_morador: 1, id_taxa: 1, periodo: 'Setembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 2000, valor_divida: 14000, data_limite: '2026-09-10', estado: 'Atrasada' },
+  { id: 2, id_morador: 1, id_taxa: 1, periodo: 'Outubro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-10-10', estado: 'Pendente' },
+  { id: 3, id_morador: 1, id_taxa: 1, periodo: 'Novembro 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 12000, data_limite: '2026-11-10', estado: 'Pendente' },
+  { id: 4, id_morador: 1, id_taxa: 1, periodo: 'Agosto 2026', descricao: 'Quota de condomínio', valor_original: 12000, multa: 0, valor_divida: 0, data_limite: '2026-08-10', estado: 'Paga', valor_pago: 12000, data_pagamento: '2026-08-08', metodo_pagamento: 'Multicaixa Express', referencia: 'CV-2026-008', comprovativo: '' },
+];
+DB.historicoPlataforma = [];
+
 // Registro extra: dados fixos de exemplo para a tela "Minha Unidade" do morador
 const MINHA_UNIDADE_EXEMPLO = {
   numero: 'A-101',
@@ -904,8 +920,9 @@ const MENUS = {
       ],
     },
     { group: 'Financeiro', icon: 'wallet', items: [
-        { type: 'entity', label: 'Subscrições', icon: 'package', entity: 'subscricoes' },
-        { type: 'entity', label: 'Cobranças da Plataforma', icon: 'receipt', entity: 'cobrancasPlataforma' },
+        { type: 'custom', label: 'Subscrições', icon: 'package', screen: 'subscricoesAdmin' },
+        { type: 'custom', label: 'Cobranças da Plataforma', icon: 'receipt', screen: 'cobrancasAdmin' },
+        { type: 'custom', label: 'Histórico da Plataforma', icon: 'fileText', screen: 'historicoPlataforma' },
         { type: 'entity', label: 'Pagamentos (condomínios)', icon: 'coins', entity: 'pagamentos' },
         { type: 'custom', label: 'Credenciais Bancárias', icon: 'creditCard', screen: 'credenciaisAdmin' },
       ] },

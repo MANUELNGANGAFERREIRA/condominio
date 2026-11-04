@@ -968,6 +968,32 @@ html[data-theme="dark"] .profile-theme-switch-dot { transform: translateX(20px);
 
 .detail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 0; }
 .detail-list div { display: flex; flex-direction: column; gap: 3px; }
+.entity-detail-card { padding: 24px; margin-bottom: 18px; }
+.entity-detail-pre { margin: 0; white-space: pre-wrap; font: inherit; }
+.payment-charge-filters,
+.subscription-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 0 16px 14px; }
+.payment-charge-filters label,
+.subscription-filters label { display: flex; flex-direction: column; gap: 5px; color: var(--text-2); font-size: .74rem; font-weight: 600; }
+.payment-charge-filters select,
+.subscription-filters select { min-width: 190px; height: 40px; padding: 8px 34px 8px 11px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); color: var(--text-0); font: inherit; }
+.platform-charge-actions { min-width: 220px; white-space: normal !important; }
+.platform-charge-actions > div { display: flex; gap: 7px; margin-top: 7px; }
+.table-cell-subtext { display: block; margin-top: 4px; color: var(--text-3); font-size: .72rem; }
+.subscription-detail-card { padding: 24px; margin-bottom: 18px; }
+.subscription-choice-overlay { position: fixed; z-index: 1200; inset: 0; min-height: 100dvh; background: rgba(12,18,32,.58); backdrop-filter: blur(4px); }
+.subscription-choice-card { width: min(100%, 480px); box-shadow: var(--shadow-lg); text-align: left; }
+.subscription-choice-card h3 { margin-top: 5px; }
+.subscription-period-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 16px 0; }
+.subscription-period-option { display: flex; align-items: flex-start; gap: 9px; padding: 13px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.subscription-period-option.is-selected { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 0 0 2px color-mix(in srgb,var(--primary) 12%,transparent); }
+.subscription-period-option input { accent-color: var(--primary); margin-top: 3px; }
+.subscription-period-option strong,.subscription-period-option small { display: block; }
+.subscription-period-option strong { color: var(--text-0); font-size: .85rem; }
+.subscription-period-option small { margin-top: 3px; color: var(--text-2); font-size: .72rem; }
+.subscription-choice-summary { margin-bottom: 16px; }
+.subscription-choice-summary .bank-cred-field { display: flex; justify-content: space-between; gap: 12px; }
+.subscription-choice-summary .bank-cred-field strong { text-align: right; }
+@media(max-width:480px){.subscription-choice-card{padding:22px 18px}.subscription-period-options{grid-template-columns:1fr}}
 .detail-list dt { font-size: 0.7rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.03em; }
 .detail-list dd { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-0); }
 
