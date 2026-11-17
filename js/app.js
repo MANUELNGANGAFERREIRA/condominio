@@ -100,7 +100,7 @@ function initCadastro() {
     // Endpoint real: POST /morador-publico
     // (o morador indica o condomínio; o síndico vincula a unidade depois)
     // ------------------------------------------------------------------
-    alert('Cadastro simulado com sucesso! Assim que o síndico vincular a sua unidade, ela vai aparecer na sua área.');
+    alert('Cadastro recebido. Assim que o síndico vincular a sua unidade, ela aparecerá na sua área.');
     e.target.reset();
     showScreen('screen-login-morador');
   });
@@ -469,15 +469,12 @@ function renderAdsCarousel(body, role) {
 
   const track = wrap.querySelector('.ads-track');
   const viewport = wrap.querySelector('.ads-viewport');
-  const cloneCount = 2;
+  const cloneCount = 1;
   let current = cloneCount;
   let timer = null;
   let isAnimating = false;
   const duration = 4800;
-  const visibleSlides = () => window.matchMedia('(min-width: 901px)').matches && ads.length > 1 ? 2 : 1;
-
-  // Dois clones em cada extremidade permitem avançar um cartão por vez
-  // mantendo dois anúncios visíveis no computador, sem quebrar o loop.
+  // Um clone em cada extremidade mantém o loop contínuo com um anúncio visível.
   const leadingClones = Array.from({ length: cloneCount }, (_, i) => ads[(ads.length - cloneCount + i % ads.length) % ads.length]);
   const trailingClones = Array.from({ length: cloneCount }, (_, i) => ads[i % ads.length]);
   const slides = [...leadingClones, ...ads, ...trailingClones];
@@ -519,10 +516,8 @@ function renderAdsCarousel(body, role) {
   });
 
   function position(animate = true) {
-    wrap.classList.toggle('ads-carousel-two-up', visibleSlides() === 2);
     track.style.transition = animate ? 'transform .65s cubic-bezier(.22,.61,.36,1)' : 'none';
-    const step = 100 / visibleSlides();
-    track.style.transform = `translate3d(-${current * step}%,0,0)`;
+    track.style.transform = `translate3d(-${current * 100}%,0,0)`;
   }
 
   function next() {
@@ -603,6 +598,121 @@ function renderCustomScreen(screen) {
   if(screen==='planosDisponiveis') return renderPlanosDisponiveisScreen();
   if(screen==='minhaSubscricao') return renderMinhaSubscricaoScreen();
   if(screen==='pagarPlano') return renderPagarPlanoScreen();
+  if(screen==='permissoes') return renderPermissionsScreen();
+  if(screen==='portasMorador') return renderResidentDoorsScreen();
+}
+
+const ROLE_PERMISSION_STORAGE_KEY = 'conviva-role-permissions-v1';
+function permissionKeyForMenuItem(item) {
+  if (item.type === 'entity') return `entity:${item.entity}`;
+  if (item.type === 'custom') return `screen:${item.screen}`;
+  return `action:${item.type}`;
+}
+function readRolePermissions() {
+  try { return JSON.parse(localStorage.getItem(ROLE_PERMISSION_STORAGE_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+function canRoleUseMenuItem(role, item) {
+  if (item.type === 'home' || (role === 'admin' && item.screen === 'permissoes')) return true;
+  return readRolePermissions()[role]?.[permissionKeyForMenuItem(item)] !== false;
+}
+
+function renderPermissionsScreen() {
+  const body = document.getElementById('generic-screen-body');
+  if (!body) return;
+  let selectedRole = 'sindico';
+  body.innerHTML = `<div class="screen-heading"><div><h2>Permissões de acesso</h2><p>Escolha os módulos disponíveis para cada nível de acesso.</p></div></div>
+    <section class="table-card glass permissions-card"><div class="permissions-toolbar"><label for="permissions-role">Nível de acesso</label><select id="permissions-role" class="form-control"></select></div><div id="permissions-list" class="permissions-list"></div></section>`;
+  const roleSelect = body.querySelector('#permissions-role');
+  const list = body.querySelector('#permissions-list');
+  const roleOptions = Object.keys(ROLE_LABELS);
+  roleOptions.forEach(role => {
+    const option = document.createElement('option'); option.value = role; option.textContent = ROLE_LABELS[role]; roleSelect.appendChild(option);
+  });
+  roleSelect.value = selectedRole;
+
+  function drawRole() {
+    selectedRole = roleSelect.value;
+    const permissions = readRolePermissions();
+    const groups = [];
+    MENUS[selectedRole].forEach(entry => {
+      if (entry.type === 'home' || (selectedRole === 'admin' && entry.screen === 'permissoes')) return;
+      const groupName = entry.group || 'Geral';
+      const items = entry.group ? entry.items : [entry];
+      let group = groups.find(row => row.name === groupName);
+      if (!group) { group = { name: groupName, items: [] }; groups.push(group); }
+      group.items.push(...items);
+    });
+    list.innerHTML = '';
+    groups.forEach(group => {
+      const section = document.createElement('section'); section.className = 'permissions-group';
+      const heading = document.createElement('h3'); heading.textContent = group.name; section.appendChild(heading);
+      group.items.forEach(item => {
+        const key = permissionKeyForMenuItem(item);
+        const row = document.createElement('label'); row.className = 'permission-row';
+        const text = document.createElement('span'); text.textContent = item.label;
+        const input = document.createElement('input'); input.type = 'checkbox'; input.checked = permissions[selectedRole]?.[key] !== false;
+        input.setAttribute('aria-label', `${item.label}: acesso permitido`);
+        const toggle = document.createElement('span'); toggle.className = 'permission-switch';
+        const knob = document.createElement('span'); knob.className = 'permission-switch-knob'; knob.setAttribute('aria-hidden', 'true');
+        toggle.append(input, knob);
+        input.addEventListener('change', () => {
+          const latest = readRolePermissions();
+          latest[selectedRole] ||= {};
+          latest[selectedRole][key] = input.checked;
+          try { localStorage.setItem(ROLE_PERMISSION_STORAGE_KEY, JSON.stringify(latest)); }
+          catch (_) { showToast('Não foi possível guardar as permissões.'); return; }
+          if (APP_STATE.role === selectedRole) buildSidebar(selectedRole);
+          showToast(`Acesso a “${item.label}” ${input.checked ? 'ativado' : 'desativado'}.`);
+        });
+        row.append(text, toggle); section.appendChild(row);
+      });
+      list.appendChild(section);
+    });
+  }
+  roleSelect.addEventListener('change', drawRole);
+  drawRole();
+}
+
+function renderResidentDoorsScreen() {
+  const body = document.getElementById('generic-screen-body');
+  if (!body) return;
+  const doors = DB.portas || DB.portasView || [];
+  const porters = DB.porteiros || [];
+  body.innerHTML = `<div class="screen-heading"><div><h2>Portas e contactos</h2><p>Consulte as entradas do condomínio e contacte a portaria responsável.</p></div></div><div class="resident-doors-grid"></div>`;
+  const grid = body.querySelector('.resident-doors-grid');
+  if (!doors.length) {
+    grid.innerHTML = '<div class="home-empty-state">Ainda não há portas registadas pelo condomínio.</div>';
+    return;
+  }
+  doors.forEach(door => {
+    const assigned = porters.filter(person => Number(person.id_porta) === Number(door.id) && person.visibilidade !== 'Inativo').slice(0, 1);
+    const card = document.createElement('article'); card.className = 'card resident-door-card';
+    const iconBox = document.createElement('span'); iconBox.className = 'resident-door-icon'; iconBox.innerHTML = icon('door', 22);
+    const content = document.createElement('div'); content.className = 'resident-door-content';
+    const title = document.createElement('h3'); title.textContent = door.nome || 'Porta do condomínio';
+    const type = document.createElement('p'); type.textContent = door.tipo || door.localizacao || 'Acesso do condomínio';
+    content.append(title, type);
+    const contact = document.createElement('div'); contact.className = 'resident-door-contact';
+    const label = document.createElement('span'); label.textContent = 'Contacto da portaria'; contact.appendChild(label);
+    if (assigned.length) {
+      assigned.forEach(person => {
+        const line = document.createElement('p');
+        line.append(`${person.nome || 'Porteiro'} · `);
+        const contactValue = person.telefone || person.email;
+        if (contactValue) {
+          const link = document.createElement('a');
+          link.textContent = contactValue;
+          link.href = person.telefone ? `tel:${String(person.telefone).replace(/[^\d+]/g, '')}` : `mailto:${person.email}`;
+          line.appendChild(link);
+        } else line.append('Contacto não indicado');
+        contact.appendChild(line);
+      });
+    } else {
+      const line = document.createElement('p'); line.textContent = 'Contacto ainda não associado a esta porta.'; contact.appendChild(line);
+    }
+    card.append(iconBox, content, contact); grid.appendChild(card);
+  });
 }
 
 function renderAdminSubscriptionsScreen() {
@@ -727,10 +837,10 @@ function viewPlatformProof(charge) {
 function renderAdminPlatformHistoryScreen() {
   const body=document.getElementById('generic-screen-body');
   const history=DB.historicoPlataforma||[];
-  body.innerHTML=`<div class="screen-heading"><div><h2>Histórico da Plataforma</h2><p>Registo demonstrativo de alterações e pagamentos processados nesta sessão.</p></div></div>
+  body.innerHTML=`<div class="screen-heading"><div><h2>Histórico da Plataforma</h2></div></div>
     <div class="table-card glass"><div class="table-card-header"><h3>Atividade financeira e administrativa</h3><span class="entity-card-id">${history.length} registo(s)</span></div>
       <div class="responsive-table"><table class="crud-table"><thead><tr><th>Data</th><th>Utilizador</th><th>Operação</th><th>Detalhe</th></tr></thead><tbody>
-        ${history.map(item=>`<tr><td>${item.data}</td><td>${item.utilizador}</td><td>${item.operacao}</td><td>${item.detalhe}</td></tr>`).join('')||'<tr><td colspan="4">Ainda não há alterações registadas nesta sessão.</td></tr>'}
+        ${history.map(item=>`<tr><td>${item.data}</td><td>${item.utilizador}</td><td>${item.operacao}</td><td>${item.detalhe}</td></tr>`).join('')||'<tr><td colspan="4">Ainda não há alterações registadas.</td></tr>'}
       </tbody></table></div>
     </div>`;
 }
@@ -1556,7 +1666,7 @@ function renderMeusPagamentosScreen(){
   document.getElementById('payment-search').oninput = draw;
   document.getElementById('btn-new-payment').onclick = () => renderMensalidadeScreen();
 }
-function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r||r.estado!=='Pago')return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const value=Number(r.valor_pago??taxa.valor_taxa??0);const period=r.periodo||r.mes_pago||'—';const reference=r.referencia||`CONVIVA-${r.id}`;const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Recibo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Recibo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Período</span><strong>${period}</strong></div><div class=\"row\"><span>Valor pago</span><strong>${formatNumber(value)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Método</span><strong>${r.metodo_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>${reference}</strong></div></div><p>Recibo demonstrativo gerado pelo protótipo Conviva.</p></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`recibo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Recibo preparado para download.');}
+function downloadReceipt(id){const r=(DB.meusPagamentos||[]).find(x=>x.id===id);if(!r||r.estado!=='Pago')return;const taxa=(DB.taxas||[])[0]||{valor_taxa:0};const value=Number(r.valor_pago??taxa.valor_taxa??0);const period=r.periodo||r.mes_pago||'—';const reference=r.referencia||`CONVIVA-${r.id}`;const html=`<!doctype html><html lang=\"pt\"><head><meta charset=\"utf-8\"><title>Recibo de pagamento</title><style>body{font-family:Arial,sans-serif;padding:42px;color:#16213a;max-width:760px;margin:auto}h1{margin-bottom:28px}.box{border:1px solid #d8deea;border-radius:16px;padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #edf0f5}.row:last-child{border-bottom:0}.brand{font-size:24px;font-weight:800;margin-bottom:20px}</style></head><body><div class=\"brand\">CONVIVA</div><h1>Recibo de pagamento</h1><div class=\"box\"><div class=\"row\"><span>Período</span><strong>${period}</strong></div><div class=\"row\"><span>Valor pago</span><strong>${formatNumber(value)} Kz</strong></div><div class=\"row\"><span>Estado</span><strong>${r.estado}</strong></div><div class=\"row\"><span>Data</span><strong>${r.data_pagamento||'—'}</strong></div><div class=\"row\"><span>Método</span><strong>${r.metodo_pagamento||'—'}</strong></div><div class=\"row\"><span>Referência</span><strong>${reference}</strong></div></div></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`recibo-pagamento-${r.id}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('Recibo preparado para download.');}
 function downloadResidentProof(id){const payment=(DB.meusPagamentos||[]).find(row=>row.id===id);const proof=payment?.comprovativo;if(!proof?.dados)return;const link=document.createElement('a');link.href=proof.dados;link.download=proof.nome||`comprovativo-${id}`;document.body.appendChild(link);link.click();link.remove();}
 
 function renderManutencoesMoradorScreen(){
@@ -1886,11 +1996,6 @@ function renderPerfilScreen() {
   heading.innerHTML = '<h2>Editar perfil</h2>';
   body.appendChild(heading);
 
-  const p = document.createElement('p');
-  p.className = 'home-intro';
-  p.textContent = 'Estes dados são só um mockup — nada é enviado a nenhum servidor.';
-  body.appendChild(p);
-
   const nomeAtual = document.getElementById('topbar-profile-name').textContent.trim() || `${ROLE_LABELS[APP_STATE.role]} Exemplo`;
 
   // -------- Cabeçalho do perfil: avatar, nome e badge de perfil --------
@@ -1951,7 +2056,7 @@ function renderPerfilScreen() {
       try {
         localStorage.setItem(profileAvatarStorageKey(), url);
       } catch (error) {
-        showToast('Não foi possível guardar a foto neste navegador.');
+        showToast('Não foi possível guardar a foto do perfil.');
       }
       setTopbarAvatar(url);
     } else {
@@ -2144,6 +2249,10 @@ function buildSidebar(role) {
   nav.innerHTML = '';
 
   function dispatch(item, btn) {
+    if (!canRoleUseMenuItem(role, item)) {
+      showToast('Este nível de acesso não tem permissão para abrir esta área.');
+      return;
+    }
     document.querySelectorAll('.sidebar-link').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
@@ -2171,6 +2280,8 @@ function buildSidebar(role) {
 
   MENUS[role].forEach(entry => {
     if (entry.group) {
+      const permittedItems = entry.items.filter(item => canRoleUseMenuItem(role, item));
+      if (!permittedItems.length) return;
       // Secção com cabeçalho clicável (expande/recolhe a sublista) — igual
       // ao padrão "GERENCIAMENTO DE X" de referência.
       const section = document.createElement('div');
@@ -2187,7 +2298,7 @@ function buildSidebar(role) {
 
       const list = document.createElement('div');
       list.className = 'sidebar-section-list';
-      entry.items.forEach(item => list.appendChild(buildLink(item)));
+      permittedItems.forEach(item => list.appendChild(buildLink(item)));
 
       // Secções começam recolhidas — a pessoa abre a que precisa.
       section.classList.toggle('sidebar-section-open', true);
@@ -2200,6 +2311,7 @@ function buildSidebar(role) {
       section.appendChild(list);
       nav.appendChild(section);
     } else {
+      if (!canRoleUseMenuItem(role, entry)) return;
       nav.appendChild(buildLink(entry));
     }
   });

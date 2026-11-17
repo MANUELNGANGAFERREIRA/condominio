@@ -249,15 +249,9 @@ function buildRefCombobox(idPrefix, field, currentId) {
   wrap.append(statusIcon, text, hidden);
   return wrap;
 }
-/* ---------------------------------------------------------------------------
-   Legenda discreta com o(s) endpoint(s) reais que um dev vai plugar depois.
-   --------------------------------------------------------------------------- */
+/* Mantém os pontos de composição existentes sem expor detalhes de API na interface. */
 function buildApiNote(endpoints) {
-  const p = document.createElement('p');
-  p.className = 'api-note';
-  const parts = Object.values(endpoints).filter(Boolean);
-  p.textContent = 'Endpoint(s) real(is): ' + parts.join('  ·  ');
-  return p;
+  return document.createDocumentFragment();
 }
 
 /* ---------------------------------------------------------------------------

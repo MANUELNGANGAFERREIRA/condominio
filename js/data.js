@@ -908,6 +908,7 @@ const MENUS = {
         { type: 'entity', label: 'Tipos de Pagamento', icon: 'creditCard', entity: 'tiposPagamento' },
         { type: 'entity', label: 'Planos', icon: 'package', entity: 'planos' },
         { type: 'entity', label: 'Publicidade / ADS', icon: 'megaphone', entity: 'anuncios' },
+        { type: 'custom', label: 'Permissões de acesso', icon: 'shield', screen: 'permissoes' },
       ],
     },
     {
@@ -1007,6 +1008,7 @@ const MENUS = {
         { type: 'custom', label: 'Chat do Condomínio', icon: 'message', screen: 'chat' },
         { type: 'entity', label: 'Comunicados', icon: 'megaphone', entity: 'comunicadosView' },
         { type: 'custom', label: 'Manutenções', icon: 'wrench', screen: 'manutencoesMorador' },
+        { type: 'custom', label: 'Portas e contactos', icon: 'door', screen: 'portasMorador' },
         { type: 'votar', label: 'Votações', icon: 'vote' },
         { type: 'entity', label: 'Regras', icon: 'scroll', entity: 'regrasView' },
         { type: 'entity', label: 'Áreas Comuns', icon: 'waves', entity: 'areasComunsView' },
